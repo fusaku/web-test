@@ -467,18 +467,6 @@ function initializePlayer() {
   }
 }
 
-// 事件监听
-document.getElementById('subtitle-toggle').addEventListener('click', toggleSubtitles);
-
-// 键盘快捷键
-document.addEventListener('keydown', (e) => {
-  if (e.key === 's' || e.key === 'S') {
-    toggleSubtitles();
-  } else if (e.key === 'Escape') {
-    window.location.href = 'index.html';
-  }
-});
-
 // 页面卸载时清理
 window.addEventListener('beforeunload', () => {
   if (updateInterval) {
@@ -487,7 +475,22 @@ window.addEventListener('beforeunload', () => {
 });
 
 // 页面加载完成后初始化
-window.addEventListener('DOMContentLoaded', initializePage);
+document.addEventListener('DOMContentLoaded', () => {
+  // 初始化页面
+  initializePage();
+  
+  // 事件监听
+  document.getElementById('subtitle-toggle').addEventListener('click', toggleSubtitles);
+  
+  // 键盘快捷键
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 's' || e.key === 'S') {
+      toggleSubtitles();
+    } else if (e.key === 'Escape') {
+      window.location.href = 'index.html';
+    }
+  });
+});
 
 // 全局变量确保YouTube API回调能找到
 window.onYouTubeIframeAPIReady = null;
