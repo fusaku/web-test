@@ -183,7 +183,7 @@
 <body>
 
 <div id="header">
-  <a href="javascript:history.back()" id="back-button">
+  <a href="index.html" id="back-button">
     ← 返回列表
   </a>
   <h1 id="video-title">加载中...</h1>
@@ -338,6 +338,8 @@ function displayCurrentSubtitle(currentTime) {
 
 // YouTube Player API 加载完成回调
 function onYouTubeIframeAPIReady() {
+  if (!currentVideoId) return;
+  
   player = new YT.Player('youtube-player', {
     height: '100%',
     width: '100%',
@@ -350,12 +352,14 @@ function onYouTubeIframeAPIReady() {
     },
     events: {
       'onReady': onPlayerReady,
-      'onStateChange': onPlayerStateChange
+      'onStateChange': onPlayerStateChange,
+      'onError': onPlayerError
     }
   });
 }
 
 function onPlayerReady(event) {
+  console.log('YouTube Player Ready');
   document.getElementById('loading').classList.add('hidden');
   document.getElementById('youtube-player').classList.remove('hidden');
   
@@ -365,6 +369,13 @@ function onPlayerReady(event) {
 
 function onPlayerStateChange(event) {
   // 可以根据播放状态调整字幕显示
+  console.log('Player State Changed:', event.data);
+}
+
+function onPlayerError(event) {
+  console.error('YouTube Player Error:', event.data);
+  document.getElementById('error').classList.remove('hidden');
+  document.getElementById('loading').classList.add('hidden');
 }
 
 // 开始字幕更新
@@ -406,6 +417,8 @@ async function initializePage() {
     return;
   }
   
+  console.log('Video ID:', currentVideoId);
+  
   // 更新页面标题
   const title = await fetchVideoTitle(currentVideoId);
   document.getElementById('video-title').textContent = title;
@@ -414,29 +427,55 @@ async function initializePage() {
   // 加载字幕
   await loadSubtitles(currentVideoId);
   
-  // 动态加载 YouTube Player API
-  if (!window.YT) {
-    const script = document.createElement('script');
-    script.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(script);
+  // 确保YouTube Player API加载
+  if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+    console.log('Loading YouTube API...');
+    // 等待API加载完成
+    window.onYouTubeIframeAPIReady = function() {
+      console.log('YouTube API Loaded');
+      initializePlayer();
+    };
+    
+    // 加载YouTube API
+    if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://www.youtube.com/iframe_api';
+      script.onload = function() {
+        console.log('YouTube API script loaded');
+      };
+      script.onerror = function() {
+        console.error('Failed to load YouTube API');
+        document.getElementById('error').classList.remove('hidden');
+        document.getElementById('loading').classList.add('hidden');
+      };
+      document.head.appendChild(script);
+    }
   } else {
+    console.log('YouTube API already loaded');
+    initializePlayer();
+  }
+}
+
+// 初始化播放器
+function initializePlayer() {
+  try {
     onYouTubeIframeAPIReady();
+  } catch (error) {
+    console.error('Error initializing player:', error);
+    document.getElementById('error').classList.remove('hidden');
+    document.getElementById('loading').classList.add('hidden');
   }
 }
 
 // 事件监听
 document.getElementById('subtitle-toggle').addEventListener('click', toggleSubtitles);
 
-div.addEventListener('click', () => {
-  window.location.href = `player.html?v=${video.id}`;
-});
-
 // 键盘快捷键
 document.addEventListener('keydown', (e) => {
   if (e.key === 's' || e.key === 'S') {
     toggleSubtitles();
   } else if (e.key === 'Escape') {
-    history.back();
+    window.location.href = 'index.html';
   }
 });
 
@@ -450,8 +489,8 @@ window.addEventListener('beforeunload', () => {
 // 页面加载完成后初始化
 window.addEventListener('DOMContentLoaded', initializePage);
 
-// YouTube API 全局回调
-window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+// 全局变量确保YouTube API回调能找到
+window.onYouTubeIframeAPIReady = null;
 </script>
 
 </body>
