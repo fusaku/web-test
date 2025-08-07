@@ -115,7 +115,6 @@
   }
   }
 
-
   .video-item {
     background: #fafafa;
     border-radius: 8px;
@@ -124,12 +123,20 @@
     display: flex;
     flex-direction: column;
     height: fit-content;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .video-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
   }
 
   iframe {
     width: 100%;
     aspect-ratio: 16 / 9;
     border: none;
+    pointer-events: none;
   }
 
   .video-title {
@@ -309,6 +316,11 @@ function createVideoItem(video) {
     <div class="video-title" title="${video.displayTitle || video.title || '加载中...'}">${video.displayTitle || video.title || '加载中...'}</div>
     ${dateStr ? `<div class="video-date">${dateStr}</div>` : ''}
   `;
+  
+  // 添加点击事件跳转到播放页面
+  div.addEventListener('click', () => {
+    window.location.href = `player.html?v=${video.id}`;
+  });
   
   // 如果还没有获取到真实标题，就去获取
   if (!video.displayTitle) {
