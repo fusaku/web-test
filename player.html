@@ -395,6 +395,13 @@
 
     // 完全重写的字幕渲染函数，解决重复加载问题
     function displayCurrentSubtitle(currentTime) {
+      // 清理过期的时间记录（超过当前时间10秒的记录）
+      for (const [timeKey, lineSet] of displayedSubtitles.entries()) {
+        const recordTime = parseFloat(timeKey);
+        if (currentTime - recordTime > 10) {
+          displayedSubtitles.delete(timeKey);
+        }
+      }
       const overlay = document.getElementById('subtitle-overlay');
 
       if (!subtitlesVisible || subtitles.length === 0) {
@@ -405,12 +412,17 @@
         return;
       }
       let lastTime = 0;
-      const timeDiff = Math.abs(currentTime - lastTime);
-      if (timeDiff > 2) { // 如果时间跳跃超过2秒，清理显示记录
-        console.log('Time jump detected, clearing display history');
+      // 检测时间跳跃，清理过时的显示记录
+      if (typeof displayCurrentSubtitle.lastTime === 'undefined') {
+        displayCurrentSubtitle.lastTime = currentTime;
+      }
+
+      const timeDiff = Math.abs(currentTime - displayCurrentSubtitle.lastTime);
+      if (timeDiff > 1) { // 降低到1秒阈值
+        console.log(`Time jump detected: ${displayCurrentSubtitle.lastTime} -> ${currentTime}`);
         displayedSubtitles.clear();
       }
-      lastTime = currentTime;
+      displayCurrentSubtitle.lastTime = currentTime;
       // 获取当前应该显示的字幕
       const currentSubs = subtitles.filter(sub =>
         currentTime >= sub.start && currentTime <= sub.end
@@ -427,7 +439,7 @@
           // 使用字幕在原数组中的真实索引作为唯一标识
           const realSubIndex = subtitles.indexOf(sub);
           const subId = `sub_${realSubIndex}_${lineIndex}_${sub.start}_${sub.end}`;
-          const timeKey = `${Math.floor(sub.start * 10)}`; // 精确到0.1秒
+          const timeKey = `${sub.start.toFixed(1)}`; // 更准确的时间表示
 
           currentSubIds.add(subId);
 
