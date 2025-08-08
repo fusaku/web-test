@@ -212,6 +212,8 @@ let currentSubtitleIndex = -1;
 let subtitlesVisible = true;
 let player = null;
 let updateInterval = null;
+let youtubeApiReady = false;
+let playerInitialized = false;
 
 // 从URL获取视频ID
 function getVideoIdFromUrl() {
@@ -291,29 +293,29 @@ async function loadSubtitles(videoId) {
       document.getElementById('subtitle-toggle').classList.remove('disabled');
       document.getElementById('subtitle-toggle').textContent = '隐藏字幕';
       console.log(`成功加载 ${subtitles.length} 行字幕`);
-      return true; // 返回true表示有字幕
+      return true;
     } else {
       throw new Error('字幕文件为空');
     }
   } catch (error) {
     console.warn('加载字幕失败:', error.message);
-    // 没有字幕时的状态
     document.getElementById('subtitle-status').textContent = '字幕: 无';
     document.getElementById('subtitle-toggle').classList.add('disabled');
     document.getElementById('subtitle-toggle').textContent = '无字幕';
     subtitles = [];
     subtitlesVisible = false;
-    return false; // 返回false表示没有字幕
+    return false;
   }
 }
 
 // 获取YouTube视频标题
 async function fetchVideoTitle(videoId) {
   try {
-    const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+    // 使用更可靠的方法获取标题
+    const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`);
     if (response.ok) {
       const data = await response.json();
-      return data.title;
+      return data.title || '视频播放';
     }
   } catch (error) {
     console.warn('无法获取视频标题:', error);
@@ -328,7 +330,6 @@ function displayCurrentSubtitle(currentTime) {
     return;
   }
   
-  // 找到当前时间对应的字幕
   const currentSub = subtitles.find(sub => 
     currentTime >= sub.start && currentTime <= sub.end
   );
@@ -336,7 +337,6 @@ function displayCurrentSubtitle(currentTime) {
   const overlay = document.getElementById('subtitle-overlay');
   
   if (currentSub) {
-    // 将字幕按行分割显示
     const lines = currentSub.text.split('\n');
     overlay.innerHTML = lines
       .map(line => `<div class="subtitle-line">${line}</div>`)
@@ -346,51 +346,84 @@ function displayCurrentSubtitle(currentTime) {
   }
 }
 
-// YouTube Player API 加载完成回调
+// YouTube Player API回调函数 - 全局唯一
 function onYouTubeIframeAPIReady() {
-  if (!currentVideoId || player) {
-    return; // 防止重复初始化
-  }
+  console.log('YouTube API 已准备就绪');
+  youtubeApiReady = true;
   
-  console.log('YouTube API Ready, creating player...');
-  initializePlayer();
+  // 如果页面已经加载完成，立即初始化播放器
+  if (currentVideoId && !playerInitialized) {
+    initializePlayer();
+  }
 }
 
+// 播放器事件处理
 function onPlayerReady(event) {
-  console.log('YouTube Player Ready');
+  console.log('YouTube Player 已准备就绪');
   document.getElementById('loading').classList.add('hidden');
   document.getElementById('youtube-player').classList.remove('hidden');
-  
-  // 开始字幕更新循环
   startSubtitleUpdate();
 }
 
 function onPlayerStateChange(event) {
-  // 可以根据播放状态调整字幕显示
-  console.log('Player State Changed:', event.data);
+  console.log('播放器状态改变:', event.data);
+  
+  // YT.PlayerState.PLAYING = 1
+  if (event.data === 1) {
+    startSubtitleUpdate();
+  }
 }
 
 function onPlayerError(event) {
-  console.error('YouTube Player Error:', event.data);
+  console.error('YouTube Player 错误:', event.data);
+  let errorMessage = '视频加载失败';
+  
+  switch(event.data) {
+    case 2:
+      errorMessage = '视频ID无效';
+      break;
+    case 5:
+      errorMessage = '不支持HTML5播放器';
+      break;
+    case 100:
+      errorMessage = '视频不存在或已被删除';
+      break;
+    case 101:
+    case 150:
+      errorMessage = '视频无法在此页面播放';
+      break;
+  }
+  
+  document.getElementById('error').innerHTML = `
+    <h3>播放失败</h3>
+    <p>${errorMessage}</p>
+    <p>错误代码: ${event.data}</p>
+  `;
   document.getElementById('error').classList.remove('hidden');
   document.getElementById('loading').classList.add('hidden');
 }
 
 // 开始字幕更新
 function startSubtitleUpdate() {
+  // 清除现有的定时器
   if (updateInterval) {
     clearInterval(updateInterval);
+    updateInterval = null;
   }
   
   // 只有在有字幕的情况下才启动字幕更新
   if (subtitles.length > 0) {
     console.log('启动字幕同步更新');
     updateInterval = setInterval(() => {
-      if (player && player.getCurrentTime) {
-        const currentTime = player.getCurrentTime();
-        displayCurrentSubtitle(currentTime);
+      if (player && typeof player.getCurrentTime === 'function') {
+        try {
+          const currentTime = player.getCurrentTime();
+          displayCurrentSubtitle(currentTime);
+        } catch (e) {
+          console.warn('获取播放时间失败:', e);
+        }
       }
-    }, 100); // 每100ms更新一次
+    }, 100);
   } else {
     console.log('无字幕文件，跳过字幕更新');
   }
@@ -400,7 +433,6 @@ function startSubtitleUpdate() {
 function toggleSubtitles() {
   const toggleButton = document.getElementById('subtitle-toggle');
   
-  // 如果没有字幕，不允许切换
   if (toggleButton.classList.contains('disabled') || subtitles.length === 0) {
     return;
   }
@@ -413,69 +445,21 @@ function toggleSubtitles() {
   }
 }
 
-// 初始化页面
-async function initializePage() {
-  currentVideoId = getVideoIdFromUrl();
-  
-  if (!currentVideoId) {
-    document.getElementById('error').classList.remove('hidden');
-    document.getElementById('loading').classList.add('hidden');
-    return;
-  }
-  
-  console.log('Video ID:', currentVideoId);
-  
-  // 更新页面标题
-  const title = await fetchVideoTitle(currentVideoId);
-  document.getElementById('video-title').textContent = title;
-  document.title = `${title} - 视频播放`;
-  
-  // 检查并加载字幕
-  console.log('检查字幕文件...');
-  const hasSubtitles = await loadSubtitles(currentVideoId);
-  
-  if (hasSubtitles) {
-    console.log('✅ 找到字幕文件，将同步显示字幕');
-  } else {
-    console.log('ℹ️ 未找到字幕文件，仅播放视频');
-  }
-  
-  // 无论是否有字幕都继续加载视频
-  console.log('开始加载视频播放器...');
-  
-  // 确保YouTube Player API加载
-  if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
-    console.log('Loading YouTube API...');
-    
-    // 加载YouTube API
-    if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
-      const script = document.createElement('script');
-      script.src = 'https://www.youtube.com/iframe_api';
-      script.onload = function() {
-        console.log('YouTube API script loaded');
-      };
-      script.onerror = function() {
-        console.error('Failed to load YouTube API');
-        document.getElementById('error').classList.remove('hidden');
-        document.getElementById('loading').classList.add('hidden');
-      };
-      document.head.appendChild(script);
-    }
-  } else {
-    console.log('YouTube API already loaded');
-    initializePlayer();
-  }
-}
-
-// 初始化播放器 - 只能被调用一次
+// 初始化播放器
 function initializePlayer() {
-  if (player) {
-    console.log('Player already initialized');
+  if (playerInitialized || !youtubeApiReady || !currentVideoId) {
+    console.log('播放器初始化条件不满足:', {
+      playerInitialized,
+      youtubeApiReady,
+      hasVideoId: !!currentVideoId
+    });
     return;
   }
   
   try {
-    console.log('Creating YouTube player...');
+    console.log('正在创建 YouTube 播放器...');
+    playerInitialized = true;
+    
     player = new YT.Player('youtube-player', {
       height: '100%',
       width: '100%',
@@ -484,7 +468,9 @@ function initializePlayer() {
         'playsinline': 1,
         'autoplay': 1,
         'controls': 1,
-        'rel': 0
+        'rel': 0,
+        'modestbranding': 1,
+        'fs': 1
       },
       events: {
         'onReady': onPlayerReady,
@@ -492,44 +478,155 @@ function initializePlayer() {
         'onError': onPlayerError
       }
     });
+    
+    console.log('YouTube 播放器创建成功');
   } catch (error) {
-    console.error('Error creating player:', error);
+    console.error('创建播放器时出错:', error);
+    playerInitialized = false;
+    document.getElementById('error').innerHTML = `
+      <h3>初始化失败</h3>
+      <p>播放器创建失败: ${error.message}</p>
+    `;
     document.getElementById('error').classList.remove('hidden');
     document.getElementById('loading').classList.add('hidden');
   }
 }
 
-// 页面卸载时清理
+// 加载YouTube API
+function loadYouTubeAPI() {
+  return new Promise((resolve, reject) => {
+    // 检查是否已经加载
+    if (window.YT && window.YT.Player) {
+      youtubeApiReady = true;
+      resolve();
+      return;
+    }
+    
+    // 检查是否已经有API脚本
+    if (document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+      // API脚本已存在，等待加载完成
+      const checkAPI = setInterval(() => {
+        if (window.YT && window.YT.Player) {
+          clearInterval(checkAPI);
+          youtubeApiReady = true;
+          resolve();
+        }
+      }, 100);
+      
+      // 超时处理
+      setTimeout(() => {
+        clearInterval(checkAPI);
+        if (!youtubeApiReady) {
+          reject(new Error('YouTube API 加载超时'));
+        }
+      }, 10000);
+      return;
+    }
+    
+    // 创建API脚本
+    const script = document.createElement('script');
+    script.src = 'https://www.youtube.com/iframe_api';
+    script.async = true;
+    
+    script.onload = () => {
+      console.log('YouTube API 脚本加载成功');
+    };
+    
+    script.onerror = () => {
+      reject(new Error('YouTube API 脚本加载失败'));
+    };
+    
+    document.head.appendChild(script);
+    
+    // 超时处理
+    setTimeout(() => {
+      if (!youtubeApiReady) {
+        reject(new Error('YouTube API 初始化超时'));
+      }
+    }, 15000);
+  });
+}
+
+// 初始化页面
+async function initializePage() {
+  try {
+    // 获取视频ID
+    currentVideoId = getVideoIdFromUrl();
+    
+    if (!currentVideoId) {
+      throw new Error('未提供视频ID');
+    }
+    
+    console.log('视频ID:', currentVideoId);
+    
+    // 并行加载标题和字幕
+    const [title] = await Promise.all([
+      fetchVideoTitle(currentVideoId),
+      loadSubtitles(currentVideoId)
+    ]);
+    
+    // 更新页面标题
+    document.getElementById('video-title').textContent = title;
+    document.title = `${title} - 视频播放`;
+    
+    // 加载YouTube API
+    console.log('加载 YouTube API...');
+    await loadYouTubeAPI();
+    
+    // 初始化播放器
+    if (youtubeApiReady) {
+      initializePlayer();
+    }
+    
+  } catch (error) {
+    console.error('初始化页面失败:', error);
+    document.getElementById('error').innerHTML = `
+      <h3>加载失败</h3>
+      <p>${error.message}</p>
+    `;
+    document.getElementById('error').classList.remove('hidden');
+    document.getElementById('loading').classList.add('hidden');
+  }
+}
+
+// 页面卸载清理
 window.addEventListener('beforeunload', () => {
   if (updateInterval) {
     clearInterval(updateInterval);
   }
+  if (player && typeof player.destroy === 'function') {
+    try {
+      player.destroy();
+    } catch (e) {
+      console.warn('销毁播放器时出错:', e);
+    }
+  }
 });
+
+// 设置全局YouTube API回调
+window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
-  // 设置全局YouTube API回调
-  window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+  console.log('页面DOM加载完成');
   
   // 初始化页面
   initializePage();
   
-  // 事件监听
+  // 事件监听器
   document.getElementById('subtitle-toggle').addEventListener('click', toggleSubtitles);
   
   // 键盘快捷键
   document.addEventListener('keydown', (e) => {
     if ((e.key === 's' || e.key === 'S') && subtitles.length > 0) {
-      // 只有在有字幕时才允许切换
+      e.preventDefault();
       toggleSubtitles();
     } else if (e.key === 'Escape') {
+      e.preventDefault();
       window.location.href = 'index.html';
     }
   });
 });
-
-// 初始化全局回调为null
-window.onYouTubeIframeAPIReady = null;
 </script>
 
 </body>
