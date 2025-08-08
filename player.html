@@ -308,7 +308,11 @@ function parseASSTime(timeStr) {
   return parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + 
          parseInt(match[3]) + parseInt(match[4]) / 100;
 }
-
+// 字幕的唯一标识
+function getSubtitleId(sub, lineIndex) {
+  const textHash = sub.text.split('\n')[lineIndex].trim();
+  return `sub-${sub.start}-${sub.end}-${textHash}`;
+}
 // 改进的字幕加载
 async function loadSubtitles(videoId) {
   try {
@@ -371,9 +375,11 @@ function displayCurrentSubtitle(currentTime) {
   currentSubs.forEach((sub, index) => {
     // 检查是否已经存在这个字幕元素
     const existingId = `subtitle-${sub.start}-${index}`;
-    if (overlay.querySelector(`[data-subtitle-id="${existingId}"]`)) {
+    const subId = getSubtitleId(sub, lineIndex);
+    if (overlay.querySelector(`[data-subtitle-id="${subId}"]`)) {
       return; // 已存在，跳过
     }
+    div.dataset.subtitleId = subId;
     
     const lines = sub.text.split('\n');
     lines.forEach((line, lineIndex) => {
