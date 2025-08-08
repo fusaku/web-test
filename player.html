@@ -370,7 +370,7 @@ function displayCurrentSubtitle(currentTime) {
   
   currentSubs.forEach((sub, index) => {
     // 检查是否已经存在这个字幕元素
-    const existingId = `subtitle-${sub.start}-${index}`;
+    const existingId = `subtitle-${sub.start}-${sub.end}-${lineIndex}`;
     if (overlay.querySelector(`[data-subtitle-id="${existingId}"]`)) {
       return; // 已存在，跳过
     }
@@ -381,7 +381,7 @@ function displayCurrentSubtitle(currentTime) {
       
       const div = document.createElement('div');
       div.className = 'danmaku-subtitle';
-      div.dataset.subtitleId = `${existingId}-${lineIndex}`;
+      div.dataset.subtitleId = existingId;
       div.dataset.startTime = sub.start;
       div.dataset.endTime = sub.end;
       
