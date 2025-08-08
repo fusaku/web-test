@@ -303,6 +303,7 @@
     // 用于跟踪已显示的字幕，避免重复创建
     let activeSubtitles = new Set();
     let subtitleElements = new Map(); // 存储字幕元素的引用
+    let processedSubtitles = new Set(); // 跟踪已经处理过的字幕，防止重复
 
     function getVideoIdFromUrl() {
       const params = new URLSearchParams(window.location.search);
@@ -417,13 +418,15 @@
           if (!line.trim()) return;
 
           // 创建唯一ID，使用时间戳和索引确保唯一性
-          const subId = `sub_${sub.start}_${sub.end}_${index}_${lineIndex}`;
+          const subId = `sub_${sub.start}_${sub.end}_${index}_${lineIndex}_${sub.text.replace(/\s/g, '').slice(0, 10)}`;
           currentSubIds.add(subId);
 
-          // 如果字幕已经存在，跳过创建
-          if (activeSubtitles.has(subId)) {
+          // 如果字幕已经存在或已经处理过，跳过创建
+          if (activeSubtitles.has(subId) || processedSubtitles.has(subId)) {
             return;
           }
+          // 标记为已处理
+          processedSubtitles.add(subId);
 
           // 标记为活跃字幕
           activeSubtitles.add(subId);
@@ -557,6 +560,7 @@
       subtitlesToRemove.forEach(subId => {
         activeSubtitles.delete(subId);
         subtitleElements.delete(subId);
+        processedSubtitles.delete(subId); // 清理已处理记录，允许重新播放
       });
     }
 
@@ -861,4 +865,5 @@
   </script>
 </body>
 ß
+
 </html>
