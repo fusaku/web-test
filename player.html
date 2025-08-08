@@ -370,7 +370,7 @@ function displayCurrentSubtitle(currentTime) {
   
   currentSubs.forEach((sub, index) => {
     // 检查是否已经存在这个字幕元素
-    const existingId = `subtitle-${sub.start}-${sub.end}-${lineIndex}`;
+    const existingId = `subtitle-${sub.start}-${index}`;
     if (overlay.querySelector(`[data-subtitle-id="${existingId}"]`)) {
       return; // 已存在，跳过
     }
