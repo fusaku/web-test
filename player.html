@@ -348,24 +348,12 @@ function displayCurrentSubtitle(currentTime) {
 
 // YouTube Player API 加载完成回调
 function onYouTubeIframeAPIReady() {
-  if (!currentVideoId) return;
+  if (!currentVideoId || player) {
+    return; // 防止重复初始化
+  }
   
-  player = new YT.Player('youtube-player', {
-    height: '100%',
-    width: '100%',
-    videoId: currentVideoId,
-    playerVars: {
-      'playsinline': 1,
-      'autoplay': 1,
-      'controls': 1,
-      'rel': 0
-    },
-    events: {
-      'onReady': onPlayerReady,
-      'onStateChange': onPlayerStateChange,
-      'onError': onPlayerError
-    }
-  });
+  console.log('YouTube API Ready, creating player...');
+  initializePlayer();
 }
 
 function onPlayerReady(event) {
@@ -458,11 +446,6 @@ async function initializePage() {
   // 确保YouTube Player API加载
   if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
     console.log('Loading YouTube API...');
-    // 等待API加载完成
-    window.onYouTubeIframeAPIReady = function() {
-      console.log('YouTube API Loaded');
-      initializePlayer();
-    };
     
     // 加载YouTube API
     if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
@@ -484,12 +467,33 @@ async function initializePage() {
   }
 }
 
-// 初始化播放器
+// 初始化播放器 - 只能被调用一次
 function initializePlayer() {
+  if (player) {
+    console.log('Player already initialized');
+    return;
+  }
+  
   try {
-    onYouTubeIframeAPIReady();
+    console.log('Creating YouTube player...');
+    player = new YT.Player('youtube-player', {
+      height: '100%',
+      width: '100%',
+      videoId: currentVideoId,
+      playerVars: {
+        'playsinline': 1,
+        'autoplay': 1,
+        'controls': 1,
+        'rel': 0
+      },
+      events: {
+        'onReady': onPlayerReady,
+        'onStateChange': onPlayerStateChange,
+        'onError': onPlayerError
+      }
+    });
   } catch (error) {
-    console.error('Error initializing player:', error);
+    console.error('Error creating player:', error);
     document.getElementById('error').classList.remove('hidden');
     document.getElementById('loading').classList.add('hidden');
   }
@@ -504,6 +508,9 @@ window.addEventListener('beforeunload', () => {
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
+  // 设置全局YouTube API回调
+  window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+  
   // 初始化页面
   initializePage();
   
@@ -521,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// 全局变量确保YouTube API回调能找到
+// 初始化全局回调为null
 window.onYouTubeIframeAPIReady = null;
 </script>
 
