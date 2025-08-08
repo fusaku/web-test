@@ -345,87 +345,126 @@ async function loadSubtitles(videoId) {
 }
 
 // 改进的字幕渲染，支持ASS标签
+// 改进的字幕渲染，支持弹幕样式
 function displayCurrentSubtitle(currentTime) {
   const overlay = document.getElementById('subtitle-overlay');
-  overlay.innerHTML = '';
   
-  if (!subtitlesVisible || subtitles.length === 0) return;
+  if (!subtitlesVisible || subtitles.length === 0) {
+    overlay.innerHTML = '';
+    return;
+  }
   
   const currentSubs = subtitles.filter(sub => 
     currentTime >= sub.start && currentTime <= sub.end
   );
   
+  // 清除不再显示的字幕
+  const existingSubtitles = overlay.querySelectorAll('.danmaku-subtitle');
+  existingSubtitles.forEach(el => {
+    const startTime = parseFloat(el.dataset.startTime);
+    const endTime = parseFloat(el.dataset.endTime);
+    if (currentTime < startTime || currentTime > endTime) {
+      el.remove();
+    }
+  });
+  
   currentSubs.forEach((sub, index) => {
+    // 检查是否已经存在这个字幕元素
+    const existingId = `subtitle-${sub.start}-${index}`;
+    if (overlay.querySelector(`[data-subtitle-id="${existingId}"]`)) {
+      return; // 已存在，跳过
+    }
+    
     const lines = sub.text.split('\n');
     lines.forEach((line, lineIndex) => {
       if (!line.trim()) return;
       
       const div = document.createElement('div');
-      div.className = 'subtitle-line';
+      div.className = 'danmaku-subtitle';
+      div.dataset.subtitleId = `${existingId}-${lineIndex}`;
+      div.dataset.startTime = sub.start;
+      div.dataset.endTime = sub.end;
       
       // 解析ASS标签
       let cleanText = line;
-      let styles = {};
-      let position = 'bottom';
+      let moveData = null;
       
-      // 提取位置标签
-      const posMatch = line.match(/\\pos\((\d+),(\d+)\)/);
+      // 提取移动标签
       const moveMatch = line.match(/\\move\((\d+),(\d+),(\d+),(\d+)\)/);
-      const alignMatch = line.match(/\\an(\d)/);
-      
-      if (posMatch) {
-        const x = parseInt(posMatch[1]);
-        const y = parseInt(posMatch[2]);
-        div.style.left = `${x}px`;
-        div.style.top = `${y}px`;
-        div.style.transform = 'none';
-        position = 'custom';
-      }
+      const alphaMatch = line.match(/\\alpha&H([0-9A-Fa-f]+)&/);
       
       if (moveMatch) {
-        const x1 = parseInt(moveMatch[1]);
-        const y1 = parseInt(moveMatch[2]);
-        const x2 = parseInt(moveMatch[3]);
-        const y2 = parseInt(moveMatch[4]);
-        
-        div.style.left = `${x1}px`;
-        div.style.top = `${y1}px`;
-        div.style.transform = 'none';
-        div.style.transition = `all ${(sub.end - sub.start)}s linear`;
-        
-        setTimeout(() => {
-          div.style.left = `${x2}px`;
-          div.style.top = `${y2}px`;
-        }, 50);
-        position = 'custom';
+        moveData = {
+          x1: parseInt(moveMatch[1]),
+          y1: parseInt(moveMatch[2]),
+          x2: parseInt(moveMatch[3]),
+          y2: parseInt(moveMatch[4])
+        };
       }
       
-      if (alignMatch) {
-        const align = parseInt(alignMatch[1]);
-        if (align <= 3) position = 'bottom';
-        else if (align <= 6) position = 'middle';
-        else position = 'top';
-        
-        if (align % 3 === 1) div.style.textAlign = 'left';
-        else if (align % 3 === 2) div.style.textAlign = 'center';
-        else div.style.textAlign = 'right';
+      // 设置弹幕样式
+      div.style.position = 'absolute';
+      div.style.color = '#fff';
+      div.style.fontSize = '16px';
+      div.style.fontWeight = '600';
+      div.style.textShadow = '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px rgba(0,0,0,0.8)';
+      div.style.whiteSpace = 'nowrap';
+      div.style.pointerEvents = 'none';
+      div.style.zIndex = '100';
+      
+      // 设置透明度
+      if (alphaMatch) {
+        const alpha = parseInt(alphaMatch[1], 16);
+        div.style.opacity = (255 - alpha) / 255;
       }
       
-      // 应用默认位置
-      if (position !== 'custom') {
-        div.classList.add(position);
-        if (index > 0 || lineIndex > 0) {
-          // 多行字幕时调整位置
-          div.style.bottom = `${60 + (index + lineIndex) * 30}px`;
-        }
+      if (moveData) {
+        // 弹幕动画：从右到左移动
+        const containerWidth = overlay.offsetWidth || 1200;
+        const duration = sub.end - sub.start;
+        
+        // 将ASS坐标系统转换为CSS坐标
+        // ASS默认分辨率是640x360，需要按比例缩放
+        const scaleX = containerWidth / 640;
+        const scaleY = (overlay.offsetHeight || 675) / 360;
+        
+        const startX = moveData.x1 * scaleX;
+        const startY = moveData.y1 * scaleY;
+        const endX = moveData.x2 * scaleX;
+        const endY = moveData.y2 * scaleY;
+        
+        // 设置初始位置
+        div.style.left = `${startX}px`;
+        div.style.top = `${startY}px`;
+        div.style.transition = `all ${duration}s linear`;
+        
+        // 开始动画
+        requestAnimationFrame(() => {
+          div.style.left = `${endX}px`;
+          div.style.top = `${endY}px`;
+        });
+      } else {
+        // 如果没有移动标签，默认作为普通弹幕处理
+        const containerWidth = overlay.offsetWidth || 1200;
+        const duration = sub.end - sub.start;
+        const yPos = 20 + (index + lineIndex) * 25; // 错开显示
+        
+        div.style.left = `${containerWidth}px`;
+        div.style.top = `${yPos}px`;
+        div.style.transition = `left ${duration}s linear`;
+        
+        // 开始弹幕动画
+        requestAnimationFrame(() => {
+          div.style.left = `-200px`;
+        });
       }
       
       // 处理文本样式标签
       cleanText = line.replace(/\{[^}]*\}/g, (match) => {
-        if (match.includes('\\b1')) div.classList.add('subtitle-bold');
-        if (match.includes('\\i1')) div.classList.add('subtitle-italic');
-        if (match.includes('\\u1')) div.classList.add('subtitle-underline');
-        if (match.includes('\\s1')) div.classList.add('subtitle-strikeout');
+        if (match.includes('\\b1')) div.style.fontWeight = 'bold';
+        if (match.includes('\\i1')) div.style.fontStyle = 'italic';
+        if (match.includes('\\u1')) div.style.textDecoration = 'underline';
+        if (match.includes('\\s1')) div.style.textDecoration = 'line-through';
         
         // 颜色标签
         const colorMatch = match.match(/\\c&H([0-9A-Fa-f]{6})&/);
