@@ -286,14 +286,24 @@ async function loadSubtitles(videoId) {
     const assContent = await response.text();
     subtitles = parseASSSubtitles(assContent);
     
-    document.getElementById('subtitle-status').textContent = `字幕: ${subtitles.length} 行`;
-    document.getElementById('subtitle-toggle').classList.remove('disabled');
-    
-    console.log(`成功加载 ${subtitles.length} 行字幕`);
+    if (subtitles.length > 0) {
+      document.getElementById('subtitle-status').textContent = `字幕: ${subtitles.length} 行`;
+      document.getElementById('subtitle-toggle').classList.remove('disabled');
+      document.getElementById('subtitle-toggle').textContent = '隐藏字幕';
+      console.log(`成功加载 ${subtitles.length} 行字幕`);
+      return true; // 返回true表示有字幕
+    } else {
+      throw new Error('字幕文件为空');
+    }
   } catch (error) {
-    console.error('加载字幕失败:', error);
+    console.warn('加载字幕失败:', error.message);
+    // 没有字幕时的状态
     document.getElementById('subtitle-status').textContent = '字幕: 无';
     document.getElementById('subtitle-toggle').classList.add('disabled');
+    document.getElementById('subtitle-toggle').textContent = '无字幕';
+    subtitles = [];
+    subtitlesVisible = false;
+    return false; // 返回false表示没有字幕
   }
 }
 
@@ -384,23 +394,31 @@ function startSubtitleUpdate() {
     clearInterval(updateInterval);
   }
   
-  updateInterval = setInterval(() => {
-    if (player && player.getCurrentTime) {
-      const currentTime = player.getCurrentTime();
-      displayCurrentSubtitle(currentTime);
-    }
-  }, 100); // 每100ms更新一次
+  // 只有在有字幕的情况下才启动字幕更新
+  if (subtitles.length > 0) {
+    console.log('启动字幕同步更新');
+    updateInterval = setInterval(() => {
+      if (player && player.getCurrentTime) {
+        const currentTime = player.getCurrentTime();
+        displayCurrentSubtitle(currentTime);
+      }
+    }, 100); // 每100ms更新一次
+  } else {
+    console.log('无字幕文件，跳过字幕更新');
+  }
 }
 
 // 切换字幕显示
 function toggleSubtitles() {
-  if (document.getElementById('subtitle-toggle').classList.contains('disabled')) {
+  const toggleButton = document.getElementById('subtitle-toggle');
+  
+  // 如果没有字幕，不允许切换
+  if (toggleButton.classList.contains('disabled') || subtitles.length === 0) {
     return;
   }
   
   subtitlesVisible = !subtitlesVisible;
-  document.getElementById('subtitle-toggle').textContent = 
-    subtitlesVisible ? '隐藏字幕' : '显示字幕';
+  toggleButton.textContent = subtitlesVisible ? '隐藏字幕' : '显示字幕';
   
   if (!subtitlesVisible) {
     document.getElementById('subtitle-overlay').innerHTML = '';
@@ -424,8 +442,18 @@ async function initializePage() {
   document.getElementById('video-title').textContent = title;
   document.title = `${title} - 视频播放`;
   
-  // 加载字幕
-  await loadSubtitles(currentVideoId);
+  // 检查并加载字幕
+  console.log('检查字幕文件...');
+  const hasSubtitles = await loadSubtitles(currentVideoId);
+  
+  if (hasSubtitles) {
+    console.log('✅ 找到字幕文件，将同步显示字幕');
+  } else {
+    console.log('ℹ️ 未找到字幕文件，仅播放视频');
+  }
+  
+  // 无论是否有字幕都继续加载视频
+  console.log('开始加载视频播放器...');
   
   // 确保YouTube Player API加载
   if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
@@ -484,7 +512,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // 键盘快捷键
   document.addEventListener('keydown', (e) => {
-    if (e.key === 's' || e.key === 'S') {
+    if ((e.key === 's' || e.key === 'S') && subtitles.length > 0) {
+      // 只有在有字幕时才允许切换
       toggleSubtitles();
     } else if (e.key === 'Escape') {
       window.location.href = 'index.html';
