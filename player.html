@@ -303,6 +303,7 @@
     // 用于跟踪已显示的字幕，避免重复创建
     let activeSubtitles = new Set();
     let subtitleElements = new Map(); // 存储字幕元素的引用
+    let displayedSubtitles = new Map(); // 记录每个时间点已显示过的字幕行：Map<时间戳, Set<字幕索引>>
     let processedSubtitles = new Set(); // 跟踪已经处理过的字幕，防止重复
 
     function getVideoIdFromUrl() {
@@ -403,7 +404,13 @@
         subtitleElements.clear();
         return;
       }
-
+      let lastTime = 0;
+      const timeDiff = Math.abs(currentTime - lastTime);
+      if (timeDiff > 2) { // 如果时间跳跃超过2秒，清理显示记录
+        console.log('Time jump detected, clearing display history');
+        displayedSubtitles.clear();
+      }
+      lastTime = currentTime;
       // 获取当前应该显示的字幕
       const currentSubs = subtitles.filter(sub =>
         currentTime >= sub.start && currentTime <= sub.end
@@ -417,14 +424,28 @@
         lines.forEach((line, lineIndex) => {
           if (!line.trim()) return;
 
-          // 创建唯一ID，使用时间戳和索引确保唯一性
-          const subId = `sub_${sub.start}_${sub.end}_${index}_${lineIndex}_${sub.text.replace(/\s/g, '').slice(0, 10)}`;
+          // 使用字幕在原数组中的真实索引作为唯一标识
+          const realSubIndex = subtitles.indexOf(sub);
+          const subId = `sub_${realSubIndex}_${lineIndex}_${sub.start}_${sub.end}`;
+          const timeKey = `${Math.floor(sub.start * 10)}`; // 精确到0.1秒
+
           currentSubIds.add(subId);
 
-          // 如果字幕已经存在或已经处理过，跳过创建
-          if (activeSubtitles.has(subId) || processedSubtitles.has(subId)) {
+          // 检查这个时间点的这一行字幕是否已经显示过
+          if (!displayedSubtitles.has(timeKey)) {
+            displayedSubtitles.set(timeKey, new Set());
+          }
+
+          const displayedAtTime = displayedSubtitles.get(timeKey);
+          const lineKey = `${realSubIndex}_${lineIndex}`;
+
+          // 如果字幕已经存在或这一行在这个时间点已经显示过，跳过创建
+          if (activeSubtitles.has(subId) || displayedAtTime.has(lineKey)) {
             return;
           }
+
+          // 标记这一行字幕在这个时间点已显示
+          displayedAtTime.add(lineKey);
           // 标记为已处理
           processedSubtitles.add(subId);
 
@@ -561,6 +582,13 @@
         activeSubtitles.delete(subId);
         subtitleElements.delete(subId);
         processedSubtitles.delete(subId); // 清理已处理记录，允许重新播放
+
+        const element = subtitleElements.get(subId);
+        if (element) {
+          const startTime = parseFloat(element.dataset.startTime);
+          const timeKey = `${Math.floor(startTime * 10)}`;
+          // 不清理displayedSubtitles，保持已显示记录
+        }
       });
     }
 
