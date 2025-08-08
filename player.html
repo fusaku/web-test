@@ -213,6 +213,18 @@
   .subtitle-italic { font-style: italic; }
   .subtitle-underline { text-decoration: underline; }
   .subtitle-strikeout { text-decoration: line-through; }
+  
+  /* 弹幕样式 */
+  .danmaku-subtitle {
+    position: absolute;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px rgba(0,0,0,0.8);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+  }
 </style>
 </head>
 <body>
@@ -256,6 +268,10 @@ let updateInterval = null;
 let loadingTimeout = null;
 let usingFallback = false;
 let apiReady = false;
+
+// 用于跟踪已显示的字幕，避免重复创建
+let activeSubtitles = new Set();
+let subtitleElements = new Map(); // 存储字幕元素的引用
 
 function getVideoIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -308,6 +324,7 @@ function parseASSTime(timeStr) {
   return parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + 
          parseInt(match[3]) + parseInt(match[4]) / 100;
 }
+
 // 改进的字幕加载
 async function loadSubtitles(videoId) {
   try {
@@ -343,46 +360,52 @@ async function loadSubtitles(videoId) {
   }
 }
 
-// 改进的字幕渲染，支持ASS标签
-// 改进的字幕渲染，支持弹幕样式
+// 完全重写的字幕渲染函数，解决重复加载问题
 function displayCurrentSubtitle(currentTime) {
   const overlay = document.getElementById('subtitle-overlay');
   
   if (!subtitlesVisible || subtitles.length === 0) {
+    // 清除所有字幕
     overlay.innerHTML = '';
+    activeSubtitles.clear();
+    subtitleElements.clear();
     return;
   }
   
+  // 获取当前应该显示的字幕
   const currentSubs = subtitles.filter(sub => 
     currentTime >= sub.start && currentTime <= sub.end
   );
   
-  // 清除不再显示的字幕
-  const existingSubtitles = overlay.querySelectorAll('.danmaku-subtitle');
-  existingSubtitles.forEach(el => {
-    const startTime = parseFloat(el.dataset.startTime);
-    const endTime = parseFloat(el.dataset.endTime);
-    if (currentTime < startTime || currentTime > endTime) {
-      el.remove();
-    }
-  });
+  // 创建当前应该显示的字幕ID集合
+  const currentSubIds = new Set();
   
   currentSubs.forEach((sub, index) => {
-    // 检查是否已经存在这个字幕元素
-    const existingId = `subtitle-${sub.start}-${index}`;
-    if (overlay.querySelector(`[data-subtitle-id="${existingId}"]`)) {
-      return; // 已存在，跳过
-    }
-    
     const lines = sub.text.split('\n');
     lines.forEach((line, lineIndex) => {
       if (!line.trim()) return;
       
+      // 创建唯一ID，使用时间戳和索引确保唯一性
+      const subId = `sub_${sub.start}_${sub.end}_${index}_${lineIndex}`;
+      currentSubIds.add(subId);
+      
+      // 如果字幕已经存在，跳过创建
+      if (activeSubtitles.has(subId)) {
+        return;
+      }
+      
+      // 标记为活跃字幕
+      activeSubtitles.add(subId);
+      
+      // 创建字幕元素
       const div = document.createElement('div');
       div.className = 'danmaku-subtitle';
-      div.dataset.subtitleId = `${existingId}-${lineIndex}`;
+      div.dataset.subtitleId = subId;
       div.dataset.startTime = sub.start;
       div.dataset.endTime = sub.end;
+      
+      // 存储元素引用
+      subtitleElements.set(subId, div);
       
       // 解析ASS标签
       let cleanText = line;
@@ -401,7 +424,7 @@ function displayCurrentSubtitle(currentTime) {
         };
       }
       
-      // 设置弹幕样式
+      // 设置基本样式
       div.style.position = 'absolute';
       div.style.color = '#fff';
       div.style.fontSize = '16px';
@@ -418,14 +441,14 @@ function displayCurrentSubtitle(currentTime) {
       }
       
       if (moveData) {
-        // 弹幕动画：从右到左移动
+        // 弹幕动画：使用ASS坐标系统
         const containerWidth = overlay.offsetWidth || 1200;
+        const containerHeight = overlay.offsetHeight || 675;
         const duration = sub.end - sub.start;
         
         // 将ASS坐标系统转换为CSS坐标
-        // ASS默认分辨率是640x360，需要按比例缩放
         const scaleX = containerWidth / 640;
-        const scaleY = (overlay.offsetHeight || 675) / 360;
+        const scaleY = containerHeight / 360;
         
         const startX = moveData.x1 * scaleX;
         const startY = moveData.y1 * scaleY;
@@ -443,10 +466,10 @@ function displayCurrentSubtitle(currentTime) {
           div.style.top = `${endY}px`;
         });
       } else {
-        // 如果没有移动标签，默认作为普通弹幕处理
+        // 默认弹幕处理
         const containerWidth = overlay.offsetWidth || 1200;
         const duration = sub.end - sub.start;
-        const yPos = 20 + (index + lineIndex) * 25; // 错开显示
+        const yPos = 20 + (index + lineIndex) * 25;
         
         div.style.left = `${containerWidth}px`;
         div.style.top = `${yPos}px`;
@@ -481,6 +504,24 @@ function displayCurrentSubtitle(currentTime) {
       div.textContent = cleanText.trim();
       overlay.appendChild(div);
     });
+  });
+  
+  // 清除不再需要显示的字幕
+  const subtitlesToRemove = [];
+  activeSubtitles.forEach(subId => {
+    if (!currentSubIds.has(subId)) {
+      const element = subtitleElements.get(subId);
+      if (element && element.parentNode) {
+        element.parentNode.removeChild(element);
+      }
+      subtitlesToRemove.push(subId);
+    }
+  });
+  
+  // 从集合中移除已删除的字幕
+  subtitlesToRemove.forEach(subId => {
+    activeSubtitles.delete(subId);
+    subtitleElements.delete(subId);
   });
 }
 
@@ -525,7 +566,7 @@ function showSuccess() {
   console.log('Player loaded successfully, using fallback:', usingFallback);
 }
 
-// 改进的YouTube API处理
+// YouTube API处理
 function onYouTubeIframeAPIReady() {
   console.log('YouTube API ready');
   apiReady = true;
@@ -552,7 +593,7 @@ function onPlayerError(event) {
   tryFallbackPlayer();
 }
 
-// 改进的播放器初始化
+// 播放器初始化
 function initializeYouTubePlayer() {
   if (!apiReady || !currentVideoId) {
     console.log('API or video ID not ready');
@@ -583,7 +624,6 @@ function initializeYouTubePlayer() {
       }
     });
     
-    // 增加超时时间到10秒
     loadingTimeout = setTimeout(() => {
       console.log('YouTube player timeout, trying fallback');
       tryFallbackPlayer();
@@ -665,13 +705,16 @@ function toggleSubtitles() {
   btn.textContent = subtitlesVisible ? '隐藏字幕' : '显示字幕';
   
   if (!subtitlesVisible) {
+    // 清理所有字幕状态
     document.getElementById('subtitle-overlay').innerHTML = '';
+    activeSubtitles.clear();
+    subtitleElements.clear();
   }
   
   console.log('Subtitles toggled:', subtitlesVisible);
 }
 
-// 改进的API加载
+// API加载
 function loadYouTubeAPI() {
   return new Promise((resolve, reject) => {
     if (window.YT && window.YT.Player) { 
@@ -700,7 +743,6 @@ function loadYouTubeAPI() {
     };
     document.head.appendChild(script);
     
-    // 增加API加载超时时间
     setTimeout(() => {
       if (!apiReady) {
         console.error('YouTube API initialization timeout');
@@ -734,7 +776,6 @@ async function initializePage() {
     
     try {
       await loadYouTubeAPI();
-      // 确保API准备就绪后再初始化播放器
       if (apiReady) {
         initializeYouTubePlayer();
       }
