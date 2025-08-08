@@ -282,8 +282,11 @@ function parseASSSubtitles(assContent) {
     if (inEvents && line.startsWith('Dialogue:')) {
       const parts = line.split(',');
       if (parts.length >= 10) {
-        const startTime = parseASSTime(parts[1].trim());
-        const endTime = parseASSTime(parts[2].trim());
+        const startTime = parseFloat(el.dataset.startTime);
+        const endTime = parseFloat(el.dataset.endTime);
+        if (currentTime + 0.05 < startTime || currentTime - 0.05 > endTime) {
+          el.remove();
+        }
         const style = parts[3].trim();
         const text = parts.slice(9).join(',').replace(/\\N/g, '\n').trim();
         
@@ -370,7 +373,7 @@ function displayCurrentSubtitle(currentTime) {
   
   currentSubs.forEach((sub, index) => {
     // 检查是否已经存在这个字幕元素
-    const existingId = `subtitle-${sub.start}-${index}`;
+    const existingId = `subtitle-${sub.start}-${sub.end}-${lineIndex}`;
     if (overlay.querySelector(`[data-subtitle-id="${existingId}"]`)) {
       return; // 已存在，跳过
     }
@@ -381,7 +384,7 @@ function displayCurrentSubtitle(currentTime) {
       
       const div = document.createElement('div');
       div.className = 'danmaku-subtitle';
-      div.dataset.subtitleId = `${existingId}-${lineIndex}`;
+      div.dataset.subtitleId = existingId;
       div.dataset.startTime = sub.start;
       div.dataset.endTime = sub.end;
       
