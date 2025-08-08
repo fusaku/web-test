@@ -264,46 +264,42 @@ function getVideoIdFromUrl() {
 
 // 改进的ASS字幕解析
 function parseASSSubtitles(assContent) {
-  const lines = assContent.split('\n');
+  const lines = assContent.split(/\r?\n/);
   const subtitleLines = [];
   let inEvents = false;
-  
+
   for (let line of lines) {
     line = line.trim();
-    if (line === '[Events]') { 
-      inEvents = true; 
-      continue; 
-    }
-    if (line.startsWith('[') && line !== '[Events]') { 
-      inEvents = false; 
-      continue; 
-    }
-    
-    if (inEvents && line.startsWith('Dialogue:')) {
-      const parts = line.split(',');
-      if (parts.length >= 10) {
-        const startTime = parseFloat(el.dataset.startTime);
-        const endTime = parseFloat(el.dataset.endTime);
-        if (currentTime + 0.05 < startTime || currentTime - 0.05 > endTime) {
-          el.remove();
-        }
-        const style = parts[3].trim();
-        const text = parts.slice(9).join(',').replace(/\\N/g, '\n').trim();
-        
-        if (text && startTime !== null && endTime !== null) {
-          subtitleLines.push({ 
-            start: startTime, 
-            end: endTime, 
-            text: text,
-            style: style
-          });
-        }
-      }
-    }
+    if (line === '[Events]') { inEvents = true; continue; }
+    if (line.startsWith('[') && line !== '[Events]') { inEvents = false; continue; }
+    if (!inEvents) continue;
+    if (!line.startsWith('Dialogue:')) continue;
+
+    // Dialogue: Marked, Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+    const parts = line.split(',');
+    if (parts.length < 10) continue;
+
+    const startTime = parseASSTime(parts[1]);
+    const endTime = parseASSTime(parts[2]);
+    const text = parts.slice(9).join(',').replace(/\\N/g, '\n').trim();
+
+    if (startTime === null || endTime === null || !text) continue;
+
+    subtitleLines.push({
+      start: startTime,
+      end: endTime,
+      text: text
+    });
   }
-  
-  return subtitleLines.sort((a, b) => a.start - b.start);
+
+  // 去重（完全相同的 start/end/text）
+  const deduped = subtitleLines.filter((s, i, arr) =>
+    i === arr.findIndex(t => t.start === s.start && t.end === s.end && t.text === s.text)
+  );
+
+  return deduped.sort((a, b) => a.start - b.start);
 }
+
 
 function parseASSTime(timeStr) {
   const match = timeStr.match(/(\d+):(\d+):(\d+)\.(\d+)/);
@@ -350,6 +346,143 @@ async function loadSubtitles(videoId) {
 // 改进的字幕渲染，支持ASS标签
 // 改进的字幕渲染，支持弹幕样式
 function displayCurrentSubtitle(currentTime) {
+  const overlay = document.getElementById('subtitle-overlay');
+  if (!overlay) return;
+
+  // 无字幕或被隐藏时清空
+  if (!subtitlesVisible || subtitles.length === 0) {
+    overlay.innerHTML = '';
+    return;
+  }
+
+  // 清理已经过期的元素（带一点容差）
+  const existing = Array.from(overlay.querySelectorAll('.danmaku-subtitle'));
+  existing.forEach(el => {
+    const startTime = parseFloat(el.dataset.startTime);
+    const endTime = parseFloat(el.dataset.endTime);
+    // 如果解析失败也移除
+    if (isNaN(startTime) || isNaN(endTime) || currentTime + 0.05 < startTime || currentTime - 0.05 > endTime) {
+      el.remove();
+    }
+  });
+
+  // 找出当前应显示的字幕
+  const currentSubs = subtitles.filter(sub => currentTime >= sub.start && currentTime <= sub.end);
+  if (currentSubs.length === 0) return;
+
+  const containerWidth = overlay.offsetWidth || window.innerWidth || 1280;
+  const containerHeight = overlay.offsetHeight || window.innerHeight || 720;
+  const scaleX = containerWidth / 640; // ASS 常用基准 640x360
+  const scaleY = containerHeight / 360;
+
+  currentSubs.forEach(sub => {
+    const duration = Math.max(sub.end - sub.start, 0.05);
+
+    sub.text.split('\n').forEach((line, lineIndex) => {
+      if (!line || !line.trim()) return;
+
+      // 唯一ID：用 start,end,lineIndex（保证同一字幕只添加一次）
+      const id = `subtitle-${sub.start.toFixed(3)}-${sub.end.toFixed(3)}-${lineIndex}`;
+      if (overlay.querySelector(`[data-subtitle-id="${id}"]`)) return; // 已存在则跳过
+
+      // 创建元素
+      const div = document.createElement('div');
+      div.className = 'danmaku-subtitle';
+      div.dataset.subtitleId = id;
+      div.dataset.startTime = sub.start;
+      div.dataset.endTime = sub.end;
+
+      // 默认样式（可按需微调）
+      div.style.position = 'absolute';
+      div.style.color = '#fff';
+      div.style.fontSize = '16px';
+      div.style.fontWeight = '600';
+      div.style.textShadow = '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px rgba(0,0,0,0.8)';
+      div.style.whiteSpace = 'nowrap';
+      div.style.pointerEvents = 'none';
+      div.style.zIndex = '100';
+      div.style.willChange = 'transform,left,top';
+
+      // 解析控制标签（在 { } 内）
+      let raw = line;
+      // 先处理并保留样式信息
+      const tagMatch = raw.match(/\{([^}]*)\}/);
+      if (tagMatch) {
+        const tagStr = tagMatch[1];
+        // 粗略支持：\b, \i, \u, \alpha, \c, \pos, \move, \an
+        if (tagStr.includes('\\b1')) div.style.fontWeight = '700';
+        if (tagStr.includes('\\i1')) div.style.fontStyle = 'italic';
+        if (tagStr.includes('\\u1')) div.style.textDecoration = 'underline';
+        const alphaMatch = tagStr.match(/\\alpha&H([0-9A-Fa-f]{2})&/);
+        if (alphaMatch) {
+          const a = parseInt(alphaMatch[1], 16);
+          div.style.opacity = ((255 - a) / 255).toString();
+        }
+        const colorMatch = tagStr.match(/\\c&H([0-9A-Fa-f]{6})&/);
+        if (colorMatch) {
+          const c = colorMatch[1];
+          // ASS 存储顺序为 BGR
+          const r = parseInt(c.substr(4,2), 16);
+          const g = parseInt(c.substr(2,2), 16);
+          const b = parseInt(c.substr(0,2), 16);
+          div.style.color = `rgb(${r},${g},${b})`;
+        }
+      }
+
+      // 提取 \pos 或 \move 或 \an
+      const posMatch = raw.match(/\\pos\(([-\d.]+),([-\d.]+)\)/);
+      const moveMatch = raw.match(/\\move\(([-\d.]+),([-\d.]+),([-\d.]+),([-\d.]+)(?:,[^\)]*)?\)/);
+      const anMatch = raw.match(/\\an(\d)/);
+
+      if (posMatch) {
+        const x = parseFloat(posMatch[1]) * scaleX;
+        const y = parseFloat(posMatch[2]) * scaleY;
+        div.style.left = `${x}px`;
+        div.style.top = `${y}px`;
+      } else if (moveMatch) {
+        // 动画：从 (x1,y1) -> (x2,y2)
+        const x1 = parseFloat(moveMatch[1]) * scaleX;
+        const y1 = parseFloat(moveMatch[2]) * scaleY;
+        const x2 = parseFloat(moveMatch[3]) * scaleX;
+        const y2 = parseFloat(moveMatch[4]) * scaleY;
+        div.style.left = `${x1}px`;
+        div.style.top = `${y1}px`;
+        // 用 transition 做线性移动
+        // 强制回流后设置目标位置以触发 transition
+        div.style.transition = `left ${duration}s linear, top ${duration}s linear, transform ${duration}s linear`;
+        requestAnimationFrame(() => {
+          div.style.left = `${x2}px`;
+          div.style.top = `${y2}px`;
+        });
+      } else {
+        // 普通弹幕：从右往左
+        const startX = containerWidth + 20;
+        const endX = - (200); // 移出左侧
+        // y 位置按 lineIndex 和已有元素错开（简单策略）
+        // 计算已有弹幕数量，避免完全重叠
+        const lane = (() => {
+          const base = 20;
+          // 避免和页面顶部遮挡，限制最多几条
+          return base + (lineIndex % 12) * 26;
+        })();
+        div.style.left = `${startX}px`;
+        div.style.top = `${lane}px`;
+        div.style.transition = `left ${duration}s linear`;
+        requestAnimationFrame(() => {
+          div.style.left = `${endX}px`;
+        });
+      }
+
+      // 去掉所有控制标签后作为显示文本
+      const cleanText = raw.replace(/\{[^}]*\}/g, '').trim();
+      div.textContent = cleanText;
+
+      // 最后 append（保证先设置所有样式）
+      overlay.appendChild(div);
+    });
+  });
+}
+
   const overlay = document.getElementById('subtitle-overlay');
   
   if (!subtitlesVisible || subtitles.length === 0) {
@@ -486,7 +619,6 @@ function displayCurrentSubtitle(currentTime) {
       overlay.appendChild(div);
     });
   });
-}
 
 async function fetchVideoTitle(videoId) {
   try {
