@@ -434,6 +434,8 @@ body {
     padding: 8px 12px;
     /* 减少头部内边距 */
     font-size: 14px;
+    min-width: 0;
+    overflow: hidden;
   }
 
   #video-title {
@@ -442,9 +444,10 @@ body {
     padding: 0 10px;
     position: relative;
     min-width: 0;
-    white-space: nowrap;
+    max-width: calc(100vw - 160px);
     overflow-x: auto;
     overflow-y: hidden;
+    white-space: nowrap;
   }
 
   /* 播放页面移动端适配 */
