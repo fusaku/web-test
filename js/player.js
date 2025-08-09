@@ -598,6 +598,74 @@ function bindEvents() {
       window.location.href = 'index.html';
     }
   });
+  initTitleScroll();
+}
+
+// 新增函数：初始化标题滚动
+function initTitleScroll() {
+  const titleElement = document.getElementById('video-title');
+  let isScrolling = false;
+  let startX = 0;
+  let scrollLeft = 0;
+
+  // 检查标题是否需要滚动
+  function checkScrollable() {
+    const isScrollable = titleElement.scrollWidth > titleElement.clientWidth;
+    titleElement.classList.toggle('scrollable', isScrollable);
+    return isScrollable;
+  }
+
+  // 鼠标事件（桌面端）
+  titleElement.addEventListener('mousedown', (e) => {
+    if (!checkScrollable()) return;
+
+    isScrolling = true;
+    titleElement.style.cursor = 'grabbing';
+    startX = e.pageX - titleElement.offsetLeft;
+    scrollLeft = titleElement.scrollLeft;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isScrolling) return;
+    e.preventDefault();
+
+    const x = e.pageX - titleElement.offsetLeft;
+    const walk = (x - startX) * 2; // 滚动速度倍数
+    titleElement.scrollLeft = scrollLeft - walk;
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isScrolling) {
+      isScrolling = false;
+      titleElement.style.cursor = 'grab';
+    }
+  });
+
+  // 触摸事件（移动端）
+  let touchStartX = 0;
+  let touchScrollLeft = 0;
+
+  titleElement.addEventListener('touchstart', (e) => {
+    if (!checkScrollable()) return;
+
+    touchStartX = e.touches[0].clientX;
+    touchScrollLeft = titleElement.scrollLeft;
+  }, { passive: true });
+
+  titleElement.addEventListener('touchmove', (e) => {
+    if (!checkScrollable()) return;
+
+    const touchX = e.touches[0].clientX;
+    const walk = (touchStartX - touchX) * 1.5; // 滚动速度
+    titleElement.scrollLeft = touchScrollLeft + walk;
+  }, { passive: true });
+
+  // 监听窗口大小变化，重新检查是否需要滚动
+  window.addEventListener('resize', checkScrollable);
+
+  // 初始检查
+  setTimeout(checkScrollable, 100);
 }
 
 // 清理资源
