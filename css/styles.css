@@ -478,6 +478,9 @@ body {
     max-width: calc(100vw - 200px) !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
   }
 
   #video-title::-webkit-scrollbar {
