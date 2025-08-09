@@ -257,7 +257,7 @@ body {
   flex-direction: column;
   padding: 20px;
   gap: 20px;
-  overflow: visible;
+  overflow: auto;
 }
 
 /* 播放页面头部 */
@@ -318,8 +318,8 @@ body {
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   border: 1px solid #e8e8e8;
-  flex: 1;
-  min-height: 400px;
+  height: 600px;
+  width: 100%;
 }
 
 .video-wrapper {
