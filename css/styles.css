@@ -377,7 +377,7 @@ body {
   right: 0;
   bottom: 0;
   pointer-events: none;
-  z-index: 50;
+  z-index: 9999;
 }
 
 .subtitle-line {
@@ -434,7 +434,7 @@ body {
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px rgba(0, 0, 0, 0.8);
   white-space: nowrap;
   pointer-events: none;
-  z-index: 100;
+  z-index: 10000;
 }
 
 /* ASS字幕样式效果 */
