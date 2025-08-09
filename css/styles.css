@@ -291,19 +291,13 @@ body {
   flex: 1;
   text-align: center;
   padding: 0 20px;
-  white-space: nowrap;
 
   /* 滚动相关样式 */
   overflow-x: auto;
-  /* 允许水平滚动 */
   overflow-y: hidden;
   white-space: nowrap;
-  /* 单行显示 */
   scrollbar-width: none;
-  /* Firefox 隐藏滚动条 */
   -ms-overflow-style: none;
-  /* IE 隐藏滚动条 */
-  /* 触摸滚动优化 */
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 
@@ -314,45 +308,16 @@ body {
 
   /* 过渡效果 */
   transition: all 0.2s ease;
+}
 
-  /* 隐藏 Webkit 浏览器的滚动条 */
-  #video-title::-webkit-scrollbar {
-    display: none;
-  }
+/* 隐藏 Webkit 浏览器的滚动条 */
+#video-title::-webkit-scrollbar {
+  display: none;
+}
 
-  /* 拖拽时的样式 */
-  #video-title:active {
-    cursor: grabbing;
-  }
-
-  /* 手机端优化 */
-  @media (max-width: 768px) {
-    #video-title {
-      font-size: 14px;
-      margin: 0 8px;
-      /* 添加视觉提示，让用户知道可以滑动 */
-      position: relative;
-    }
-
-    /* 可选：添加渐变遮罩效果，提示内容可以滚动 */
-    #video-title::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 20px;
-      height: 100%;
-      background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    /* 当标题超出宽度时显示遮罩 */
-    #video-title.scrollable::after {
-      opacity: 1;
-    }
-  }
+/* 拖拽时的样式 */
+#video-title:active {
+  cursor: grabbing;
 }
 
 #subtitle-controls {
@@ -472,10 +437,14 @@ body {
   }
 
   #video-title {
-    font-size: 16px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 14px;
+    margin: 0 8px;
+    padding: 0 10px;
+    position: relative;
+    min-width: 0;
     white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 }
 
@@ -652,5 +621,29 @@ body {
   #subtitle-controls {
     order: 3;
     align-self: flex-end;
+  }
+
+  /* 标题滚动提示遮罩 */
+  #video-title::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  #video-title.scrollable::after {
+    opacity: 1;
+  }
+
+  @media (max-width: 768px) {
+    #video-title::after {
+      width: 15px;
+    }
   }
 }
