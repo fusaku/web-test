@@ -304,7 +304,8 @@ function displayCurrentSubtitle(currentTime) {
       } else {
         // 默认弹幕处理 - 移动端优化
         const containerWidth = overlay.offsetWidth || (window.innerWidth > 768 ? 1200 : window.innerWidth);
-        const duration = sub.end - sub.start;
+        const minScrollTime = (containerWidth + 200) / 120; // 最小滚动时间
+        const duration = Math.max(sub.end - sub.start, minScrollTime);
         // 移动端使用更紧密的行距
         const lineHeight = window.innerWidth > 768 ? 25 : 20;
         const maxLines = window.innerWidth > 768 ? 20 : 15;
