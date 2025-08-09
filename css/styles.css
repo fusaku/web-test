@@ -275,6 +275,7 @@ body {
   justify-content: space-between;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   border: 1px solid #e8e8e8;
+  overflow: hidden;
 }
 
 #back-button {
@@ -413,6 +414,30 @@ body {
 
 /* 添加手机端字幕样式 */
 @media (max-width: 768px) {
+
+  /* 首页布局 */
+  body {
+    flex-direction: column;
+  }
+
+  #sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+    order: 2;
+  }
+
+  #main-content {
+    height: auto;
+    flex: 1;
+    order: 1;
+  }
+
+  #video-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* 播放页面 */
   .danmaku-subtitle {
     font-size: 14px !important;
     max-width: calc(100vw - 20px);
@@ -425,52 +450,54 @@ body {
   }
 
   #header {
-    display: flex;
-    align-items: center;
-    padding: 8px 12px;
-    font-size: 14px;
-    width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    overflow: hidden !important;
+    width: calc(100vw - 40px) !important;
+    max-width: 100% !important;
   }
 
   #back-button {
-    flex: 0 0 auto;
-    margin-right: 8px;
-    font-size: 12px;
-    padding: 6px 10px;
-    white-space: nowrap;
+    flex-shrink: 0 !important;
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+    margin-right: 8px !important;
   }
 
   #video-title {
-    flex: 1 1 0;
-    min-width: 0;
-    font-size: 14px;
-    margin: 0;
-    padding: 0 8px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-align: center;
+    flex: 1 !important;
+    min-width: 0 !important;
+    font-size: 13px !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    max-width: calc(100vw - 200px) !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  #video-title::-webkit-scrollbar {
+    display: none !important;
   }
 
   #subtitle-controls {
-    flex: 0 0 auto;
-    margin-left: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    flex-shrink: 0 !important;
+    margin-left: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
   }
 
   #subtitle-toggle {
-    font-size: 10px;
-    padding: 4px 6px;
-    white-space: nowrap;
+    font-size: 10px !important;
+    padding: 4px 6px !important;
   }
 
   #subtitle-status {
-    font-size: 9px;
-    white-space: nowrap;
+    font-size: 9px !important;
   }
 
   .player-page {
@@ -486,10 +513,6 @@ body {
     top: auto;
     left: auto;
     transform: none;
-  }
-
-  #video-title::after {
-    width: 15px;
   }
 }
 
@@ -588,29 +611,6 @@ body {
 @media (max-width: 1200px) {
   #video-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  body {
-    flex-direction: column;
-  }
-
-  #sidebar {
-    width: 100%;
-    height: auto;
-    max-height: 200px;
-    order: 2;
-  }
-
-  #main-content {
-    height: auto;
-    flex: 1;
-    order: 1;
-  }
-
-  #video-grid {
-    grid-template-columns: 1fr;
   }
 }
 
