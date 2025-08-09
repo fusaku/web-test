@@ -455,6 +455,7 @@ body {
     overflow: hidden !important;
     width: calc(100vw - 40px) !important;
     max-width: 100% !important;
+    justify-content: flex-start !important;
   }
 
   #back-button {
