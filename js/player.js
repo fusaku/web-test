@@ -167,7 +167,7 @@ function displayCurrentSubtitle(currentTime) {
       displayedSubtitles.delete(timeKey);
     }
   }
-  
+
   const overlay = document.getElementById('subtitle-overlay');
 
   if (!subtitlesVisible || subtitles.length === 0) {
@@ -275,18 +275,21 @@ function displayCurrentSubtitle(currentTime) {
 
       if (moveData) {
         // 弹幕动画：使用ASS坐标系统
-        const containerWidth = overlay.offsetWidth || 1200;
-        const containerHeight = overlay.offsetHeight || 675;
+        const containerWidth = overlay.offsetWidth || (window.innerWidth > 768 ? 1200 : window.innerWidth);
+        const containerHeight = overlay.offsetHeight || (window.innerWidth > 768 ? 675 : window.innerHeight * 0.6);
         const duration = sub.end - sub.start;
 
-        // 将ASS坐标系统转换为CSS坐标
-        const scaleX = containerWidth / 640;
-        const scaleY = containerHeight / 360;
+        // 移动端适配：使用更小的基准分辨率
+        const baseWidth = window.innerWidth > 768 ? 640 : 360;
+        const baseHeight = window.innerWidth > 768 ? 360 : 200;
 
-        const startX = moveData.x1 * scaleX;
-        const startY = moveData.y1 * scaleY;
-        const endX = moveData.x2 * scaleX;
-        const endY = moveData.y2 * scaleY;
+        const scaleX = containerWidth / baseWidth;
+        const scaleY = containerHeight / baseHeight;
+
+        const startX = Math.max(0, Math.min(moveData.x1 * scaleX, containerWidth - 100));
+        const startY = Math.max(0, Math.min(moveData.y1 * scaleY, containerHeight - 30));
+        const endX = Math.max(-200, Math.min(moveData.x2 * scaleX, containerWidth));
+        const endY = Math.max(0, Math.min(moveData.y2 * scaleY, containerHeight - 30)); ß
 
         // 设置初始位置
         div.style.left = `${startX}px`;
@@ -299,10 +302,13 @@ function displayCurrentSubtitle(currentTime) {
           div.style.top = `${endY}px`;
         });
       } else {
-        // 默认弹幕处理
-        const containerWidth = overlay.offsetWidth || 1200;
+        // 默认弹幕处理 - 移动端优化
+        const containerWidth = overlay.offsetWidth || (window.innerWidth > 768 ? 1200 : window.innerWidth);
         const duration = sub.end - sub.start;
-        const yPos = 20 + (index + lineIndex) * 25;
+        // 移动端使用更紧密的行距
+        const lineHeight = window.innerWidth > 768 ? 25 : 20;
+        const maxLines = window.innerWidth > 768 ? 20 : 15;
+        const yPos = 20 + ((index + lineIndex) % maxLines) * lineHeight;
 
         div.style.left = `${containerWidth}px`;
         div.style.top = `${yPos}px`;
