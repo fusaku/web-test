@@ -292,8 +292,6 @@ body {
   text-align: center;
   padding: 0 20px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 
   /* 滚动相关样式 */
   overflow-x: auto;
@@ -475,7 +473,6 @@ body {
 
   #video-title {
     font-size: 16px;
-    max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
