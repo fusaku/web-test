@@ -1,15 +1,35 @@
 {
   "videos": [
     {
+      "id": "oWX03ntBJ2Q",
+      "date": "2025-08-09",
+      "title": "250809 Showroom - AKB48 Team 8 橋本 陽菜 210957",
+      "description": "橋本陽菜\n2025-08-09 22:18:47\n\n#AKB48 #Team8 #橋本陽菜",
+      "tags": [
+        "AKB48",
+        "Team8",
+        "橋本陽菜",
+        "Showroom"
+      ]
+    },
+    {
       "id": "pCFOGyGTC4I",
       "date": "2025-08-05",
-      "tags": ["橋本陽菜", "AKB48", "Team8"],
+      "tags": [
+        "橋本陽菜",
+        "AKB48",
+        "Team8"
+      ],
       "description": "橋本陽菜"
     },
     {
       "id": "9bZkp7q19f0",
       "date": "2025-08-04",
-      "tags": ["音乐", "K-POP", "热门"],
+      "tags": [
+        "音乐",
+        "K-POP",
+        "热门"
+      ],
       "description": "韩流音乐视频"
     }
   ]
