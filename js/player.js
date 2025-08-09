@@ -127,7 +127,7 @@ function parseASSSubtitles(assContent) {
 async function loadSubtitles(videoId) {
   try {
     console.log('Loading subtitles for:', videoId);
-    const response = await fetch(`./subtitles/${videoId}.ass`);
+    const response = await fetch(`../subtitles/${videoId}.ass`);
 
     if (!response.ok) {
       throw new Error(`字幕文件不存在 (${response.status})`);

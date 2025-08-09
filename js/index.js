@@ -20,7 +20,7 @@ async function loadVideoData() {
   try {
     showLoading();
     // 尝试加载 videos.json 文件
-    const response = await fetch('./videos.json');
+    const response = await fetch('../videos.json');
     if (!response.ok) {
       throw new Error('无法加载视频数据');
     }
