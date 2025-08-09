@@ -1,0 +1,634 @@
+/* 统一样式表 - styles.css */
+
+/* 基础重置和全局样式 */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f0f2f5;
+  color: #333;
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 按钮基础样式 */
+.btn {
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.btn-primary {
+  background: #1890ff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0050b3;
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background: #52c41a;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #389e0d;
+  transform: translateY(-1px);
+}
+
+.btn:disabled,
+.btn.disabled {
+  background: #f5f5f5;
+  color: #bfbfbf;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 加载动画 */
+.loading-spinner {
+  border: 3px solid #f0f2f5;
+  border-top: 3px solid #1890ff;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 10px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 工具类 */
+.hidden {
+  display: none !important;
+}
+
+/* ==================== 首页样式 ==================== */
+
+/* 侧边栏 */
+#sidebar {
+  width: 280px;
+  background: #fff;
+  border-right: 1px solid #e8e8e8;
+  padding: 20px;
+  overflow-y: auto;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
+}
+
+#sidebar h2 {
+  margin-top: 0;
+  font-weight: 700;
+  color: #333;
+  border-bottom: 2px solid #1890ff;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+  font-size: 22px;
+}
+
+#sidebar section {
+  margin-bottom: 30px;
+}
+
+#sidebar section strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #555;
+  font-weight: 600;
+}
+
+#sidebar ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+#sidebar li {
+  margin-bottom: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  color: #1890ff;
+  font-weight: 500;
+  user-select: none;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+#sidebar li:hover {
+  background: #e6f7ff;
+  transform: translateX(2px);
+}
+
+#sidebar li.active {
+  background: #1890ff;
+  color: white;
+  font-weight: 600;
+}
+
+/* 主内容区 */
+#main-content {
+  flex: 1;
+  padding: 20px 30px;
+  overflow-y: auto;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+#main-content h1 {
+  margin: 0 0 20px 0;
+  font-weight: 700;
+  color: #222;
+  font-size: 28px;
+}
+
+/* 搜索框 */
+#filter {
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #e8e8e8;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+#filter:focus {
+  border-color: #1890ff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+/* 视频网格 */
+#video-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  flex: 1;
+}
+
+.video-item {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #f0f0f0;
+}
+
+.video-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: #1890ff;
+}
+
+.video-item iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  pointer-events: none;
+}
+
+.video-title {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.video-date {
+  padding: 0 16px 12px 16px;
+  font-size: 12px;
+  color: #999;
+  border-top: 1px solid #f5f5f5;
+  margin-top: auto;
+}
+
+/* 加载和错误状态 */
+#loading {
+  text-align: center;
+  margin: 40px 0;
+  color: #666;
+  display: none;
+  padding: 20px;
+}
+
+#error {
+  text-align: center;
+  margin: 40px 20px;
+  padding: 20px;
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 8px;
+  color: #a8071a;
+  display: none;
+}
+
+/* ==================== 播放页面样式 ==================== */
+
+.player-page {
+  background: #f0f2f5;
+  flex-direction: column;
+  padding: 20px;
+  gap: 20px;
+  overflow: auto;
+}
+
+/* 播放页面头部 */
+#header {
+  background: #fff;
+  padding: 16px 24px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8e8e8;
+  overflow: hidden;
+}
+
+#back-button {
+  background: #1890ff;
+  color: white;
+  text-decoration: none;
+}
+
+#video-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  padding: 0 20px;
+
+  /* 滚动相关样式 */
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+
+  /* 用户选择和拖拽 */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+
+  /* 过渡效果 */
+  transition: all 0.2s ease;
+}
+
+/* 隐藏 Webkit 浏览器的滚动条 */
+#video-title::-webkit-scrollbar {
+  display: none;
+}
+
+/* 拖拽时的样式 */
+#video-title:active {
+  cursor: grabbing;
+}
+
+#subtitle-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+#subtitle-toggle {
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+#subtitle-status {
+  font-size: 10px;
+}
+
+/* 视频容器 */
+#video-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e8e8e8;
+  height: 600px;
+  width: 100%;
+}
+
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#youtube-player,
+#fallback-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  z-index: 1;
+}
+
+/* 播放页面加载和错误状态 */
+.player-page #loading,
+.player-page #error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 100;
+  padding: 30px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.player-page #error {
+  background: #fff2f0;
+  border-color: #ffccc7;
+  color: #a8071a;
+}
+
+.player-page #error h3 {
+  margin-top: 0;
+  color: #a8071a;
+}
+
+.player-page #error .btn {
+  margin-top: 16px;
+}
+
+/* 字幕相关样式 */
+#subtitle-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  /* 手机端适配 */
+  overflow: hidden;
+  /* 防止字幕超出屏幕 */
+}
+
+/* 添加手机端字幕样式 */
+@media (max-width: 768px) {
+
+  /* 首页布局 */
+  body {
+    flex-direction: column;
+  }
+
+  #sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+    order: 2;
+  }
+
+  #main-content {
+    height: auto;
+    flex: 1;
+    order: 1;
+  }
+
+  #video-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* 播放页面 */
+  .danmaku-subtitle {
+    font-size: 14px !important;
+    max-width: calc(100vw - 20px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #video-container {
+    height: calc(100vh - 80px);
+  }
+
+  #header {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    overflow: hidden !important;
+    width: calc(100vw - 40px) !important;
+    max-width: 100% !important;
+    justify-content: flex-start !important;
+  }
+
+  #back-button {
+    flex-shrink: 0 !important;
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+    margin-right: 8px !important;
+  }
+
+  #video-title {
+    flex: 1 !important;
+    min-width: 0 !important;
+    font-size: 13px !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    max-width: calc(100vw - 200px) !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  #video-title::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  #subtitle-controls {
+    flex-shrink: 0 !important;
+    margin-left: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+
+  #subtitle-toggle {
+    font-size: 10px !important;
+    padding: 4px 6px !important;
+  }
+
+  #subtitle-status {
+    font-size: 9px !important;
+  }
+
+  .player-page {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .player-page #loading,
+  .player-page #error {
+    padding: 20px;
+    margin: 10px;
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+  }
+}
+
+.subtitle-line {
+  position: absolute;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000,
+    0 0 3px rgba(0, 0, 0, 0.8);
+  white-space: pre-wrap;
+  line-height: 1.2;
+  max-width: 90%;
+  word-wrap: break-word;
+}
+
+.subtitle-line.bottom {
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.subtitle-line.top {
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.subtitle-line.left {
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: left;
+}
+
+.subtitle-line.right {
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: right;
+}
+
+/* 弹幕样式 */
+.danmaku-subtitle {
+  position: absolute;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+/* ASS字幕样式效果 */
+.subtitle-bold {
+  font-weight: bold;
+}
+
+.subtitle-italic {
+  font-style: italic;
+}
+
+.subtitle-underline {
+  text-decoration: underline;
+}
+
+.subtitle-strikeout {
+  text-decoration: line-through;
+}
+
+/* 备用播放器提示 */
+.fallback-notice {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 193, 7, 0.95);
+  color: #000;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  z-index: 60;
+  border: 1px solid #faad14;
+  font-weight: 500;
+}
+
+/* ==================== 响应式设计 ==================== */
+
+@media (max-width: 1200px) {
+  #video-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 标题滚动提示遮罩 */
+#video-title::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 100%;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+#video-title.scrollable::after {
+  opacity: 1;
+}
