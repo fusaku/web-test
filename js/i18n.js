@@ -9,10 +9,10 @@ class I18n {
 
   detectLanguage() {
     // 临时强制使用中文进行测试 - 测试完成后可以改回自动检测
-    console.log('强制使用中文');
-    return 'zh-CN';
+    // console.log('强制使用中文');
+    // return 'zh-CN';
     
-    /* 自动检测逻辑（需要时取消注释）
+    //自动检测逻辑（需要时取消注释）
     const browserLangs = navigator.languages || [navigator.language] || ['zh-CN'];
     console.log('检测到浏览器语言列表:', browserLangs);
     
@@ -40,7 +40,7 @@ class I18n {
     
     console.log('未找到匹配语言，使用默认中文');
     return 'zh-CN';
-    */
+    
   }
 
   async loadLanguage(lang = this.currentLang) {
