@@ -1,4 +1,4 @@
-// 简化版 i18n - 先确保基本功能正常
+// 增强版 i18n - 添加外部文件加载功能
 function I18n() {
   this.currentLang = this.detectLanguage();
   this.translations = this.getFallbackTranslations(); // 先用内置翻译
@@ -11,9 +11,15 @@ function I18n() {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
       self.updatePageTexts();
+      // DOM 加载完成后，尝试加载外部语言文件
+      self.loadExternalLanguage();
     });
   } else {
-    setTimeout(function() { self.updatePageTexts(); }, 100);
+    setTimeout(function() { 
+      self.updatePageTexts(); 
+      // 尝试加载外部语言文件
+      self.loadExternalLanguage();
+    }, 100);
   }
 }
 
@@ -57,7 +63,7 @@ I18n.prototype.detectLanguage = function() {
 I18n.prototype.getFallbackTranslations = function() {
   return {
     "siteTitle": "视频分享主页",
-    "siteSubtitle": "Video Sharing Homepage",
+    "siteSubtitle": "Video Sharing Homepage", 
     "navigation": {
       "categories": "分类导航",
       "byYear": "按年分类",
@@ -90,6 +96,104 @@ I18n.prototype.getFallbackTranslations = function() {
     },
     "playerTitle": "视频播放 - 字幕播放器"
   };
+};
+
+// 尝试加载外部语言文件
+I18n.prototype.loadExternalLanguage = function(lang) {
+  var self = this;
+  lang = lang || this.currentLang;
+  
+  console.log('尝试加载外部语言文件:', lang);
+  
+  var possiblePaths = [
+    'lang/' + lang + '.json',
+    './lang/' + lang + '.json',
+    '../lang/' + lang + '.json'
+  ];
+  
+  var tryPath = function(pathIndex) {
+    if (pathIndex >= possiblePaths.length) {
+      console.log('所有外部语言文件路径都失败，继续使用内置翻译');
+      return;
+    }
+    
+    var path = possiblePaths[pathIndex];
+    console.log('尝试加载路径:', path);
+    
+    // 使用兼容性更好的 XMLHttpRequest
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', path, true);
+    xhr.timeout = 5000; // 5秒超时
+    
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          try {
+            var externalTranslations = JSON.parse(xhr.responseText);
+            console.log('外部语言文件加载成功:', path);
+            
+            // 合并外部翻译和内置翻译
+            self.translations = self.mergeTranslations(self.translations, externalTranslations);
+            console.log('翻译合并完成，重新更新页面');
+            
+            // 重新更新页面
+            self.updatePageTexts();
+            self.refreshDynamicContent();
+            
+          } catch (e) {
+            console.error('外部语言文件JSON解析失败:', path, e);
+            tryPath(pathIndex + 1);
+          }
+        } else {
+          console.log('外部语言文件加载失败:', path, 'Status:', xhr.status);
+          tryPath(pathIndex + 1);
+        }
+      }
+    };
+    
+    xhr.onerror = function() {
+      console.log('外部语言文件网络错误:', path);
+      tryPath(pathIndex + 1);
+    };
+    
+    xhr.ontimeout = function() {
+      console.log('外部语言文件加载超时:', path);
+      tryPath(pathIndex + 1);
+    };
+    
+    xhr.send();
+  };
+  
+  tryPath(0);
+};
+
+// 合并翻译对象
+I18n.prototype.mergeTranslations = function(base, external) {
+  var merged = {};
+  
+  // 复制基础翻译
+  for (var key in base) {
+    if (base.hasOwnProperty(key)) {
+      if (typeof base[key] === 'object' && base[key] !== null && !Array.isArray(base[key])) {
+        merged[key] = this.mergeTranslations(base[key], {});
+      } else {
+        merged[key] = base[key];
+      }
+    }
+  }
+  
+  // 覆盖/添加外部翻译
+  for (var key in external) {
+    if (external.hasOwnProperty(key)) {
+      if (typeof external[key] === 'object' && external[key] !== null && !Array.isArray(external[key]) && merged[key]) {
+        merged[key] = this.mergeTranslations(merged[key], external[key]);
+      } else {
+        merged[key] = external[key];
+      }
+    }
+  }
+  
+  return merged;
 };
 
 I18n.prototype.t = function(key, defaultValue) {
@@ -188,11 +292,14 @@ I18n.prototype.updatePageTexts = function() {
   }
 };
 
-// 简化的加载函数 - 目前只返回已有的翻译
+// 公开的加载语言接口
 I18n.prototype.loadLanguage = function(lang) {
   var self = this;
+  lang = lang || this.currentLang;
+  
   return new Promise(function(resolve) {
-    console.log('简化版：使用内置翻译');
+    self.currentLang = lang;
+    self.loadExternalLanguage(lang);
     resolve(true);
   });
 };
