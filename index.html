@@ -11,21 +11,21 @@
 <body>
 
   <aside id="sidebar">
-    <h2 data-i18n="categories">分类导航</h2>
+    <h2 data-i18n="navigation.categories">分类导航</h2>
     <section>
-      <strong data-i18n="byYear">按年分类</strong>
+      <strong data-i18n="navigation.byYear">按年分类</strong>
       <ul id="yearList">
         <!-- 年份将动态生成 -->
       </ul>
     </section>
     <section>
-      <strong data-i18n="byTag">按标签分类</strong>
+      <strong data-i18n="navigation.byMonth">按月分类</strong>
       <ul id="monthList">
         <!-- 月份将动态生成 -->
       </ul>
     </section>
     <section>
-      <strong data-i18n="byTag">按标签分类</strong>
+      <strong data-i18n="navigation.byTag">按标签分类</strong>
       <ul id="tagList">
         <!-- 标签将动态生成 -->
       </ul>
@@ -34,13 +34,13 @@
 
   <main id="main-content">
     <h1 data-i18n="siteTitle">视频分享主页</h1>
-    <input type="text" id="filter" data-i18n="searchPlaceholder" placeholder="输入关键词过滤视频..." />
+    <input type="text" id="filter" data-i18n-placeholder="search.placeholder" placeholder="输入关键词过滤视频..." />
     <div id="video-grid"></div>
     <div id="loading">
       <div class="loading-spinner"></div>
-      <span data-i18n="loading">加载中...</span>
+      <span data-i18n="loading.text">加载中...</span>
     </div>
-    <div id="error" data-i18n="loadError">数据加载失败，请稍后重试</div>
+    <div id="error" data-i18n="error.dataLoadFailed">数据加载失败，请稍后重试</div>
   </main>
 
   <script src="js/i18n.js"></script>
