@@ -352,7 +352,7 @@ function displayCurrentSubtitle(currentTime) {
     if (element) {
       const endTime = parseFloat(element.dataset.endTime);
       // 只有当字幕真正结束时才移除，给一点缓冲时间
-      if (currentTime > endTime + 5) {
+      if (currentTime > endTime + 0.5) {
         if (element.parentNode) {
           element.parentNode.removeChild(element);
         }
