@@ -612,7 +612,7 @@ body {
 
 /* ==================== 响应式设计 ==================== */
 
-@media (max-width: 1200px) {
+@media (max-width: 1200px) and (min-width: 769px){
   #video-grid {
     grid-template-columns: repeat(2, 1fr);
   }
