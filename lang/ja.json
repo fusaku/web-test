@@ -1,0 +1,92 @@
+{
+  "siteTitle": "Showroom アーカイブ",
+  "siteSubtitle": "バッチ読み込み・分割表示",
+  "playerTitle": "動画プレーヤー - 字幕プレーヤー",
+  
+  "navigation": {
+    "categories": "カテゴリ",
+    "byYear": "年別",
+    "byMonth": "月別",
+    "byTag": "タグ別"
+  },
+  
+  "months": {
+    "01": "1月",
+    "02": "2月",
+    "03": "3月",
+    "04": "4月", 
+    "05": "5月",
+    "06": "6月",
+    "07": "7月",
+    "08": "8月",
+    "09": "9月",
+    "10": "10月",
+    "11": "11月",
+    "12": "12月"
+  },
+  
+  "search": {
+    "placeholder": "キーワードを入力して動画を絞り込む...",
+    "noResults": "動画が見つかりません"
+  },
+  
+  "loading": {
+    "text": "読み込み中...",
+    "videoInfo": "動画情報を読み込み中...",
+    "ytApi": "YouTube APIを読み込み中...",
+    "createPlayer": "YouTubeプレーヤーを作成中...",
+    "fallbackPlayer": "代替プレーヤーを使用中...",
+    "loadingVideo": "動画を読み込み中...",
+    "initPlayer": "プレーヤーを初期化中"
+  },
+  
+  "error": {
+    "dataLoadFailed": "データの読み込みに失敗しました。しばらくしてから再試行してください",
+    "noVideoId": "動画IDが提供されていません",
+    "loadFailed": "読み込み失敗",
+    "cannotLoadVideo": "動画を読み込めません",
+    "ytApiLoadFailed": "YouTube APIスクリプトの読み込みに失敗しました",
+    "ytApiTimeout": "YouTube API初期化タイムアウト"
+  },
+  
+  "player": {
+    "backToList": "← リストに戻る",
+    "videoPlay": "動画プレーヤー",
+    "loading": "読み込み中...",
+    "retry": "再試行"
+  },
+  
+  "subtitles": {
+    "status": "字幕",
+    "loading": "読み込み中...",
+    "none": "なし",
+    "show": "字幕を表示",
+    "hide": "字幕を非表示",
+    "noSubtitles": "字幕なし",
+    "loadingCount": "行",
+    "fileNotFound": "字幕ファイルが見つかりません",
+    "fileEmpty": "字幕ファイルが空か形式が正しくありません",
+    "fallbackNotice": "代替プレーヤーを使用中 - 字幕が完全に同期しない可能性があります"
+  },
+  
+  "shortcuts": {
+    "subtitle": "Sキーで字幕表示を切り替え",
+    "back": "ESCキーで戻る",
+    "search": "/キーで検索にフォーカス"
+  },
+  
+  "date": {
+    "year": "年"
+  },
+  
+  "video": {
+    "example": "サンプル動画",
+    "exampleDesc": "これはサンプル動画の説明です"
+  },
+  
+  "tags": {
+    "example": "サンプル",
+    "hot": "人気",
+    "normal": "通常"
+  }
+}

@@ -2,11 +2,11 @@
 
 // 全局变量
 let allVideos = [];
-const batchSize = 15;   
-const displayStep = 12; 
+const batchSize = 15;
+const displayStep = 12;
 let filteredVideos = [];
-let loadedBatches = 0;  
-let displayedCount = 0; 
+let loadedBatches = 0;
+let displayedCount = 0;
 
 // DOM元素引用
 const filterInput = document.getElementById('filter');
@@ -15,6 +15,12 @@ const loading = document.getElementById('loading');
 const errorDiv = document.getElementById('error');
 const mainContent = document.getElementById('main-content');
 
+// 初始化多语言
+async function initializeI18n() {
+  await window.i18n.loadLanguage();
+  window.i18n.updatePageTexts();
+}
+
 // 从外部JSON文件加载视频数据
 async function loadVideoData() {
   try {
@@ -22,15 +28,15 @@ async function loadVideoData() {
     // 尝试加载 videos.json 文件
     const response = await fetch('../videos.json');
     if (!response.ok) {
-      throw new Error('无法加载视频数据');
+      throw new Error(window.i18n.t('error.dataLoadFailed', '无法加载视频数据'));
     }
     const data = await response.json();
     allVideos = data.videos || [];
     filteredVideos = [...allVideos];
-    
+
     // 动态生成分类导航
     generateCategories();
-    
+
     // 开始显示视频
     resetAndLoad();
     hideLoading();
@@ -45,13 +51,13 @@ async function loadVideoData() {
 // 备用示例数据
 function loadFallbackData() {
   allVideos = [];
-  for(let i=1; i<=50; i++) {
+  for (let i = 1; i <= 50; i++) {
     allVideos.push({
       id: "dQw4w9WgXcQ",
-      title: "示例视频 #" + i,
+      title: window.i18n.t('video.example', '示例视频') + " #" + i,
       date: "2025-08-0" + ((i % 5) + 1),
-      tags: ["示例", i % 3 === 0 ? "热门" : "普通"],
-      description: "这是示例视频的描述"
+      tags: [window.i18n.t('tags.example', '示例'), i % 3 === 0 ? window.i18n.t('tags.hot', '热门') : window.i18n.t('tags.normal', '普通')],
+      description: window.i18n.t('video.exampleDesc', '这是示例视频的描述')
     });
   }
   filteredVideos = [...allVideos];
@@ -67,21 +73,21 @@ function generateCategories() {
 
   // 生成年份导航
   const yearList = document.getElementById('yearList');
-  yearList.innerHTML = years.map(year => 
-    `<li data-filter="${year}">${year}年</li>`
+  yearList.innerHTML = years.map(year =>
+    `<li data-filter="${year}">${year}${window.i18n.t('date.year', '年')}</li>`
   ).join('');
 
   // 生成月份导航
   const monthList = document.getElementById('monthList');
-  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   monthList.innerHTML = months.map(month => {
-    const monthNum = parseInt(month);
-    return `<li data-filter="${month}">${monthNames[monthNum-1]}</li>`;
+    const monthKey = month.padStart(2, '0');
+    const monthName = window.i18n.t(`months.${monthKey}`, `${parseInt(month)}月`);
+    return `<li data-filter="${month}">${monthName}</li>`;
   }).join('');
 
   // 生成标签导航
   const tagList = document.getElementById('tagList');
-  tagList.innerHTML = tags.map(tag => 
+  tagList.innerHTML = tags.map(tag =>
     `<li data-filter="${tag}">${tag}</li>`
   ).join('');
 }
@@ -90,21 +96,21 @@ function generateCategories() {
 function createVideoItem(video) {
   const div = document.createElement('div');
   div.className = 'video-item';
-  
+
   // 格式化日期
-  const dateStr = video.date ? new Date(video.date).toLocaleDateString('zh-CN') : '';
-  
+  const dateStr = video.date ? new Date(video.date).toLocaleDateString(window.i18n.currentLang) : '';
+
   div.innerHTML = `
     <iframe src="https://www.youtube.com/embed/${video.id}" allowfullscreen></iframe>
-    <div class="video-title" title="${video.displayTitle || video.title || '加载中...'}">${video.displayTitle || video.title || '加载中...'}</div>
+    <div class="video-title" title="${video.displayTitle || video.title || window.i18n.t('loading.text', '加载中...')}">${video.displayTitle || video.title || window.i18n.t('loading.text', '加载中...')}</div>
     ${dateStr ? `<div class="video-date">${dateStr}</div>` : ''}
   `;
-  
+
   // 添加点击事件跳转到播放页面
   div.addEventListener('click', () => {
     window.location.href = `player.html?v=${video.id}`;
   });
-  
+
   // 如果还没有获取到真实标题，就去获取
   if (!video.displayTitle) {
     fetchYouTubeTitle(video.id).then(realTitle => {
@@ -118,7 +124,7 @@ function createVideoItem(video) {
       }
     });
   }
-  
+
   return div;
 }
 
@@ -152,11 +158,11 @@ function loadNextBatch() {
 // 显示更多视频
 function showMoreVideos() {
   const totalLoadedVideos = loadedBatches * batchSize;
-  if(displayedCount >= filteredVideos.length) return;
-  if(displayedCount >= totalLoadedVideos) return;
+  if (displayedCount >= filteredVideos.length) return;
+  if (displayedCount >= totalLoadedVideos) return;
 
   const nextCount = Math.min(displayedCount + displayStep, totalLoadedVideos, filteredVideos.length);
-  for(let i = displayedCount; i < nextCount; i++) {
+  for (let i = displayedCount; i < nextCount; i++) {
     videoGrid.appendChild(createVideoItem(filteredVideos[i]));
   }
   displayedCount = nextCount;
@@ -167,12 +173,12 @@ function resetAndLoad() {
   videoGrid.innerHTML = "";
   loadedBatches = 0;
   displayedCount = 0;
-  
+
   if (filteredVideos.length === 0) {
-    videoGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px; font-size: 16px;">没有找到相关视频</div>';
+    videoGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px; font-size: 16px;">${window.i18n.t('search.noResults', '没有找到相关视频')}</div>`;
     return;
   }
-  
+
   loadNextBatch().then(() => {
     showMoreVideos();
   });
@@ -191,7 +197,7 @@ function hideLoading() {
 
 // 显示错误状态
 function showError(message) {
-  errorDiv.textContent = message || '数据加载失败，请稍后重试';
+  const errorText = message || window.i18n.t('error.dataLoadFailed', '数据加载失败，请稍后重试');
   errorDiv.style.display = 'block';
   hideLoading();
 }
@@ -210,7 +216,7 @@ function onCategoryClick(type, value, element) {
   } else if (type === "tag") {
     filteredVideos = allVideos.filter(v => v.tags && v.tags.includes(value));
   }
-  
+
   filterInput.value = "";
   clearActiveNav();
   element.classList.add('active');
@@ -220,7 +226,7 @@ function onCategoryClick(type, value, element) {
 // 搜索过滤
 function handleSearch() {
   const text = filterInput.value.trim().toLowerCase();
-  filteredVideos = allVideos.filter(v => 
+  filteredVideos = allVideos.filter(v =>
     (v.title && v.title.toLowerCase().includes(text)) ||
     (v.displayTitle && v.displayTitle.toLowerCase().includes(text)) ||
     (v.description && v.description.toLowerCase().includes(text)) ||
@@ -235,9 +241,9 @@ function handleScroll() {
   const scrollTop = mainContent.scrollTop;
   const scrollHeight = mainContent.scrollHeight;
   const clientHeight = mainContent.clientHeight;
-  
+
   if (scrollTop + clientHeight >= scrollHeight - 100) {
-    if(displayedCount >= loadedBatches * batchSize && displayedCount < filteredVideos.length) {
+    if (displayedCount >= loadedBatches * batchSize && displayedCount < filteredVideos.length) {
       loadNextBatch().then(showMoreVideos);
     } else {
       showMoreVideos();
@@ -249,29 +255,29 @@ function handleScroll() {
 function bindEvents() {
   // 搜索框事件
   filterInput.addEventListener('input', handleSearch);
-  
+
   // 分类导航事件
   document.getElementById('yearList').addEventListener('click', e => {
-    if(e.target.tagName === 'LI') {
+    if (e.target.tagName === 'LI') {
       onCategoryClick('year', e.target.dataset.filter, e.target);
     }
   });
-  
+
   document.getElementById('monthList').addEventListener('click', e => {
-    if(e.target.tagName === 'LI') {
+    if (e.target.tagName === 'LI') {
       onCategoryClick('month', e.target.dataset.filter, e.target);
     }
   });
-  
+
   document.getElementById('tagList').addEventListener('click', e => {
-    if(e.target.tagName === 'LI') {
+    if (e.target.tagName === 'LI') {
       onCategoryClick('tag', e.target.dataset.filter, e.target);
     }
   });
 
   // 滚动加载事件
   mainContent.addEventListener('scroll', handleScroll);
-  
+
   // 键盘快捷键
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && filterInput.value) {
@@ -285,12 +291,15 @@ function bindEvents() {
 }
 
 // 初始化应用
-function initializeApp() {
+async function initializeApp() {
   console.log('初始化首页应用...');
-  
+
+  // 新增：初始化多语言
+  await initializeI18n();
+
   // 绑定事件
   bindEvents();
-  
+
   // 加载视频数据
   loadVideoData();
 }

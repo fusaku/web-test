@@ -1,0 +1,92 @@
+{
+  "siteTitle": "Showroom 存档",
+  "siteSubtitle": "分批加载和分屏显示",
+  "playerTitle": "视频播放 - 弹幕播放器",
+  
+  "navigation": {
+    "categories": "分类导航",
+    "byYear": "按年分类",
+    "byMonth": "按月分类", 
+    "byTag": "按标签分类"
+  },
+  
+  "months": {
+    "01": "1月",
+    "02": "2月",
+    "03": "3月", 
+    "04": "4月",
+    "05": "5月",
+    "06": "6月",
+    "07": "7月",
+    "08": "8月",
+    "09": "9月",
+    "10": "10月",
+    "11": "11月",
+    "12": "12月"
+  },
+  
+  "search": {
+    "placeholder": "输入关键词过滤视频...",
+    "noResults": "没有找到相关视频"
+  },
+  
+  "loading": {
+    "text": "加载中...",
+    "videoInfo": "加载视频信息...",
+    "ytApi": "加载YouTube API...",
+    "createPlayer": "创建YouTube播放器...",
+    "fallbackPlayer": "使用备用播放器...",
+    "loadingVideo": "正在加载视频...",
+    "initPlayer": "初始化播放器"
+  },
+  
+  "error": {
+    "dataLoadFailed": "数据加载失败，请稍后重试",
+    "noVideoId": "未提供视频ID",
+    "loadFailed": "加载失败",
+    "cannotLoadVideo": "无法加载视频",
+    "ytApiLoadFailed": "YouTube API脚本加载失败",
+    "ytApiTimeout": "YouTube API初始化超时"
+  },
+  
+  "player": {
+    "backToList": "← 返回列表",
+    "videoPlay": "视频播放",
+    "loading": "加载中...",
+    "retry": "重试"
+  },
+  
+  "subtitles": {
+    "status": "弹幕",
+    "loading": "加载中...",
+    "none": "无",
+    "show": "显示弹幕",
+    "hide": "隐藏弹幕",
+    "noSubtitles": "无弹幕",
+    "loadingCount": "行",
+    "fileNotFound": "弹幕文件不存在",
+    "fileEmpty": "弹幕文件为空或格式不正确",
+    "fallbackNotice": "使用备用播放器 - 弹幕可能不完全同步"
+  },
+  
+  "shortcuts": {
+    "subtitle": "按 S 键切换弹幕显示",
+    "back": "按 ESC 键返回列表",
+    "search": "按 / 键聚焦搜索框"
+  },
+  
+  "date": {
+    "year": "年"
+  },
+  
+  "video": {
+    "example": "示例视频",
+    "exampleDesc": "这是示例视频的描述"
+  },
+  
+  "tags": {
+    "example": "示例",
+    "hot": "热门", 
+    "normal": "普通"
+  }
+}

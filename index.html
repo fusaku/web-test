@@ -1,47 +1,51 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>视频分享主页 - 分批加载和分屏显示</title>
+  <title data-i18n="title">视频分享主页</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
 
-<aside id="sidebar">
-  <h2>分类导航</h2>
-  <section>
-    <strong>按年分类</strong>
-    <ul id="yearList">
-      <!-- 年份将动态生成 -->
-    </ul>
-  </section>
-  <section>
-    <strong>按月分类</strong>
-    <ul id="monthList">
-      <!-- 月份将动态生成 -->
-    </ul>
-  </section>
-  <section>
-    <strong>按标签分类</strong>
-    <ul id="tagList">
-      <!-- 标签将动态生成 -->
-    </ul>
-  </section>
-</aside>
+  <aside id="sidebar">
+    <h2 data-i18n="categories">分类导航</h2>
+    <section>
+      <strong data-i18n="byYear">按年分类</strong>
+      <ul id="yearList">
+        <!-- 年份将动态生成 -->
+      </ul>
+    </section>
+    <section>
+      <strong data-i18n="byTag">按标签分类</strong>
+      <ul id="monthList">
+        <!-- 月份将动态生成 -->
+      </ul>
+    </section>
+    <section>
+      <strong data-i18n="byTag">按标签分类</strong>
+      <ul id="tagList">
+        <!-- 标签将动态生成 -->
+      </ul>
+    </section>
+  </aside>
 
-<main id="main-content">
-  <h1>视频分享主页</h1>
-  <input type="text" id="filter" placeholder="输入关键词过滤视频..." autocomplete="off" />
-  <div id="video-grid"></div>
-  <div id="loading">
-    <div class="loading-spinner"></div>
-    加载中...
-  </div>
-  <div id="error">数据加载失败，请稍后重试</div>
-</main>
+  <main id="main-content">
+    <h1 data-i18n="title">视频分享主页</h1>
+    <input type="text" id="filter" data-i18n="searchPlaceholder" placeholder="输入关键词过滤视频..." />
+    <div id="video-grid"></div>
+    <div id="loading">
+      <div class="loading-spinner"></div>
+      <span data-i18n="loading">加载中...</span>
+    </div>
+    <div id="error" data-i18n="loadError">数据加载失败，请稍后重试</div>
+  </main>
 
-<script src="js/index.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/index.js"></script>
 
 </body>
+
 </html>

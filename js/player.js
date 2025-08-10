@@ -16,6 +16,12 @@ let subtitleElements = new Map(); // 存储字幕元素的引用
 let displayedSubtitles = new Map(); // 记录每个时间点已显示过的字幕行：Map<时间戳, Set<字幕索引>>
 let processedSubtitles = new Set(); // 跟踪已经处理过的字幕，防止重复
 
+// 初始化多语言
+async function initializeI18n() {
+  await window.i18n.loadLanguage();
+  window.i18n.updatePageTexts();
+}
+
 // 工具函数
 function getVideoIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -36,7 +42,7 @@ function showSuccess() {
     document.getElementById('fallback-iframe').classList.remove('hidden');
     const notice = document.createElement('div');
     notice.className = 'fallback-notice';
-    notice.textContent = '使用备用播放器 - 字幕可能不完全同步';
+    notice.textContent = window.i18n.t('subtitles.fallbackNotice', '使用备用播放器 - 字幕可能不完全同步');
     document.getElementById('video-container').appendChild(notice);
   } else {
     document.getElementById('youtube-player').classList.remove('hidden');
@@ -67,12 +73,12 @@ async function fetchVideoTitle(videoId) {
     const res = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`);
     if (res.ok) {
       const data = await res.json();
-      return data.title || '视频播放';
+      return data.title || window.i18n.t('player.videoPlay', '视频播放');
     }
   } catch (error) {
     console.error('Failed to fetch video title:', error);
   }
-  return '视频播放';
+  return window.i18n.t('player.videoPlay', '视频播放');
 }
 
 // 字幕相关函数
@@ -130,7 +136,7 @@ async function loadSubtitles(videoId) {
     const response = await fetch(`../subtitles/${videoId}.ass`);
 
     if (!response.ok) {
-      throw new Error(`字幕文件不存在 (${response.status})`);
+      throw new Error(window.i18n.t('subtitles.fileNotFound', `字幕文件不存在 (${response.status})`));
     }
 
     const assContent = await response.text();
@@ -140,18 +146,18 @@ async function loadSubtitles(videoId) {
     console.log('Parsed subtitles:', subtitles.length);
 
     if (subtitles.length > 0) {
-      document.getElementById('subtitle-status').textContent = `字幕: ${subtitles.length} 行`;
+      document.getElementById('subtitle-status').innerHTML = `${window.i18n.t('subtitles.status', '字幕')}: ${subtitles.length} ${window.i18n.t('subtitles.loadingCount', '行')}`;
       document.getElementById('subtitle-toggle').classList.remove('disabled');
-      document.getElementById('subtitle-toggle').textContent = '隐藏字幕';
+      document.getElementById('subtitle-toggle').textContent = window.i18n.t('subtitles.hide', '隐藏字幕');
       return true;
     } else {
-      throw new Error('字幕文件为空或格式不正确');
+      throw new Error(window.i18n.t('subtitles.fileEmpty', '字幕文件为空或格式不正确'));
     }
   } catch (error) {
     console.error('Subtitle loading error:', error);
-    document.getElementById('subtitle-status').textContent = '字幕: 无';
+    document.getElementById('subtitle-status').innerHTML = `${window.i18n.t('subtitles.status', '字幕')}: ${window.i18n.t('subtitles.none', '无')}`;
     document.getElementById('subtitle-toggle').classList.add('disabled');
-    document.getElementById('subtitle-toggle').textContent = '无字幕';
+    document.getElementById('subtitle-toggle').textContent = window.i18n.t('subtitles.noSubtitles', '无字幕');
     subtitles = [];
     subtitlesVisible = false;
     return false;
@@ -404,7 +410,7 @@ function initializeYouTubePlayer() {
   }
 
   try {
-    updateLoadingStatus('创建YouTube播放器...');
+    updateLoadingStatus(window.i18n.t('loading.createPlayer', '创建YouTube播放器...'));
     console.log('Creating YouTube player for video:', currentVideoId);
 
     player = new YT.Player('youtube-player', {
@@ -443,7 +449,7 @@ function tryFallbackPlayer() {
 
   console.log('Using fallback player');
   usingFallback = true;
-  updateLoadingStatus('使用备用播放器...');
+  updateLoadingStatus(window.i18n.t('loading.fallbackPlayer', '使用备用播放器...'));
 
   if (loadingTimeout) {
     clearTimeout(loadingTimeout);
@@ -514,14 +520,14 @@ function loadYouTubeAPI() {
     };
     script.onerror = () => {
       console.error('Failed to load YouTube API script');
-      reject(new Error('YouTube API脚本加载失败'));
+      reject(new Error(window.i18n.t('error.ytApiLoadFailed', 'YouTube API脚本加载失败')));
     };
     document.head.appendChild(script);
 
     setTimeout(() => {
       if (!apiReady) {
         console.error('YouTube API initialization timeout');
-        reject(new Error('YouTube API初始化超时'));
+        reject(new Error(window.i18n.t('error.ytApiTimeout', 'YouTube API初始化超时')));
       }
     }, 15000);
   });
@@ -532,8 +538,9 @@ function toggleSubtitles() {
   const btn = document.getElementById('subtitle-toggle');
   if (btn.classList.contains('disabled') || subtitles.length === 0) return;
 
-  subtitlesVisible = !subtitlesVisible;
-  btn.textContent = subtitlesVisible ? '隐藏字幕' : '显示字幕';
+  btn.textContent = subtitlesVisible ?
+    window.i18n.t('subtitles.hide', '隐藏字幕') :
+    window.i18n.t('subtitles.show', '显示字幕');
 
   if (!subtitlesVisible) {
     // 清理所有字幕状态
@@ -550,11 +557,11 @@ async function initializePage() {
   try {
     currentVideoId = getVideoIdFromUrl();
     if (!currentVideoId) {
-      throw new Error('未提供视频ID');
+      throw new Error(window.i18n.t('error.noVideoId', '未提供视频ID'));
     }
 
     console.log('Initializing page for video:', currentVideoId);
-    updateLoadingStatus('加载视频信息...');
+    updateLoadingStatus(window.i18n.t('loading.videoInfo', '加载视频信息...'));
 
     // 并行加载视频标题和字幕
     const [title] = await Promise.all([
@@ -563,9 +570,9 @@ async function initializePage() {
     ]);
 
     document.getElementById('video-title').textContent = title;
-    document.title = `${title} - 视频播放`;
+    document.title = `${title} - ${window.i18n.t('player.videoPlay', '视频播放')}`;
 
-    updateLoadingStatus('加载YouTube API...');
+    updateLoadingStatus(window.i18n.t('loading.ytApi', '加载YouTube API...'));
 
     try {
       await loadYouTubeAPI();
@@ -689,8 +696,10 @@ window.retryLoad = retryLoad;
 window.addEventListener('beforeunload', cleanupResources);
 
 // 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded, initializing player...');
+  // 初始化多语言
+  await initializeI18n();
   bindEvents();
   initializePage();
 });

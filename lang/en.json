@@ -1,0 +1,92 @@
+{
+  "siteTitle": "Showroom Archive",
+  "siteSubtitle": "Batch Loading & Split Display", 
+  "playerTitle": "Video Player - Subtitle Player",
+  
+  "navigation": {
+    "categories": "Categories",
+    "byYear": "By Year",
+    "byMonth": "By Month",
+    "byTag": "By Tag"
+  },
+  
+  "months": {
+    "01": "Jan",
+    "02": "Feb", 
+    "03": "Mar",
+    "04": "Apr",
+    "05": "May",
+    "06": "Jun",
+    "07": "Jul",
+    "08": "Aug",
+    "09": "Sep",
+    "10": "Oct",
+    "11": "Nov",
+    "12": "Dec"
+  },
+  
+  "search": {
+    "placeholder": "Enter keywords to filter videos...",
+    "noResults": "No videos found"
+  },
+  
+  "loading": {
+    "text": "Loading...",
+    "videoInfo": "Loading video info...",
+    "ytApi": "Loading YouTube API...",
+    "createPlayer": "Creating YouTube player...",
+    "fallbackPlayer": "Using fallback player...", 
+    "loadingVideo": "Loading video...",
+    "initPlayer": "Initializing player"
+  },
+  
+  "error": {
+    "dataLoadFailed": "Failed to load data, please try again later",
+    "noVideoId": "No video ID provided",
+    "loadFailed": "Load failed",
+    "cannotLoadVideo": "Cannot load video",
+    "ytApiLoadFailed": "Failed to load YouTube API script",
+    "ytApiTimeout": "YouTube API initialization timeout"
+  },
+  
+  "player": {
+    "backToList": "← Back to List",
+    "videoPlay": "Video Player",
+    "loading": "Loading...",
+    "retry": "Retry"
+  },
+  
+  "subtitles": {
+    "status": "Subtitles",
+    "loading": "Loading...",
+    "none": "None",
+    "show": "Show Subtitles",
+    "hide": "Hide Subtitles",
+    "noSubtitles": "No Subtitles",
+    "loadingCount": "lines",
+    "fileNotFound": "Subtitle file not found",
+    "fileEmpty": "Subtitle file is empty or format incorrect",
+    "fallbackNotice": "Using fallback player - Subtitles may not sync perfectly"
+  },
+  
+  "shortcuts": {
+    "subtitle": "Press S to toggle subtitles",
+    "back": "Press ESC to go back",
+    "search": "Press / to focus search"
+  },
+  
+  "date": {
+    "year": ""
+  },
+  
+  "video": {
+    "example": "Sample Video",
+    "exampleDesc": "This is a sample video description"
+  },
+  
+  "tags": {
+    "example": "Sample",
+    "hot": "Hot",
+    "normal": "Normal"
+  }
+}

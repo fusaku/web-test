@@ -4,17 +4,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>视频播放 - 字幕播放器</title>
+  <title data-i18n="playerTitle">视频播放 - 字幕播放器</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body class="player-page" style="height: 100vh; display: flex; flex-direction: column;">
 
   <div id="header">
-    <a href="index.html" id="back-button">← 返回列表</a>
+    <a href="index.html" id="back-button" data-i18n="player.backToList">← 返回列表</a>
     <h1 id="video-title">加载中...</h1>
     <div id="subtitle-controls">
-      <span id="subtitle-status">字幕: 加载中...</span>
-      <button id="subtitle-toggle" class="disabled">显示字幕</button>
+      <span id="subtitle-status"><span data-i18n="subtitles.status">字幕</span>: <span
+          data-i18n="subtitles.loading">加载中...</span></span>
+      <button id="subtitle-toggle" class="disabled" data-i18n="subtitles.show">显示字幕</button>
     </div>
   </div>
 
@@ -22,14 +24,14 @@
     <div class="video-wrapper">
       <div id="loading">
         <div class="loading-spinner"></div>
-        正在加载视频...<br>
-        <small id="loading-status">初始化播放器</small>
+        <span data-i18n="loading.loadingVideo">正在加载视频...</span><br><br>
+        <small id="loading-status" data-i18n="loading.initPlayer">初始化播放器</small>
       </div>
 
       <div id="error" class="hidden">
-        <h3>加载失败</h3>
-        <p id="error-message">无法加载视频</p>
-        <button onclick="retryLoad()" class="btn btn-primary">重试</button>
+        <h3 data-i18n="error.loadFailed">加载失败</h3>
+        <p id="error-message" data-i18n="error.cannotLoadVideo">无法加载视频</p>
+        <button onclick="retryLoad()" class="btn btn-primary" data-i18n="player.retry">重试</button>
       </div>
 
       <div id="youtube-player" class="hidden"></div>
@@ -39,6 +41,8 @@
     </div>
   </div>
 
+  <script src="js/i18n.js"></script>
   <script src="js/player.js"></script>
 </body>
+
 </html>
