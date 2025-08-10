@@ -1,8 +1,8 @@
 // 增强版 i18n - 添加外部文件加载功能
 function I18n() {
+  this.supportedLanguages = ['zh-CN', 'en', 'ja']; // 先定义支持的语言
   this.currentLang = this.detectLanguage();
   this.translations = this.getFallbackTranslations(); // 先用内置翻译
-  this.supportedLanguages = ['zh-CN', 'en', 'ja'];
   this.isLoaded = true; // 设为已加载，使用内置翻译
   this.loadPromise = null;
   
@@ -94,7 +94,26 @@ I18n.prototype.getFallbackTranslations = function() {
       "show": "显示字幕",
       "hide": "隐藏字幕"
     },
-    "playerTitle": "视频播放 - 字幕播放器"
+    "playerTitle": "视频播放 - 字幕播放器",
+    "date": {
+      "year": "年",
+      "month": "月",
+      "day": "日"
+    },
+    "months": {
+      "01": "1月",
+      "02": "2月", 
+      "03": "3月",
+      "04": "4月",
+      "05": "5月",
+      "06": "6月",
+      "07": "7月",
+      "08": "8月",
+      "09": "9月",
+      "10": "10月",
+      "11": "11月",
+      "12": "12月"
+    }
   };
 };
 
