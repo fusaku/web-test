@@ -537,6 +537,8 @@ function loadYouTubeAPI() {
 function toggleSubtitles() {
   const btn = document.getElementById('subtitle-toggle');
   if (btn.classList.contains('disabled') || subtitles.length === 0) return;
+  // 切换字幕显示状态
+  subtitlesVisible = !subtitlesVisible;
 
   btn.textContent = subtitlesVisible ?
     window.i18n.t('subtitles.hide', '隐藏字幕') :
