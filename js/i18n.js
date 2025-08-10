@@ -2,13 +2,13 @@ class I18n {
   constructor() {
     this.currentLang = this.detectLanguage();
     this.translations = {};
-    this.supportedLanguages = ['zh-CN', 'en'];
+    this.supportedLanguages = ['zh-CN', 'en', 'ja'];
   }
 
   detectLanguage() {
     // 检测浏览器语言
     const browserLang = navigator.language || navigator.languages[0] || 'zh-CN';
-    
+
     // 语言映射
     const langMap = {
       'zh': 'zh-CN',
@@ -16,9 +16,11 @@ class I18n {
       'zh-TW': 'zh-CN',
       'en': 'en',
       'en-US': 'en',
-      'en-GB': 'en'
+      'en-GB': 'en',
+      'ja': 'ja',
+      'ja-JP': 'ja'
     };
-    
+
     return langMap[browserLang] || langMap[browserLang.substring(0, 2)] || 'zh-CN';
   }
 
@@ -26,7 +28,7 @@ class I18n {
     try {
       const response = await fetch(`../lang/${lang}.json`);
       if (!response.ok) throw new Error('Language file not found');
-      
+
       this.translations = await response.json();
       this.currentLang = lang;
       return true;
@@ -49,7 +51,7 @@ class I18n {
     document.querySelectorAll('[data-i18n]').forEach(element => {
       const key = element.getAttribute('data-i18n');
       const translation = this.t(key);
-      
+
       if (element.tagName === 'INPUT' && element.type === 'text') {
         element.placeholder = translation;
       } else {
