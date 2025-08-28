@@ -1,37 +1,66 @@
-## Welcome to GitHub Pages
+# fusaku.github.io 项目简介
 
-You can use the [editor on GitHub](https://github.com/fusaku/fusaku.github.io/edit/main/README.md) to maintain and preview the content for your website in Markdown files.
+## 中文版本
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+### 项目概述
+**fusaku.github.io** 是一个基于GitHub Pages的个人网站项目，采用Jekyll静态网站生成器构建。这是一个简洁优雅的个人展示平台，为开发者提供了一个展示项目、技能和个人信息的专业空间。
 
-### Markdown
+### 主要特性
+- **GitHub Pages集成**：无缝部署，每次提交自动更新网站
+- **Jekyll驱动**：使用强大的静态网站生成器，支持Markdown内容创建
+- **响应式设计**：适配各种设备屏幕尺寸
+- **易于维护**：通过Markdown文件轻松更新内容
+- **自定义主题**：可通过Jekyll主题系统个性化网站外观
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+### 技术栈
+- **前端框架**：Jekyll静态网站生成器
+- **标记语言**：Markdown
+- **托管平台**：GitHub Pages
+- **版本控制**：Git
 
-```markdown
-Syntax highlighted code block
+### 使用场景
+- 个人作品集展示
+- 技术博客发布
+- 项目文档展示
+- 专业简历在线展示
+- 开源项目介绍
 
-# Header 1
-## Header 2
-### Header 3
+---
 
-- Bulleted
-- List
+## 日本語版
 
-1. Numbered
-2. List
+### プロジェクト概要
+**fusaku.github.io** は、GitHub Pagesをベースとした個人ウェブサイトプロジェクトで、Jekyllスタティックサイトジェネレーターを使用して構築されています。開発者がプロジェクト、スキル、個人情報を紹介するための洗練されたプラットフォームを提供します。
 
-**Bold** and _Italic_ and `Code` text
+### 主な特徴
+- **GitHub Pages統合**：シームレスなデプロイメント、コミット毎の自動サイト更新
+- **Jekyll駆動**：強力な静的サイトジェネレーターによるMarkdownコンテンツ作成サポート
+- **レスポンシブデザイン**：様々なデバイス画面サイズに対応
+- **メンテナンス性**：Markdownファイルによる簡単なコンテンツ更新
+- **カスタムテーマ**：Jekyllテーマシステムによるサイト外観のパーソナライゼーション
 
-[Link](url) and ![Image](src)
-```
+### 技術スタック
+- **フロントエンドフレームワーク**：Jekyllスタティックサイトジェネレーター
+- **マークアップ言語**：Markdown
+- **ホスティングプラットフォーム**：GitHub Pages
+- **バージョン管理**：Git
 
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+### 使用用途
+- 個人ポートフォリオの展示
+- 技術ブログの公開
+- プロジェクトドキュメントの表示
+- オンライン履歴書の展示
+- オープンソースプロジェクトの紹介
 
-### Jekyll Themes
+---
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/fusaku/fusaku.github.io/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+### 開始方法 / Getting Started
 
-### Support or Contact
+1. **リポジトリをフォーク**: このプロジェクトをあなたのGitHubアカウントにフォークします
+2. **設定を更新**: `_config.yml`ファイルで個人情報を更新します
+3. **コンテンツを編集**: Markdownファイルであなたの情報を追加・編集します
+4. **テーマをカスタマイズ**: 必要に応じてJekyllテーマを選択・カスタマイズします
+5. **GitHub Pagesを有効化**: リポジトリ設定でGitHub Pagesを有効にします
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+### ライセンス / License
+このプロジェクトはオープンソースプロジェクトです。詳細はLICENSEファイルをご確認ください。
