@@ -346,8 +346,9 @@ body {
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   border: 1px solid #e8e8e8;
-  height: 600px;
   width: 100%;
+  /* 使用 aspect-ratio 确保 16:9 比例 */
+  aspect-ratio: 16 / 9;
 }
 
 .video-wrapper {
@@ -365,6 +366,9 @@ body {
   height: 100%;
   border: none;
   z-index: 1;
+
+  /* 确保视频填满容器 */
+  object-fit: cover;
 }
 
 /* 播放页面加载和错误状态 */
@@ -446,7 +450,11 @@ body {
   }
 
   #video-container {
-    height: calc(100vh - 80px);
+    aspect-ratio: 16 / 9;
+    height: auto;
+    max-height: calc(100vh - 120px);
+    width: calc(100vw - 20px);
+    margin: 0 auto;
   }
 
   #header {
