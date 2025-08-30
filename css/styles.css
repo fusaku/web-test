@@ -639,3 +639,64 @@ body {
 #video-title.scrollable::after {
   opacity: 1;
 }
+
+/* 移动端横屏时标题自动隐藏功能 */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* 横屏时的页面布局调整 */
+  .player-page {
+    padding: 5px;
+    gap: 5px;
+  }
+  
+  /* 标题栏横屏时的样式 */
+  #header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    margin: 0;
+    border-radius: 0;
+    padding: 8px 12px;
+    
+    /* 默认隐藏 */
+    transform: translateY(-100%);
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  /* 显示状态 */
+  #header.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  
+  /* 视频容器横屏时调整 */
+  #video-container {
+    margin-top: 0; /* 移除上边距，因为标题会隐藏 */
+    height: 100vh;
+    max-height: 100vh;
+    width: 100vw;
+    border-radius: 0;
+    aspect-ratio: unset; /* 横屏时取消宽高比限制，充满屏幕 */
+  }
+  
+  /* 确保视频填满整个屏幕 */
+  .video-wrapper {
+    height: 100vh;
+  }
+  
+  #youtube-player,
+  #fallback-iframe {
+    height: 100vh;
+  }
+}
+
+/* 竖屏时保持原样 */
+@media (max-width: 768px) and (orientation: portrait) {
+  #header {
+    position: static; /* 竖屏时正常显示 */
+    transform: none;
+    opacity: 1;
+  }
+}

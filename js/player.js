@@ -704,4 +704,147 @@ document.addEventListener('DOMContentLoaded', async () => {
   await initializeI18n();
   bindEvents();
   initializePage();
+  // 初始化横屏功能
+  initLandscapeMode();
 });
+
+// 移动端横屏标题自动隐藏功能
+let headerTimeout = null;
+let lastScrollY = 0;
+let isLandscape = false;
+
+// 检查是否为移动端横屏
+function checkLandscapeMode() {
+  const isMobile = window.innerWidth <= 768;
+  const isLandscapeOrientation = window.innerWidth > window.innerHeight;
+  return isMobile && isLandscapeOrientation;
+}
+
+// 显示标题
+function showHeader() {
+  const header = document.getElementById('header');
+  if (header && isLandscape) {
+    header.classList.add('show');
+    
+    // 清除之前的定时器
+    if (headerTimeout) {
+      clearTimeout(headerTimeout);
+    }
+    
+    // 3秒后自动隐藏
+    headerTimeout = setTimeout(() => {
+      hideHeader();
+    }, 3000);
+  }
+}
+
+// 隐藏标题
+function hideHeader() {
+  const header = document.getElementById('header');
+  if (header && isLandscape) {
+    header.classList.remove('show');
+  }
+  
+  if (headerTimeout) {
+    clearTimeout(headerTimeout);
+    headerTimeout = null;
+  }
+}
+
+// 处理滚动事件
+function handleScroll() {
+  if (!isLandscape) return;
+  
+  const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+  
+  // 检测向下滚动
+  if (currentScrollY > lastScrollY && currentScrollY > 10) {
+    showHeader();
+  }
+  
+  lastScrollY = currentScrollY;
+}
+
+// 处理屏幕方向变化
+function handleOrientationChange() {
+  // 延迟检查，确保屏幕方向变化完成
+  setTimeout(() => {
+    const wasLandscape = isLandscape;
+    isLandscape = checkLandscapeMode();
+    
+    console.log('Orientation changed:', isLandscape ? 'landscape' : 'portrait');
+    
+    const header = document.getElementById('header');
+    
+    if (isLandscape) {
+      // 切换到横屏：隐藏标题
+      hideHeader();
+    } else {
+      // 切换到竖屏：显示标题并清理样式
+      if (header) {
+        header.classList.remove('show');
+        if (headerTimeout) {
+          clearTimeout(headerTimeout);
+          headerTimeout = null;
+        }
+      }
+    }
+  }, 100);
+}
+
+// 处理触摸事件（移动端可能不会触发scroll事件）
+let touchStartY = 0;
+let touchStartTime = 0;
+
+function handleTouchStart(e) {
+  if (!isLandscape) return;
+  
+  touchStartY = e.touches[0].clientY;
+  touchStartTime = Date.now();
+}
+
+function handleTouchMove(e) {
+  if (!isLandscape) return;
+  
+  const touchCurrentY = e.touches[0].clientY;
+  const deltaY = touchCurrentY - touchStartY;
+  const deltaTime = Date.now() - touchStartTime;
+  
+  // 检测快速向下滑动
+  if (deltaY > 30 && deltaTime < 500) {
+    showHeader();
+  }
+}
+
+// 初始化横屏功能
+function initLandscapeMode() {
+  isLandscape = checkLandscapeMode();
+  
+  // 监听滚动事件
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  
+  // 监听屏幕方向变化
+  window.addEventListener('orientationchange', handleOrientationChange);
+  window.addEventListener('resize', handleOrientationChange);
+  
+  // 监听触摸事件
+  document.addEventListener('touchstart', handleTouchStart, { passive: true });
+  document.addEventListener('touchmove', handleTouchMove, { passive: true });
+  
+  // 点击视频区域时显示/隐藏标题
+  const videoContainer = document.getElementById('video-container');
+  if (videoContainer) {
+    videoContainer.addEventListener('click', () => {
+      if (isLandscape) {
+        const header = document.getElementById('header');
+        if (header.classList.contains('show')) {
+          hideHeader();
+        } else {
+          showHeader();
+        }
+      }
+    });
+  }
+  
+  console.log('Landscape mode initialized:', isLandscape);
+}
