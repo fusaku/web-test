@@ -709,15 +709,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // 移动端横屏标题自动隐藏功能
+// iPhone Safari 兼容的横屏标题自动隐藏功能
 let headerTimeout = null;
 let lastScrollY = 0;
 let isLandscape = false;
+let lastTouchY = 0;
+let touchStartTime = 0;
 
-// 检查是否为移动端横屏
+// 检查是否为移动端横屏 - iPhone Safari 兼容版本
 function checkLandscapeMode() {
-  const isMobile = window.innerWidth <= 768;
+  const isMobile = window.innerWidth <= 926; // iPhone 14 Pro Max 宽度
   const isLandscapeOrientation = window.innerWidth > window.innerHeight;
-  return isMobile && isLandscapeOrientation;
+  const isShortHeight = window.innerHeight <= 428; // iPhone 横屏高度
+  
+  return isMobile && isLandscapeOrientation && isShortHeight;
 }
 
 // 显示标题
@@ -751,36 +756,70 @@ function hideHeader() {
   }
 }
 
-// 处理滚动事件
+// 处理滚动和触摸事件 - iPhone Safari 优化版本
 function handleScroll() {
   if (!isLandscape) return;
   
-  const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+  const currentScrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
   
   // 检测向下滚动
-  if (currentScrollY > lastScrollY && currentScrollY > 10) {
+  if (currentScrollY > lastScrollY && Math.abs(currentScrollY - lastScrollY) > 5) {
+    console.log('向下滚动，显示标题');
     showHeader();
   }
   
   lastScrollY = currentScrollY;
 }
 
-// 处理屏幕方向变化
+// iPhone Safari 触摸事件处理
+function handleTouchStart(e) {
+  if (!isLandscape) return;
+  
+  lastTouchY = e.touches[0].clientY;
+  touchStartTime = Date.now();
+}
+
+function handleTouchMove(e) {
+  if (!isLandscape) return;
+  
+  const currentTouchY = e.touches[0].clientY;
+  const deltaY = currentTouchY - lastTouchY;
+  const deltaTime = Date.now() - touchStartTime;
+  
+  // 检测向下滑动手势
+  if (deltaY > 20 && deltaTime < 300) {
+    console.log('向下滑动手势，显示标题');
+    showHeader();
+  }
+  
+  lastTouchY = currentTouchY;
+}
+
+// 处理屏幕方向变化 - iPhone Safari 特殊处理
 function handleOrientationChange() {
-  // 延迟检查，确保屏幕方向变化完成
+  // 延迟检查，确保屏幕尺寸变化完成
   setTimeout(() => {
     const wasLandscape = isLandscape;
     isLandscape = checkLandscapeMode();
     
-    console.log('Orientation changed:', isLandscape ? 'landscape' : 'portrait');
+    console.log('方向变化检测:', {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      isLandscape: isLandscape,
+      wasLandscape: wasLandscape
+    });
     
     const header = document.getElementById('header');
     
-    if (isLandscape) {
+    if (isLandscape && !wasLandscape) {
       // 切换到横屏：隐藏标题
+      console.log('切换到横屏模式');
       hideHeader();
-    } else {
-      // 切换到竖屏：显示标题并清理样式
+      // 重置滚动位置
+      lastScrollY = 0;
+    } else if (!isLandscape && wasLandscape) {
+      // 切换到竖屏：清理横屏状态
+      console.log('切换到竖屏模式');
       if (header) {
         header.classList.remove('show');
         if (headerTimeout) {
@@ -789,43 +828,41 @@ function handleOrientationChange() {
         }
       }
     }
-  }, 100);
+  }, 200); // 增加延迟时间，确保iPhone Safari完成方向切换
 }
 
-// 处理触摸事件（移动端可能不会触发scroll事件）
-let touchStartY = 0;
-let touchStartTime = 0;
-
-function handleTouchStart(e) {
-  if (!isLandscape) return;
-  
-  touchStartY = e.touches[0].clientY;
-  touchStartTime = Date.now();
-}
-
-function handleTouchMove(e) {
-  if (!isLandscape) return;
-  
-  const touchCurrentY = e.touches[0].clientY;
-  const deltaY = touchCurrentY - touchStartY;
-  const deltaTime = Date.now() - touchStartTime;
-  
-  // 检测快速向下滑动
-  if (deltaY > 30 && deltaTime < 500) {
-    showHeader();
-  }
-}
-
-// 初始化横屏功能
+// 初始化横屏功能 - iPhone Safari 优化版本
 function initLandscapeMode() {
   isLandscape = checkLandscapeMode();
   
-  // 监听滚动事件
-  window.addEventListener('scroll', handleScroll, { passive: true });
+  console.log('初始化横屏功能:', {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    isLandscape: isLandscape,
+    userAgent: navigator.userAgent
+  });
   
-  // 监听屏幕方向变化
+  // 监听滚动事件 - iPhone Safari 兼容
+  let ticking = false;
+  function optimizedScrollHandler() {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        handleScroll();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }
+  window.addEventListener('scroll', optimizedScrollHandler, { passive: true });
+  
+  // 监听屏幕方向变化 - 多重检测确保iPhone Safari兼容性
   window.addEventListener('orientationchange', handleOrientationChange);
   window.addEventListener('resize', handleOrientationChange);
+  
+  // iPhone Safari 特殊事件
+  if (window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', handleOrientationChange);
+  }
   
   // 监听触摸事件
   document.addEventListener('touchstart', handleTouchStart, { passive: true });
@@ -834,10 +871,24 @@ function initLandscapeMode() {
   // 点击视频区域时显示/隐藏标题
   const videoContainer = document.getElementById('video-container');
   if (videoContainer) {
-    videoContainer.addEventListener('click', () => {
-      if (isLandscape) {
+    // iPhone Safari 需要特殊处理点击事件
+    videoContainer.addEventListener('touchend', (e) => {
+      if (isLandscape && e.target === videoContainer) {
+        e.preventDefault();
         const header = document.getElementById('header');
-        if (header.classList.contains('show')) {
+        if (header && header.classList.contains('show')) {
+          hideHeader();
+        } else {
+          showHeader();
+        }
+      }
+    }, { passive: false });
+    
+    // 备用点击事件
+    videoContainer.addEventListener('click', (e) => {
+      if (isLandscape && e.target === videoContainer) {
+        const header = document.getElementById('header');
+        if (header && header.classList.contains('show')) {
           hideHeader();
         } else {
           showHeader();
@@ -846,5 +897,11 @@ function initLandscapeMode() {
     });
   }
   
-  console.log('Landscape mode initialized:', isLandscape);
+  // 添加调试信息
+  setTimeout(() => {
+    console.log('横屏功能初始化完成，当前状态:', isLandscape);
+    if (isLandscape) {
+      console.log('当前为横屏模式，标题应该隐藏');
+    }
+  }, 500);
 }
