@@ -711,10 +711,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 移动端横屏标题自动隐藏功能
 // iPhone Safari 兼容的横屏标题自动隐藏功能
 let headerTimeout = null;
-let lastScrollY = 0;
 let isLandscape = false;
-let lastTouchY = 0;
-let touchStartTime = 0;
 
 // 检查是否为移动端横屏 - iPhone Safari 兼容版本
 function checkLandscapeMode() {
@@ -758,18 +755,10 @@ function handleOrientationChange() {
       // 切换到横屏：隐藏标题
       console.log('切换到横屏模式');
       hideHeader();
-      // 重置滚动位置
-      lastScrollY = 0;
     } else if (!isLandscape && wasLandscape) {
-      // 切换到竖屏：清理横屏状态
+      // 切换到竖屏：隐藏标题
       console.log('切换到竖屏模式');
-      if (header) {
-        header.classList.remove('show');
-        if (headerTimeout) {
-          clearTimeout(headerTimeout);
-          headerTimeout = null;
-        }
-      }
+      hideHeader();
     }
   }, 200); // 增加延迟时间，确保iPhone Safari完成方向切换
 }
