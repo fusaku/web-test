@@ -649,6 +649,7 @@ body {
     gap: 0;
     height: 100vh;
     overflow: hidden;
+    background: #1a1a1a; /* 深灰色背景，不会让弹幕消失 */
   }
   
   /* 标题栏横屏时的样式 */
@@ -685,12 +686,14 @@ body {
     border-radius: 0;
     border: none;
     box-shadow: none;
+    background: #1a1a1a; /* 与页面背景一致的深灰色 */
   }
   
   /* 确保视频填满整个屏幕 */
   .video-wrapper {
     height: 100vh;
     width: 100vw;
+    background: #1a1a1a; /* 深灰色背景 */
   }
   
   #youtube-player,
