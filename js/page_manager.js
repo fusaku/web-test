@@ -244,16 +244,22 @@ class LandscapeManager {
 let pageManager = null;
 let landscapeManager = null;
 
-// 全局函数（供HTML调用）
+// 全局函数（供HTML和YouTube API调用）
 window.onYouTubeIframeAPIReady = function() {
+  console.log('YouTube API ready callback triggered');
   if (pageManager && pageManager.videoPlayer) {
-    pageManager.videoPlayer.onYouTubeIframeAPIReady();
+    pageManager.videoPlayer.apiReady = true;
+    if (pageManager.videoPlayer.currentVideoId) {
+      pageManager.videoPlayer.initializeYouTubePlayer();
+    }
   }
 };
 
 window.retryLoad = function() {
   if (pageManager) {
     pageManager.retryLoad();
+  } else {
+    location.reload();
   }
 };
 
@@ -261,11 +267,11 @@ window.retryLoad = function() {
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded, initializing player...');
   
-  // 创建管理器实例
-  pageManager = new PageManager();
-  landscapeManager = new LandscapeManager();
-
   try {
+    // 创建管理器实例
+    pageManager = new PageManager();
+    landscapeManager = new LandscapeManager();
+
     // 初始化多语言
     await pageManager.initializeI18n();
     
@@ -280,6 +286,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     
   } catch (error) {
     console.error('Page initialization failed:', error);
-    pageManager.videoPlayer.showError(error.message);
+    if (pageManager && pageManager.videoPlayer) {
+      pageManager.videoPlayer.showError(error.message);
+    } else {
+      // fallback error display
+      const errorEl = document.getElementById('error-message');
+      if (errorEl) {
+        errorEl.textContent = error.message;
+        document.getElementById('error').classList.remove('hidden');
+        document.getElementById('loading').classList.add('hidden');
+      }
+    }
   }
 });

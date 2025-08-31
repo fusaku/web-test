@@ -37,12 +37,8 @@ class VideoPlayer {
       }
 
       console.log('Loading YouTube API...');
-      window.onYouTubeIframeAPIReady = () => {
-        console.log('YouTube API callback triggered');
-        this.apiReady = true;
-        resolve();
-      };
-
+      
+      // 不要在这里设置全局回调，让 page-manager 处理
       const script = document.createElement('script');
       script.src = 'https://www.youtube.com/iframe_api';
       script.async = true;
@@ -54,6 +50,18 @@ class VideoPlayer {
         reject(new Error(window.i18n.t('error.ytApiLoadFailed', 'YouTube API脚本加载失败')));
       };
       document.head.appendChild(script);
+
+      // 检查API是否就绪的轮询机制
+      const checkApiReady = () => {
+        if (window.YT && window.YT.Player) {
+          this.apiReady = true;
+          resolve();
+        } else {
+          setTimeout(checkApiReady, 100);
+        }
+      };
+
+      setTimeout(checkApiReady, 100);
 
       setTimeout(() => {
         if (!this.apiReady) {
