@@ -198,38 +198,35 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   };
 }
 
-// 检查水平重叠 - 基于位置而非时间
+// 检查水平重叠 - 基于字幕左边缘与屏幕右边缘的距离
 function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding) {
-  const newRect = {
-    x: startX,
-    y: y,
-    width: textWidth + padding,
-    height: textHeight + padding
-  };
+  const minDistance = 120; // 前一个字幕左边缘需要离开屏幕右边缘的最小距离
 
-  const minDistance = 100; // 前一个字幕的左边缘需要离开屏幕右边的最小距离
-
-  for (const area of activeSubtitleAreas.values()) {
-    // 检查垂直重叠
-    const verticalOverlap = !(newRect.y + newRect.height < area.y || area.y + area.height < newRect.y);
+  for (const [subId, area] of activeSubtitleAreas.entries()) {
+    // 检查是否在同一行（垂直重叠）
+    const verticalOverlap = !(y + textHeight + padding < area.y || area.y + area.height < y);
 
     if (verticalOverlap) {
-      // 同一行，检查前一个字幕是否已经移动足够远
-      // 获取前一个字幕当前的实际位置
-      const previousSubElement = document.querySelector(`[data-subtitle-id="${area.subId}"]`);
+      // 同一行，获取前一个字幕的当前位置
+      const previousSubElement = document.querySelector(`[data-subtitle-id="${subId}"]`);
       if (previousSubElement) {
+        // 获取前一个字幕的当前左边缘位置
         const currentLeft = parseFloat(previousSubElement.style.left) || area.x;
-        const rightEdge = currentLeft + area.width;
 
-        // 如果前一个字幕的右边缘还在屏幕右边的安全距离内，就不能放置新字幕
-        if (rightEdge > startX - minDistance) {
-          return true; // 有冲突
+        // 计算左边缘与屏幕右边缘的距离
+        const distanceFromRightEdge = startX - currentLeft; // startX 就是屏幕右边缘
+
+        console.log(`同行检测 - 前字幕左边缘: ${currentLeft}, 屏幕右边: ${startX}, 距离: ${distanceFromRightEdge}, 需要: ${minDistance}`);
+
+        // 如果距离不够，就有冲突
+        if (distanceFromRightEdge < minDistance) {
+          return true; // 有冲突，需要换行
         }
       }
     }
   }
 
-  return false; // 没有冲突
+  return false; // 没有冲突，可以在这一行显示
 }
 
 // 计算字幕文本的实际宽度
