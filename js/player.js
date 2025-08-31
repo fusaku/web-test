@@ -10,7 +10,7 @@ let loadingTimeout = null;
 let usingFallback = false;
 let apiReady = false;
 // 新增：字幕行占用管理和移动计算
-let occupiedLines = new Map(); // Map<行号, Array<{endTime: number, rightEdge: number}>>
+let occupiedAreas = []; // Array<{x, y, width, height, endTime, subId}>
 let maxLines = 20; // 最大行数
 
 // 用于跟踪已显示的字幕，避免重复创建
@@ -132,87 +132,72 @@ function parseASSSubtitles(assContent) {
   return subtitleLines.sort((a, b) => a.start - b.start);
 }
 
+// 检测两个矩形是否重叠（考虑间距）
+function isRectangleOverlap(rect1, rect2, gap = 0) {
+  return !(rect1.x + rect1.width + gap <= rect2.x ||
+    rect2.x + rect2.width + gap <= rect1.x ||
+    rect1.y + rect1.height <= rect2.y ||
+    rect2.y + rect2.height <= rect1.y);
+}
+
 // 查找可用的行号和水平位置 - 支持同行多字幕不重叠
 function findAvailablePosition(currentTime, textWidth, containerWidth) {
   const overlay = document.getElementById('subtitle-overlay');
   const lineHeight = window.innerWidth > 768 ? 25 : 20;
   const topMargin = 20;
   const bottomMargin = 60;
-  const horizontalGap = Math.max(20, containerWidth * 0.03); // 至少20px，或容器宽度的3%
+  const horizontalGap = Math.max(20, containerWidth * 0.03);
 
   // 获取播放器实际高度
   const containerHeight = overlay ? overlay.offsetHeight : (window.innerWidth > 768 ? 675 : window.innerHeight * 0.6);
-
-  // 计算可用的垂直空间和最大行数
   const availableHeight = containerHeight - topMargin - bottomMargin;
   maxLines = Math.max(5, Math.min(Math.floor(availableHeight / lineHeight), 30));
 
-  // 清理过期的行占用记录
-  for (const [lineNum, infos] of occupiedLines.entries()) {
-    occupiedLines.set(lineNum, infos.filter(info => currentTime <= info.endTime));
-    if (occupiedLines.get(lineNum).length === 0) {
-      occupiedLines.delete(lineNum);
-    }
-  }
+  // 清理过期的占用区域
+  occupiedAreas = occupiedAreas.filter(area => currentTime <= area.endTime);
 
-  // 第一遍：优先在已占用行中寻找间隙（实现同行多字幕）
+  // 尝试在每一行找位置
   for (let line = 0; line < maxLines; line++) {
-    const lineOccupancy = occupiedLines.get(line) || [];
+    const yPos = topMargin + line * lineHeight;
 
-    // 在这里加上空行检查
-    if (lineOccupancy.length === 0) {
-      return { line: line, startX: containerWidth };
-    }
-    if (lineOccupancy.length > 0) {
-      // 按右边缘位置排序，找到可以插入的位置
-      lineOccupancy.sort((a, b) => b.rightEdge - a.rightEdge);
+    // 从右往左尝试放置
+    for (let x = containerWidth; x >= textWidth + horizontalGap; x -= 10) {
+      const newArea = {
+        x: x - textWidth,
+        y: yPos,
+        width: textWidth,
+        height: lineHeight
+      };
 
-      // 检查是否可以在最右边放置新字幕
-      const rightmostEdge = lineOccupancy[0].rightEdge;
-      if (rightmostEdge + horizontalGap + textWidth <= containerWidth) {
-        return { line: line, startX: containerWidth };
-      }
-
-      // 检查字幕之间的间隙
-      for (let i = 1; i < lineOccupancy.length; i++) {
-        const leftSubtitle = lineOccupancy[i];
-        const rightSubtitle = lineOccupancy[i - 1];
-        const gapStart = leftSubtitle.rightEdge + horizontalGap;
-        const gapEnd = rightSubtitle.rightEdge - horizontalGap - textWidth;
-
-        if (gapEnd >= gapStart && gapEnd - gapStart >= textWidth) {
-          return { line: line, startX: gapEnd + textWidth };
+      // 检查是否与现有字幕重叠
+      let hasOverlap = false;
+      for (const area of occupiedAreas) {
+        if (isRectangleOverlap(newArea, area, horizontalGap)) {
+          hasOverlap = true;
+          break;
         }
       }
+
+      if (!hasOverlap) {
+        return { line: line, startX: x };
+      }
     }
   }
 
-  // 第二遍：如果没有合适的间隙，使用空行
-  for (let line = 0; line < maxLines; line++) {
-    const lineOccupancy = occupiedLines.get(line) || [];
-    if (lineOccupancy.length === 0) {
-      return { line: line, startX: containerWidth };
-    }
-  }
-
-  for (let line = 0; line < maxLines; line++) {
-    const lineOccupancy = occupiedLines.get(line) || [];
-    if (lineOccupancy.length === 0) {
-      return { line: line, startX: containerWidth };
-    }
-  }
-  // 如果所有行都没有空间，使用第一行并覆盖最早结束的字幕
+  // 如果找不到位置，使用第一行
   return { line: 0, startX: containerWidth };
 }
 
 // 占用指定行的指定位置
-function occupyLinePosition(lineNum, endTime, rightEdge, subId) {
-  if (lineNum >= 0 && lineNum < maxLines) {
-    if (!occupiedLines.has(lineNum)) {
-      occupiedLines.set(lineNum, []);
-    }
-    occupiedLines.get(lineNum).push({ endTime, rightEdge, subId });
-  }
+function occupyArea(x, y, width, height, endTime, subId) {
+  occupiedAreas.push({
+    x: x,
+    y: y,
+    width: width,
+    height: height,
+    endTime: endTime,
+    subId: subId
+  });
 }
 
 
@@ -454,10 +439,9 @@ function displayCurrentSubtitle(currentTime) {
 
         // 计算动画结束时字幕右边缘的位置（用于占用记录）
         const endTime = currentTime + finalDuration;
-        const finalRightEdge = position.startX - totalMoveDistance + textWidth;
 
         // 占用这个位置
-        occupyLinePosition(position.line, endTime, position.startX, subId);
+        occupyArea(position.startX - textWidth, yPos, textWidth, lineHeight, endTime, subId);
 
         // 设置字体大小和位置
         div.style.fontSize = `${fontSize}px`;
