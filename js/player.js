@@ -138,7 +138,7 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   const lineHeight = window.innerWidth > 768 ? 25 : 20;
   const topMargin = 20;
   const bottomMargin = 60;
-  const horizontalGap = 10; // 字幕间的水平间距
+  const horizontalGap = Math.max(20, containerWidth * 0.03); // 至少20px，或容器宽度的3%
 
   // 获取播放器实际高度
   const containerHeight = overlay ? overlay.offsetHeight : (window.innerWidth > 768 ? 675 : window.innerHeight * 0.6);
@@ -159,8 +159,8 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   for (let line = 0; line < maxLines; line++) {
     const lineOccupancy = occupiedLines.get(line) || [];
 
-    // 如果这一行没有任何字幕，可以从右边开始
-    if (lineOccupancy.length === 0) {
+    // 如果这一行有任何字幕，从右边开始
+    if (lineOccupancy.length > 0) {
       return { line: line, startX: containerWidth };
     }
 
@@ -186,6 +186,12 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
     }
   }
 
+  for (let line = 0; line < maxLines; line++) {
+    const lineOccupancy = occupiedLines.get(line) || [];
+    if (lineOccupancy.length === 0) {
+      return { line: line, startX: containerWidth };
+    }
+  }
   // 如果所有行都没有空间，使用第一行并覆盖最早结束的字幕
   return { line: 0, startX: containerWidth };
 }
