@@ -9,6 +9,9 @@ let updateInterval = null;
 let loadingTimeout = null;
 let usingFallback = false;
 let apiReady = false;
+// 新增：字幕行占用管理和移动计算
+let occupiedLines = new Map(); // 记录每行的占用情况 Map<行号, {endTime: number, subId: string}>
+let maxLines = 20; // 最大行数
 
 // 用于跟踪已显示的字幕，避免重复创建
 let activeSubtitles = new Set();
@@ -129,6 +132,88 @@ function parseASSSubtitles(assContent) {
   return subtitleLines.sort((a, b) => a.start - b.start);
 }
 
+// 查找可用的行号 - 根据播放器大小动态计算
+function findAvailableLine(currentTime, duration) {
+  const overlay = document.getElementById('subtitle-overlay');
+  const lineHeight = window.innerWidth > 768 ? 25 : 20;
+  const topMargin = 20; // 顶部边距
+  const bottomMargin = 60; // 底部边距，避免遮挡控制栏
+
+  // 获取播放器实际高度
+  const containerHeight = overlay ? overlay.offsetHeight : (window.innerWidth > 768 ? 675 : window.innerHeight * 0.6);
+
+  // 计算可用的垂直空间
+  const availableHeight = containerHeight - topMargin - bottomMargin;
+
+  // 动态计算最大行数
+  maxLines = Math.floor(availableHeight / lineHeight);
+
+  // 确保最小有5行，最多不超过30行
+  maxLines = Math.max(5, Math.min(maxLines, 30));
+
+  console.log(`Container height: ${containerHeight}, Available lines: ${maxLines}`);
+
+  // 清理过期的行占用记录
+  for (const [lineNum, info] of occupiedLines.entries()) {
+    if (currentTime > info.endTime) {
+      occupiedLines.delete(lineNum);
+    }
+  }
+
+  // 查找第一个可用的行
+  for (let line = 0; line < maxLines; line++) {
+    if (!occupiedLines.has(line)) {
+      return line;
+    }
+  }
+
+  // 如果所有行都被占用，使用最早结束的行
+  let earliestLine = 0;
+  let earliestTime = Infinity;
+  for (const [lineNum, info] of occupiedLines.entries()) {
+    if (info.endTime < earliestTime) {
+      earliestTime = info.endTime;
+      earliestLine = lineNum;
+    }
+  }
+
+  return earliestLine;
+}
+
+// 占用指定行
+function occupyLine(lineNum, endTime, subId) {
+  // 确保行号在有效范围内
+  if (lineNum >= 0 && lineNum < maxLines) {
+    occupiedLines.set(lineNum, { endTime: endTime, subId: subId });
+  }
+}
+
+// 计算字幕文本的实际宽度
+function calculateSubtitleWidth(text, fontSize = 16) {
+  // 创建一个临时的测量元素
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  context.font = `600 ${fontSize}px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`;
+
+  // 测量文本宽度
+  const metrics = context.measureText(text);
+  return metrics.width;
+}
+
+// 计算弹幕需要的移动距离
+function calculateMoveDistance(text, containerWidth) {
+  const fontSize = window.innerWidth > 768 ? 16 : 14;
+  const textWidth = calculateSubtitleWidth(text, fontSize);
+  const baseDistance = 200; // 基础移动距离
+  const padding = 50; // 额外的缓冲距离
+
+  // 移动距离 = 容器宽度 + 文本宽度 + 缓冲距离
+  const totalDistance = containerWidth + textWidth + padding;
+
+  console.log(`Text: "${text}", width: ${textWidth}, move distance: ${totalDistance}`);
+  return totalDistance;
+}
+
 // 改进的字幕加载
 async function loadSubtitles(videoId) {
   try {
@@ -176,6 +261,10 @@ function displayCurrentSubtitle(currentTime) {
 
   const overlay = document.getElementById('subtitle-overlay');
 
+  // 确保容器有有效的高度
+  if (!overlay || overlay.offsetHeight === 0) {
+    return;
+  }
   if (!subtitlesVisible || subtitles.length === 0) {
     // 清除所有字幕
     overlay.innerHTML = '';
@@ -308,21 +397,30 @@ function displayCurrentSubtitle(currentTime) {
           div.style.top = `${endY}px`;
         });
       } else {
-        // 默认弹幕处理 - 移动端优化
+        // 默认弹幕处理 - 防重叠优化 + 动态移动距离
         const containerWidth = overlay.offsetWidth || (window.innerWidth > 768 ? 1200 : window.innerWidth);
         const duration = sub.end - sub.start;
-        // 移动端使用更紧密的行距
         const lineHeight = window.innerWidth > 768 ? 25 : 20;
-        const maxLines = window.innerWidth > 768 ? 20 : 15;
-        const yPos = 20 + ((index + lineIndex) % maxLines) * lineHeight;
 
+        // 查找可用的行号
+        const availableLine = findAvailableLine(currentTime, duration);
+        const yPos = 20 + availableLine * lineHeight;
+
+        // 占用这一行
+        occupyLine(availableLine, sub.end, subId);
+
+        // 计算这个字幕需要移动的距离
+        const cleanTextForMeasure = line.replace(/\{[^}]*\}/g, '').trim();
+        const moveDistance = calculateMoveDistance(cleanTextForMeasure, containerWidth);
+
+        // 设置初始位置和动画
         div.style.left = `${containerWidth}px`;
         div.style.top = `${yPos}px`;
         div.style.transition = `left ${duration}s linear`;
 
-        // 开始弹幕动画
+        // 开始弹幕动画 - 使用计算出的移动距离
         requestAnimationFrame(() => {
-          div.style.left = `-200px`;
+          div.style.left = `-${moveDistance}px`;
         });
       }
 
@@ -372,6 +470,14 @@ function displayCurrentSubtitle(currentTime) {
     activeSubtitles.delete(subId);
     subtitleElements.delete(subId);
     processedSubtitles.delete(subId); // 清理已处理记录，允许重新播放
+
+    // 清理行占用记录
+    for (const [lineNum, info] of occupiedLines.entries()) {
+      if (info.subId === subId) {
+        occupiedLines.delete(lineNum);
+        break;
+      }
+    }
   });
 }
 
@@ -608,6 +714,13 @@ function bindEvents() {
     }
   });
   initTitleScroll();
+
+  // 监听窗口大小变化，重新计算最大行数
+  window.addEventListener('resize', () => {
+    // 清空当前行占用，让字幕重新分配
+    occupiedLines.clear();
+    console.log('Window resized, cleared line occupancy');
+  });
 }
 
 // 新增函数：初始化标题滚动
@@ -718,7 +831,7 @@ function checkLandscapeMode() {
   const isMobile = window.innerWidth <= 926; // iPhone 14 Pro Max 宽度
   const isLandscapeOrientation = window.innerWidth > window.innerHeight;
   const isShortHeight = window.innerHeight <= 428; // iPhone 横屏高度
-  
+
   return isMobile && isLandscapeOrientation && isShortHeight;
 }
 
@@ -728,7 +841,7 @@ function hideHeader() {
   if (header && isLandscape) {
     header.classList.remove('show');
   }
-  
+
   if (headerTimeout) {
     clearTimeout(headerTimeout);
     headerTimeout = null;
@@ -741,16 +854,16 @@ function handleOrientationChange() {
   setTimeout(() => {
     const wasLandscape = isLandscape;
     isLandscape = checkLandscapeMode();
-    
+
     console.log('方向变化检测:', {
       width: window.innerWidth,
       height: window.innerHeight,
       isLandscape: isLandscape,
       wasLandscape: wasLandscape
     });
-    
+
     const header = document.getElementById('header');
-    
+
     if (isLandscape && !wasLandscape) {
       // 切换到横屏：隐藏标题
       console.log('切换到横屏模式');
