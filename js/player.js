@@ -198,35 +198,58 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   };
 }
 
-// 检查水平重叠 - 基于字幕左边缘与屏幕右边缘的距离
+// 检查水平重叠 - 结合体积检测和距离检测
 function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding) {
-  const minDistance = 120; // 前一个字幕左边缘需要离开屏幕右边缘的最小距离
+  const minDistance = 120; // 前一个字幕左边缘离开屏幕右边缘的最小距离
+
+  const newRect = {
+    x: startX,
+    y: y,
+    width: textWidth + padding,
+    height: textHeight + padding
+  };
 
   for (const [subId, area] of activeSubtitleAreas.entries()) {
-    // 检查是否在同一行（垂直重叠）
-    const verticalOverlap = !(y + textHeight + padding < area.y || area.y + area.height < y);
-
+    // 先检查垂直是否重叠（是否同一行）
+    const verticalOverlap = !(newRect.y + newRect.height < area.y || area.y + area.height < newRect.y);
+    
     if (verticalOverlap) {
-      // 同一行，获取前一个字幕的当前位置
-      const previousSubElement = document.querySelector(`[data-subtitle-id="${subId}"]`);
-      if (previousSubElement) {
+      // 同一行，获取前一个字幕的实时位置
+      const previousElement = subtitleElements.get(subId);
+      if (previousElement && previousElement.parentNode) {
         // 获取前一个字幕的当前左边缘位置
-        const currentLeft = parseFloat(previousSubElement.style.left) || area.x;
-
-        // 计算左边缘与屏幕右边缘的距离
-        const distanceFromRightEdge = startX - currentLeft; // startX 就是屏幕右边缘
-
-        console.log(`同行检测 - 前字幕左边缘: ${currentLeft}, 屏幕右边: ${startX}, 距离: ${distanceFromRightEdge}, 需要: ${minDistance}`);
-
-        // 如果距离不够，就有冲突
-        if (distanceFromRightEdge < minDistance) {
-          return true; // 有冲突，需要换行
+        const currentLeft = parseFloat(previousElement.style.left) || area.x;
+        
+        // 检查距离是否足够
+        const distanceFromRight = startX - currentLeft;
+        if (distanceFromRight < minDistance) {
+          console.log(`同行距离不够 - 前字幕左边缘: ${currentLeft}, 距离: ${distanceFromRight}, 需要: ${minDistance}`);
+          return true; // 距离不够，有冲突
         }
+
+        // 距离足够了，再进行完整的体积检测
+        const previousRect = {
+          x: currentLeft,
+          y: area.y,
+          width: area.width,
+          height: area.height
+        };
+
+        // 完整的矩形重叠检测
+        if (isRectOverlapping(newRect, previousRect)) {
+          console.log(`同行体积重叠 - 新字幕区域:`, newRect, `前字幕区域:`, previousRect);
+          return true; // 体积重叠，有冲突
+        }
+      }
+    } else {
+      // 不同行，只做体积检测
+      if (isRectOverlapping(newRect, area)) {
+        return true; // 体积重叠
       }
     }
   }
-
-  return false; // 没有冲突，可以在这一行显示
+  
+  return false; // 没有冲突
 }
 
 // 计算字幕文本的实际宽度
