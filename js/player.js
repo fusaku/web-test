@@ -214,9 +214,24 @@ function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding, line,
     const verticalOverlap = !(newRect.y + newRect.height < area.y || area.y + area.height < newRect.y);
     const currentLineSpeed = lineMoveSpeeds.get(line);
 
-    if (currentLineSpeed && moveSpeed > currentLineSpeed * 1.03) { // 3%的容差
-      console.log(`速度冲突 - 当前行速度: ${currentLineSpeed}, 新字幕速度: ${moveSpeed}, 跳过第${line}行`);
-      continue; // 跳过这一行，寻找下一行
+    if (currentLineSpeed && moveSpeed > currentLineSpeed) {
+      // 计算与前一个字幕的间距
+      const previousSubElement = subtitleElements.get(subId);
+      if (previousSubElement) {
+        const computedStyle = window.getComputedStyle(previousSubElement);
+        const currentLeft = parseFloat(computedStyle.left) || area.x;
+        const d = startX - currentLeft; // 屏幕右边缘 - 前字幕左边缘
+
+        const v1 = currentLineSpeed;
+        const v2 = moveSpeed;
+        const t1 = area.endTime - currentTime;
+
+        // 如果新字幕会在前字幕消失前追上 → 必须换行
+        if ((v2 - v1) > 0 && (d / (v2 - v1)) < t1) {
+          console.log(`追尾风险: 行${line}, v1=${v1}, v2=${v2}, d=${d}, t1=${t1}`);
+          continue;
+        }
+      }
     }
     if (verticalOverlap) {
       // 同一行，获取前一个字幕的当前位置
