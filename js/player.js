@@ -10,8 +10,7 @@ let loadingTimeout = null;
 let usingFallback = false;
 let apiReady = false;
 // 新增：字幕行占用管理和移动计算
-let occupiedLines = new Map(); // Map<行号, Array<{endTime: number, rightEdge: number}>>
-let maxLines = 20; // 最大行数
+let activeSubtitleAreas = new Map(); // Map<subId, {x, y, width, height, endTime}>
 
 // 用于跟踪已显示的字幕，避免重复创建
 let activeSubtitles = new Set();
@@ -135,86 +134,11 @@ function parseASSSubtitles(assContent) {
 // 查找可用的行号和水平位置 - 支持同行多字幕不重叠
 function findAvailablePosition(currentTime, textWidth, containerWidth) {
   const overlay = document.getElementById('subtitle-overlay');
-  const lineHeight = window.innerWidth > 768 ? 25 : 20;
-  const topMargin = 20;
-  const bottomMargin = 60;
-  const horizontalGap = Math.max(20, containerWidth * 0.03); // 至少20px，或容器宽度的3%
-
-  // 获取播放器实际高度
   const containerHeight = overlay ? overlay.offsetHeight : (window.innerWidth > 768 ? 675 : window.innerHeight * 0.6);
+  const textHeight = window.innerWidth > 768 ? 20 : 16;
 
-  // 计算可用的垂直空间和最大行数
-  const availableHeight = containerHeight - topMargin - bottomMargin;
-  maxLines = Math.max(5, Math.min(Math.floor(availableHeight / lineHeight), 30));
-
-  // 清理过期的行占用记录
-  for (const [lineNum, infos] of occupiedLines.entries()) {
-    occupiedLines.set(lineNum, infos.filter(info => currentTime <= info.endTime));
-    if (occupiedLines.get(lineNum).length === 0) {
-      occupiedLines.delete(lineNum);
-    }
-  }
-
-  // 第一遍：优先在已占用行中寻找间隙（实现同行多字幕）
-  for (let line = 0; line < maxLines; line++) {
-    const lineOccupancy = occupiedLines.get(line) || [];
-
-    // 在这里加上空行检查
-    if (lineOccupancy.length === 0) {
-      return { line: line, startX: containerWidth };
-    }
-    if (lineOccupancy.length > 0) {
-      // 按右边缘位置排序，找到可以插入的位置
-      lineOccupancy.sort((a, b) => b.rightEdge - a.rightEdge);
-
-      // 检查是否可以在最右边放置新字幕
-      const rightmostEdge = lineOccupancy[0].rightEdge;
-      if (rightmostEdge + horizontalGap + textWidth <= containerWidth) {
-        return { line: line, startX: containerWidth };
-      }
-
-      // 检查字幕之间的间隙
-      for (let i = 1; i < lineOccupancy.length; i++) {
-        const leftSubtitle = lineOccupancy[i];
-        const rightSubtitle = lineOccupancy[i - 1];
-        const gapStart = leftSubtitle.rightEdge + horizontalGap;
-        const gapEnd = rightSubtitle.rightEdge - horizontalGap - textWidth;
-
-        if (gapEnd >= gapStart && gapEnd - gapStart >= textWidth) {
-          return { line: line, startX: gapEnd + textWidth };
-        }
-      }
-    }
-  }
-
-  // 第二遍：如果没有合适的间隙，使用空行
-  for (let line = 0; line < maxLines; line++) {
-    const lineOccupancy = occupiedLines.get(line) || [];
-    if (lineOccupancy.length === 0) {
-      return { line: line, startX: containerWidth };
-    }
-  }
-
-  for (let line = 0; line < maxLines; line++) {
-    const lineOccupancy = occupiedLines.get(line) || [];
-    if (lineOccupancy.length === 0) {
-      return { line: line, startX: containerWidth };
-    }
-  }
-  // 如果所有行都没有空间，使用第一行并覆盖最早结束的字幕
-  return { line: 0, startX: containerWidth };
+  return findNonOverlappingPosition(textWidth, textHeight, containerWidth, containerHeight, currentTime);
 }
-
-// 占用指定行的指定位置
-function occupyLinePosition(lineNum, endTime, rightEdge, subId) {
-  if (lineNum >= 0 && lineNum < maxLines) {
-    if (!occupiedLines.has(lineNum)) {
-      occupiedLines.set(lineNum, []);
-    }
-    occupiedLines.get(lineNum).push({ endTime, rightEdge, subId });
-  }
-}
-
 
 // 计算字幕文本的实际宽度
 function calculateSubtitleWidth(text, fontSize = 16) {
@@ -240,6 +164,59 @@ function calculateMoveDistance(text, containerWidth) {
 
   console.log(`Text: "${text}", width: ${textWidth}, move distance: ${totalDistance}`);
   return totalDistance;
+}
+
+// 检查两个矩形是否重叠
+function isRectOverlapping(rect1, rect2) {
+  return !(rect1.x + rect1.width < rect2.x ||
+    rect2.x + rect2.width < rect1.x ||
+    rect1.y + rect1.height < rect2.y ||
+    rect2.y + rect2.height < rect1.y);
+}
+
+// 查找不重叠的位置
+function findNonOverlappingPosition(textWidth, textHeight, containerWidth, containerHeight, currentTime) {
+  const padding = 10; // 字幕间距
+  const lineHeight = window.innerWidth > 768 ? 25 : 20;
+
+  // 清理过期的区域记录
+  for (const [subId, area] of activeSubtitleAreas.entries()) {
+    if (currentTime > area.endTime + 0.5) {
+      activeSubtitleAreas.delete(subId);
+    }
+  }
+
+  // 尝试不同的垂直位置
+  for (let line = 0; line < 30; line++) { // 增加可尝试的行数
+    const y = 20 + line * lineHeight;
+    if (y + textHeight + 20 > containerHeight) break; // 超出容器底部
+
+    // 在这一行尝试不同的水平位置
+    for (let x = containerWidth; x >= -textWidth; x -= 20) {
+      const newRect = {
+        x: x,
+        y: y,
+        width: textWidth + padding,
+        height: textHeight + padding
+      };
+
+      // 检查是否与现有字幕重叠
+      let hasOverlap = false;
+      for (const area of activeSubtitleAreas.values()) {
+        if (isRectOverlapping(newRect, area)) {
+          hasOverlap = true;
+          break;
+        }
+      }
+
+      if (!hasOverlap) {
+        return { x: x, y: y };
+      }
+    }
+  }
+
+  // 如果找不到不重叠的位置，返回默认位置
+  return { x: containerWidth, y: 20 };
 }
 
 // 改进的字幕加载
@@ -454,14 +431,21 @@ function displayCurrentSubtitle(currentTime) {
 
         // 计算动画结束时字幕右边缘的位置（用于占用记录）
         const endTime = currentTime + finalDuration;
-        
-        // 占用这个位置
-        occupyLinePosition(position.line, endTime, position.startX, subId);
+
+        // 记录字幕区域
+        const textHeight = window.innerWidth > 768 ? 20 : 16;
+        activeSubtitleAreas.set(subId, {
+          x: position.x,
+          y: position.y,
+          width: textWidth + 20, // 加一点padding
+          height: textHeight + 10,
+          endTime: endTime
+        });
 
         // 设置字体大小和位置
         div.style.fontSize = `${fontSize}px`;
-        div.style.left = `${position.startX}px`;
-        div.style.top = `${yPos}px`;
+        div.style.left = `${position.x}px`;
+        div.style.top = `${position.y}px`;
         div.style.transition = `left ${finalDuration}s linear`;
 
         console.log(`Subtitle "${cleanTextForMeasure.substring(0, 20)}..." - Line: ${position.line}, Start: ${position.startX}, Width: ${textWidth}, Duration: ${finalDuration.toFixed(1)}s`);
@@ -519,16 +503,8 @@ function displayCurrentSubtitle(currentTime) {
     subtitleElements.delete(subId);
     processedSubtitles.delete(subId); // 清理已处理记录，允许重新播放
 
-    // 清理行占用记录
-    for (const [lineNum, infos] of occupiedLines.entries()) {
-      const remainingInfos = infos.filter(info => info.subId !== subId);
-      if (remainingInfos.length === 0) {
-        occupiedLines.delete(lineNum);
-      } else {
-        occupiedLines.set(lineNum, remainingInfos);
-      }
-    }
-
+    // 清理区域记录
+    activeSubtitleAreas.delete(subId);
   });
 }
 
@@ -766,11 +742,10 @@ function bindEvents() {
   });
   initTitleScroll();
 
-  // 监听窗口大小变化，重新计算最大行数
   window.addEventListener('resize', () => {
-    // 清空当前行占用，让字幕重新分配
-    occupiedLines.clear();
-    console.log('Window resized, cleared line occupancy');
+    // 清空当前区域占用，让字幕重新分配
+    activeSubtitleAreas.clear();
+    console.log('Window resized, cleared subtitle areas');
   });
 }
 
