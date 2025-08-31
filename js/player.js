@@ -159,6 +159,10 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   for (let line = 0; line < maxLines; line++) {
     const lineOccupancy = occupiedLines.get(line) || [];
 
+    // 在这里加上空行检查
+    if (lineOccupancy.length === 0) {
+      return { line: line, startX: containerWidth };
+    }
     if (lineOccupancy.length > 0) {
       // 按右边缘位置排序，找到可以插入的位置
       lineOccupancy.sort((a, b) => b.rightEdge - a.rightEdge);
