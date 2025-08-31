@@ -11,6 +11,8 @@ let usingFallback = false;
 let apiReady = false;
 // 新增：字幕行占用管理和移动计算
 let activeSubtitleAreas = new Map(); // Map<subId, {x, y, width, height, endTime}>
+// 新增：跟踪每行字幕的移动速度
+let lineMoveSpeeds = new Map(); // Map<line, speed>
 
 // 用于跟踪已显示的字幕，避免重复创建
 let activeSubtitles = new Set();
@@ -132,9 +134,9 @@ function parseASSSubtitles(assContent) {
 }
 
 // 查找可用的行号和水平位置 - 支持同行多字幕不重叠
-function findAvailablePosition(currentTime, textWidth, containerWidth) {
+function findAvailablePosition(currentTime, textWidth, containerWidth, moveSpeed) {
   const overlay = document.getElementById('subtitle-overlay');
-  
+
   // 更可靠的容器高度获取
   let containerHeight;
   if (overlay && overlay.offsetHeight > 0) {
@@ -147,7 +149,7 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
       containerHeight = window.innerWidth > 768 ? 675 : window.innerHeight * 0.6;
     }
   }
-  
+
   const textHeight = window.innerWidth > 768 ? 20 : 16;
   const lineHeight = window.innerWidth > 768 ? 25 : 20;
   const padding = 15;
@@ -163,15 +165,15 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   const minLines = 8; // 最少保证8行
   const idealMaxLines = Math.floor((containerHeight - 40) / lineHeight);
   const maxLines = Math.max(minLines, idealMaxLines);
-  
+
   // 如果容器太小，压缩行高
-  const adjustedLineHeight = idealMaxLines < minLines ? 
+  const adjustedLineHeight = idealMaxLines < minLines ?
     Math.floor((containerHeight - 40) / minLines) : lineHeight;
 
   // 从第一行开始检查，优先使用上面的行
   for (let line = 0; line < maxLines; line++) {
     const y = 20 + line * adjustedLineHeight;
-    
+
     // 确保不超出容器
     if (y + textHeight + 10 <= containerHeight) {
       // 检查这一行是否有空间
@@ -210,7 +212,12 @@ function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding) {
   for (const [subId, area] of activeSubtitleAreas.entries()) {
     // 检查是否在同一行（垂直重叠）
     const verticalOverlap = !(newRect.y + newRect.height < area.y || area.y + area.height < newRect.y);
-    
+    const currentLineSpeed = lineMoveSpeeds.get(line);
+
+    if (currentLineSpeed && moveSpeed > currentLineSpeed * 1.1) { // 10%的容差
+      console.log(`速度冲突 - 当前行速度: ${currentLineSpeed}, 新字幕速度: ${moveSpeed}, 跳过第${line}行`);
+      continue; // 跳过这一行，寻找下一行
+    }
     if (verticalOverlap) {
       // 同一行，获取前一个字幕的当前位置
       const previousSubElement = subtitleElements.get(subId);
@@ -218,12 +225,12 @@ function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding) {
         // 获取前一个字幕的当前左边缘位置
         const computedStyle = window.getComputedStyle(previousSubElement);
         const currentLeft = parseFloat(computedStyle.left) || parseFloat(previousSubElement.style.left) || area.x;
-        
+
         // 计算左边缘与屏幕右边缘的距离
         const distanceFromRightEdge = startX - currentLeft; // startX 就是屏幕右边缘
-        
+
         console.log(`同行检测 - 前字幕左边缘: ${currentLeft}, 屏幕右边: ${startX}, 距离: ${distanceFromRightEdge}, 需要: ${minDistance}`);
-        
+
         // 如果距离不够，就有冲突
         if (distanceFromRightEdge < minDistance) {
           return true; // 有冲突，需要换行
@@ -248,7 +255,7 @@ function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding) {
       }
     }
   }
-  
+
   return false; // 没有重叠
 }
 
@@ -526,8 +533,14 @@ function displayCurrentSubtitle(currentTime) {
         const cleanTextForMeasure = line.replace(/\{[^}]*\}/g, '').trim();
         const textWidth = calculateSubtitleWidth(cleanTextForMeasure, fontSize);
 
-        // 查找可用的行位置
-        const position = findAvailablePosition(currentTime, textWidth, containerWidth);
+        // 计算移动速度 (像素/秒)
+        const moveSpeed = totalMoveDistance / finalDuration;
+
+        // 查找可用的行位置（传入移动速度）
+        const position = findAvailablePosition(currentTime, textWidth, containerWidth, moveSpeed);
+
+        // 更新这一行的移动速度记录
+        lineMoveSpeeds.set(position.line, moveSpeed);
 
         // 计算移动参数
         const totalMoveDistance = containerWidth + textWidth + 50; // 完全移出屏幕的距离
@@ -616,6 +629,17 @@ function displayCurrentSubtitle(currentTime) {
 
     // 清理区域记录
     activeSubtitleAreas.delete(subId);
+    // 清理速度记录
+    const area = activeSubtitleAreas.get(subId);
+    if (area && area.line !== undefined) {
+      // 检查这一行是否还有其他活跃字幕
+      const hasOtherActiveOnLine = Array.from(activeSubtitleAreas.values())
+        .some(otherArea => otherArea.line === area.line && otherArea.subId !== subId);
+
+      if (!hasOtherActiveOnLine) {
+        lineMoveSpeeds.delete(area.line);
+      }
+    }
   });
 }
 
