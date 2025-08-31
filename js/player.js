@@ -155,34 +155,39 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
     }
   }
 
-  // 查找每一行的可用水平位置
+  // 第一遍：优先在已占用行中寻找间隙（实现同行多字幕）
   for (let line = 0; line < maxLines; line++) {
     const lineOccupancy = occupiedLines.get(line) || [];
 
-    // 如果这一行有任何字幕，从右边开始
     if (lineOccupancy.length > 0) {
-      return { line: line, startX: containerWidth };
-    }
+      // 按右边缘位置排序，找到可以插入的位置
+      lineOccupancy.sort((a, b) => b.rightEdge - a.rightEdge);
 
-    // 按右边缘位置排序，找到可以插入的位置
-    lineOccupancy.sort((a, b) => b.rightEdge - a.rightEdge);
-
-    // 检查是否可以在最右边放置新字幕
-    const rightmostEdge = lineOccupancy[0].rightEdge;
-    if (rightmostEdge + horizontalGap + textWidth <= containerWidth) {
-      return { line: line, startX: containerWidth };
-    }
-
-    // 检查字幕之间的间隙
-    for (let i = 1; i < lineOccupancy.length; i++) {
-      const leftSubtitle = lineOccupancy[i];
-      const rightSubtitle = lineOccupancy[i - 1];
-      const gapStart = leftSubtitle.rightEdge + horizontalGap;
-      const gapEnd = rightSubtitle.rightEdge - horizontalGap - textWidth;
-
-      if (gapEnd >= gapStart && gapEnd - gapStart >= textWidth) {
-        return { line: line, startX: gapEnd + textWidth };
+      // 检查是否可以在最右边放置新字幕
+      const rightmostEdge = lineOccupancy[0].rightEdge;
+      if (rightmostEdge + horizontalGap + textWidth <= containerWidth) {
+        return { line: line, startX: containerWidth };
       }
+
+      // 检查字幕之间的间隙
+      for (let i = 1; i < lineOccupancy.length; i++) {
+        const leftSubtitle = lineOccupancy[i];
+        const rightSubtitle = lineOccupancy[i - 1];
+        const gapStart = leftSubtitle.rightEdge + horizontalGap;
+        const gapEnd = rightSubtitle.rightEdge - horizontalGap - textWidth;
+
+        if (gapEnd >= gapStart && gapEnd - gapStart >= textWidth) {
+          return { line: line, startX: gapEnd + textWidth };
+        }
+      }
+    }
+  }
+
+  // 第二遍：如果没有合适的间隙，使用空行
+  for (let line = 0; line < maxLines; line++) {
+    const lineOccupancy = occupiedLines.get(line) || [];
+    if (lineOccupancy.length === 0) {
+      return { line: line, startX: containerWidth };
     }
   }
 
