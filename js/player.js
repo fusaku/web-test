@@ -348,6 +348,10 @@ async function loadSubtitles(videoId) {
 
 // 字幕显示函数
 function displayCurrentSubtitle(currentTime) {
+  const padding = 15;
+  const lineHeight = window.innerWidth > 768 ? 25 : 20;
+  const textHeight = window.innerWidth > 768 ? 20 : 16;
+
   // 清理过期的时间记录（超过当前时间10秒的记录）
   for (const [timeKey, lineSet] of displayedSubtitles.entries()) {
     const recordTime = parseFloat(timeKey);
