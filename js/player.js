@@ -533,15 +533,6 @@ function displayCurrentSubtitle(currentTime) {
         const cleanTextForMeasure = line.replace(/\{[^}]*\}/g, '').trim();
         const textWidth = calculateSubtitleWidth(cleanTextForMeasure, fontSize);
 
-        // 计算移动速度 (像素/秒)
-        const moveSpeed = totalMoveDistance / finalDuration;
-
-        // 查找可用的行位置（传入移动速度）
-        const position = findAvailablePosition(currentTime, textWidth, containerWidth, moveSpeed);
-
-        // 更新这一行的移动速度记录
-        lineMoveSpeeds.set(position.line, moveSpeed);
-
         // 计算移动参数
         const totalMoveDistance = containerWidth + textWidth + 50; // 完全移出屏幕的距离
         const pixelsPerSecond = window.innerWidth > 768 ? 180 : 150; // 恒定速度
@@ -553,6 +544,14 @@ function displayCurrentSubtitle(currentTime) {
         const maxDuration = originalDuration * 2.5;
         const finalDuration = Math.max(minDuration, Math.min(maxDuration, calculatedDuration));
 
+        // 计算移动速度 (像素/秒)
+        const moveSpeed = totalMoveDistance / finalDuration;
+
+        // 查找可用的行位置（传入移动速度）
+        const position = findAvailablePosition(currentTime, textWidth, containerWidth, moveSpeed);
+
+        // 更新这一行的移动速度记录
+        lineMoveSpeeds.set(position.line, moveSpeed);
         // 记录字幕占用的区域和结束时间
         const endTime = currentTime + finalDuration;
         // 记录字幕移动轨迹占用的空间
