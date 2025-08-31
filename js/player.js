@@ -137,7 +137,7 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   const containerHeight = overlay ? overlay.offsetHeight : (window.innerWidth > 768 ? 675 : window.innerHeight * 0.6);
   const textHeight = window.innerWidth > 768 ? 20 : 16;
   const lineHeight = window.innerWidth > 768 ? 25 : 20;
-  const padding = 15; // 字幕间的间距
+  const padding = 15;
 
   // 清理过期的区域记录
   for (const [subId, area] of activeSubtitleAreas.entries()) {
@@ -149,31 +149,28 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   // 计算可用的行数
   const maxLines = Math.floor((containerHeight - 40) / lineHeight);
 
-  // 为新字幕寻找位置
+  // 从第一行开始检查，优先使用上面的行
   for (let line = 0; line < maxLines; line++) {
     const y = 20 + line * lineHeight;
     
     // 检查这一行是否有足够空间
-    let canPlace = true;
-    const newRect = {
-      x: containerWidth,
-      y: y,
-      width: textWidth + padding,
-      height: textHeight + padding
-    };
-
-    // 检查与现有字幕的冲突
+    let lineIsFree = true;
+    
+    // 检查当前时间这一行是否被占用
     for (const area of activeSubtitleAreas.values()) {
-      // 检查垂直重叠
-      if (!(newRect.y + newRect.height < area.y || area.y + area.height < newRect.y)) {
-        // 有垂直重叠，检查水平是否会冲突
-        // 由于新字幕从右边开始移动，只需要确保有足够的时间间隔
-        canPlace = false;
+      // 检查是否在同一行（垂直重叠）
+      const isOnSameLine = !(y + textHeight + padding < area.y || area.y + area.height < y);
+      
+      if (isOnSameLine) {
+        // 在同一行，检查时间是否会冲突
+        // 考虑字幕的移动轨迹和时间重叠
+        lineIsFree = false;
         break;
       }
     }
 
-    if (canPlace) {
+    // 如果这一行空闲，就使用这一行
+    if (lineIsFree) {
       return {
         x: containerWidth,
         y: y,
@@ -183,7 +180,7 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
     }
   }
 
-  // 如果所有行都占满，使用第一行（重叠显示）
+  // 如果所有行都被占用，使用第一行（允许重叠）
   return {
     x: containerWidth,
     y: 20,
