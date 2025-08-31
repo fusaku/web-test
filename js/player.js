@@ -137,7 +137,7 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   const containerHeight = overlay ? overlay.offsetHeight : (window.innerWidth > 768 ? 675 : window.innerHeight * 0.6);
   const textHeight = window.innerWidth > 768 ? 20 : 16;
   const lineHeight = window.innerWidth > 768 ? 25 : 20;
-  const padding = 10;
+  const padding = 15; // 字幕间的间距
 
   // 清理过期的区域记录
   for (const [subId, area] of activeSubtitleAreas.entries()) {
@@ -146,41 +146,44 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
     }
   }
 
-  // 尝试不同的垂直位置（行）
-  for (let line = 0; line < 30; line++) {
+  // 计算可用的行数
+  const maxLines = Math.floor((containerHeight - 40) / lineHeight);
+
+  // 为新字幕寻找位置
+  for (let line = 0; line < maxLines; line++) {
     const y = 20 + line * lineHeight;
-    if (y + textHeight + 20 > containerHeight) break;
-
-    // 起始位置：从屏幕右边开始
-    const startX = containerWidth;
-
+    
+    // 检查这一行是否有足够空间
+    let canPlace = true;
     const newRect = {
-      x: startX,
+      x: containerWidth,
       y: y,
       width: textWidth + padding,
       height: textHeight + padding
     };
 
-    // 检查这一行是否有重叠
-    let hasOverlap = false;
+    // 检查与现有字幕的冲突
     for (const area of activeSubtitleAreas.values()) {
-      if (Math.abs(area.y - y) < lineHeight) { // 同一行
-        hasOverlap = true;
+      // 检查垂直重叠
+      if (!(newRect.y + newRect.height < area.y || area.y + area.height < newRect.y)) {
+        // 有垂直重叠，检查水平是否会冲突
+        // 由于新字幕从右边开始移动，只需要确保有足够的时间间隔
+        canPlace = false;
         break;
       }
     }
 
-    if (!hasOverlap) {
+    if (canPlace) {
       return {
-        x: startX,
+        x: containerWidth,
         y: y,
         line: line,
-        startX: startX
+        startX: containerWidth
       };
     }
   }
 
-  // 如果找不到空行，返回默认位置
+  // 如果所有行都占满，使用第一行（重叠显示）
   return {
     x: containerWidth,
     y: 20,
@@ -464,7 +467,7 @@ function displayCurrentSubtitle(currentTime) {
 
         // 计算移动参数
         const totalMoveDistance = containerWidth + textWidth + 50; // 完全移出屏幕的距离
-        const pixelsPerSecond = window.innerWidth > 768 ? 120 : 100; // 恒定速度
+        const pixelsPerSecond = window.innerWidth > 768 ? 180 : 150; // 恒定速度
         const calculatedDuration = totalMoveDistance / pixelsPerSecond;
 
         // 限制动画时间
