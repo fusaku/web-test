@@ -134,7 +134,21 @@ function parseASSSubtitles(assContent) {
 // 查找可用的行号和水平位置 - 支持同行多字幕不重叠
 function findAvailablePosition(currentTime, textWidth, containerWidth) {
   const overlay = document.getElementById('subtitle-overlay');
-  const containerHeight = overlay ? overlay.offsetHeight : (window.innerWidth > 768 ? 675 : window.innerHeight * 0.6);
+  
+  // 更可靠的容器高度获取
+  let containerHeight;
+  if (overlay && overlay.offsetHeight > 0) {
+    containerHeight = overlay.offsetHeight;
+  } else {
+    // 后备计算
+    const videoContainer = document.getElementById('video-container');
+    if (videoContainer && videoContainer.offsetHeight > 0) {
+      containerHeight = videoContainer.offsetHeight;
+    } else {
+      containerHeight = window.innerWidth > 768 ? 675 : window.innerHeight * 0.6;
+    }
+  }
+  
   const textHeight = window.innerWidth > 768 ? 20 : 16;
   const lineHeight = window.innerWidth > 768 ? 25 : 20;
   const padding = 15;
@@ -146,61 +160,53 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
     }
   }
 
-  // 动态计算最大行数，确保至少有3行可用
-  const minLines = 3;
+  // 确保至少有足够的行数显示字幕
+  const minLines = 5; // 最少保证5行
   const idealMaxLines = Math.floor((containerHeight - 40) / lineHeight);
   const maxLines = Math.max(minLines, idealMaxLines);
-
-  // 如果容器太小，调整行高来适应
-  const adjustedLineHeight = idealMaxLines < minLines ?
+  
+  // 如果容器太小，压缩行高
+  const adjustedLineHeight = idealMaxLines < minLines ? 
     Math.floor((containerHeight - 40) / minLines) : lineHeight;
 
-  // 从第一行开始检查，优先使用上面的行
+  console.log(`容器高度: ${containerHeight}, 最大行数: ${maxLines}, 调整后行高: ${adjustedLineHeight}`);
+
+  // 从第一行开始检查
   for (let line = 0; line < maxLines; line++) {
     const y = 20 + line * adjustedLineHeight;
-
-    // 确保不会超出容器底部
-    if (y + textHeight + 10 > containerHeight) {
-      // 如果会超出，调整到容器内
-      const maxY = containerHeight - textHeight - 10;
-      const adjustedY = Math.max(20, maxY);
-
-      // 检查调整后的位置是否与现有字幕重叠
-      if (!checkHorizontalOverlap(containerWidth, adjustedY, textWidth, textHeight, padding)) {
+    
+    // 确保不超出容器
+    if (y + textHeight + 10 <= containerHeight) {
+      // 检查这一行是否有空间
+      if (!checkHorizontalOverlap(containerWidth, y, textWidth, textHeight, padding)) {
+        console.log(`找到可用位置 - 行: ${line}, Y: ${y}`);
         return {
           x: containerWidth,
-          y: adjustedY,
+          y: y,
           line: line,
           startX: containerWidth
         };
+      } else {
+        console.log(`行 ${line} 被占用或距离不够`);
       }
-      break; // 如果调整后还是重叠，就不再尝试更下面的行
-    }
-
-    // 检查这一行的水平空间是否足够（体积检测）
-    if (!checkHorizontalOverlap(containerWidth, y, textWidth, textHeight, padding)) {
-      return {
-        x: containerWidth,
-        y: y,
-        line: line,
-        startX: containerWidth
-      };
     }
   }
 
-  // 如果所有行都被占用，强制使用第一行（确保字幕一定能显示）
-  const forceY = Math.min(20, containerHeight - textHeight - 10);
+  // 强制显示在最后一行（确保字幕一定显示）
+  const forceY = Math.max(20, containerHeight - textHeight - 20);
+  console.log(`强制显示在Y: ${forceY}`);
   return {
     x: containerWidth,
     y: forceY,
-    line: 0,
+    line: maxLines - 1,
     startX: containerWidth
   };
 }
 
 // 检查水平重叠 - 结合体积检测和距离检测
+// 检查水平重叠 - 使用更可靠的位置检测
 function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding) {
-  const minDistance = 120; // 前一个字幕左边缘离开屏幕右边缘的最小距离
+  const minDistance = 120;
 
   const newRect = {
     x: startX,
@@ -209,47 +215,46 @@ function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding) {
     height: textHeight + padding
   };
 
-  for (const [subId, area] of activeSubtitleAreas.entries()) {
-    // 先检查垂直是否重叠（是否同一行）
+  for (const [subId, area] of activeSubtitleAreas.values()) {
+    // 检查垂直重叠
     const verticalOverlap = !(newRect.y + newRect.height < area.y || area.y + area.height < newRect.y);
     
     if (verticalOverlap) {
       // 同一行，获取前一个字幕的实时位置
       const previousElement = subtitleElements.get(subId);
       if (previousElement && previousElement.parentNode) {
-        // 获取前一个字幕的当前左边缘位置
-        const currentLeft = parseFloat(previousElement.style.left) || area.x;
+        // 直接使用 style.left，更可靠
+        const computedStyle = window.getComputedStyle(previousElement);
+        const currentLeft = parseFloat(computedStyle.left) || parseFloat(previousElement.style.left) || area.x;
         
-        // 检查距离是否足够
+        // 检查距离
         const distanceFromRight = startX - currentLeft;
         if (distanceFromRight < minDistance) {
-          console.log(`同行距离不够 - 前字幕左边缘: ${currentLeft}, 距离: ${distanceFromRight}, 需要: ${minDistance}`);
-          return true; // 距离不够，有冲突
+          return true; // 距离不够
         }
 
-        // 距离足够了，再进行完整的体积检测
-        const previousRect = {
+        // 更新area的实时位置，用于体积检测
+        const updatedArea = {
           x: currentLeft,
           y: area.y,
           width: area.width,
           height: area.height
         };
 
-        // 完整的矩形重叠检测
-        if (isRectOverlapping(newRect, previousRect)) {
-          console.log(`同行体积重叠 - 新字幕区域:`, newRect, `前字幕区域:`, previousRect);
-          return true; // 体积重叠，有冲突
+        // 体积重叠检测
+        if (isRectOverlapping(newRect, updatedArea)) {
+          return true; // 体积重叠
         }
       }
     } else {
-      // 不同行，只做体积检测
+      // 不同行，直接体积检测
       if (isRectOverlapping(newRect, area)) {
-        return true; // 体积重叠
+        return true;
       }
     }
   }
   
-  return false; // 没有冲突
+  return false;
 }
 
 // 计算字幕文本的实际宽度
