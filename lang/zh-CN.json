@@ -50,7 +50,7 @@
   },
   
   "player": {
-    "backToList": "← 返回列表",
+    "backToList": "← 返回",
     "videoPlay": "视频播放",
     "loading": "加载中...",
     "retry": "重试"

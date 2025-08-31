@@ -50,7 +50,7 @@
   },
   
   "player": {
-    "backToList": "← Back to List",
+    "backToList": "← Back",
     "videoPlay": "Video Player",
     "loading": "Loading...",
     "retry": "Retry"

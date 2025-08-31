@@ -50,7 +50,7 @@
   },
   
   "player": {
-    "backToList": "← リストに戻る",
+    "backToList": "← 戻る",
     "videoPlay": "動画プレーヤー",
     "loading": "読み込み中...",
     "retry": "再試行"
