@@ -151,7 +151,7 @@ function findAvailablePosition(currentTime, textWidth, containerWidth, moveSpeed
   }
 
   const textHeight = window.innerWidth > 768 ? 20 : 16;
-  const lineHeight = window.innerWidth > 768 ? 25 : 20;
+  const lineHeight = window.innerWidth > 768 ? 20 : 10;
   const padding = 15;
 
   // 清理过期的区域记录
@@ -214,7 +214,7 @@ function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding, line,
     const verticalOverlap = !(newRect.y + newRect.height < area.y || area.y + area.height < newRect.y);
     const currentLineSpeed = lineMoveSpeeds.get(line);
 
-    if (currentLineSpeed && moveSpeed > currentLineSpeed * 1.1) { // 10%的容差
+    if (currentLineSpeed && moveSpeed > currentLineSpeed * 1.03) { // 3%的容差
       console.log(`速度冲突 - 当前行速度: ${currentLineSpeed}, 新字幕速度: ${moveSpeed}, 跳过第${line}行`);
       continue; // 跳过这一行，寻找下一行
     }
@@ -296,7 +296,7 @@ function isRectOverlapping(rect1, rect2) {
 // 查找不重叠的位置
 function findNonOverlappingPosition(textWidth, textHeight, containerWidth, containerHeight, currentTime) {
   const padding = 10; // 字幕间距
-  const lineHeight = window.innerWidth > 768 ? 25 : 20;
+  const lineHeight = window.innerWidth > 768 ? 20 : 10;
 
   // 清理过期的区域记录
   for (const [subId, area] of activeSubtitleAreas.entries()) {
@@ -376,7 +376,7 @@ async function loadSubtitles(videoId) {
 // 字幕显示函数
 function displayCurrentSubtitle(currentTime) {
   const padding = 15;
-  const lineHeight = window.innerWidth > 768 ? 25 : 20;
+  const lineHeight = window.innerWidth > 768 ? 20 : 10;
   const textHeight = window.innerWidth > 768 ? 20 : 16;
 
   // 清理过期的时间记录（超过当前时间10秒的记录）
