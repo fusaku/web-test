@@ -136,8 +136,57 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   const overlay = document.getElementById('subtitle-overlay');
   const containerHeight = overlay ? overlay.offsetHeight : (window.innerWidth > 768 ? 675 : window.innerHeight * 0.6);
   const textHeight = window.innerWidth > 768 ? 20 : 16;
+  const lineHeight = window.innerWidth > 768 ? 25 : 20;
+  const padding = 10;
 
-  return findNonOverlappingPosition(textWidth, textHeight, containerWidth, containerHeight, currentTime);
+  // 清理过期的区域记录
+  for (const [subId, area] of activeSubtitleAreas.entries()) {
+    if (currentTime > area.endTime + 0.5) {
+      activeSubtitleAreas.delete(subId);
+    }
+  }
+
+  // 尝试不同的垂直位置（行）
+  for (let line = 0; line < 30; line++) {
+    const y = 20 + line * lineHeight;
+    if (y + textHeight + 20 > containerHeight) break;
+
+    // 起始位置：从屏幕右边开始
+    const startX = containerWidth;
+
+    const newRect = {
+      x: startX,
+      y: y,
+      width: textWidth + padding,
+      height: textHeight + padding
+    };
+
+    // 检查这一行是否有重叠
+    let hasOverlap = false;
+    for (const area of activeSubtitleAreas.values()) {
+      if (Math.abs(area.y - y) < lineHeight) { // 同一行
+        hasOverlap = true;
+        break;
+      }
+    }
+
+    if (!hasOverlap) {
+      return {
+        x: startX,
+        y: y,
+        line: line,
+        startX: startX
+      };
+    }
+  }
+
+  // 如果找不到空行，返回默认位置
+  return {
+    x: containerWidth,
+    y: 20,
+    line: 0,
+    startX: containerWidth
+  };
 }
 
 // 计算字幕文本的实际宽度
@@ -402,57 +451,49 @@ function displayCurrentSubtitle(currentTime) {
           div.style.top = `${endY}px`;
         });
       } else {
-        // 默认弹幕处理 - 同行多字幕不重叠 + 恒定速度
+        // 默认弹幕处理 - 从右到左移动
         const containerWidth = overlay.offsetWidth || (window.innerWidth > 768 ? 1200 : window.innerWidth);
-        const lineHeight = window.innerWidth > 768 ? 25 : 20;
         const fontSize = window.innerWidth > 768 ? 16 : 14;
 
         // 计算字幕文本宽度
         const cleanTextForMeasure = line.replace(/\{[^}]*\}/g, '').trim();
         const textWidth = calculateSubtitleWidth(cleanTextForMeasure, fontSize);
 
-        // 查找可用的行号和水平位置
+        // 查找可用的行位置
         const position = findAvailablePosition(currentTime, textWidth, containerWidth);
-        const yPos = 20 + position.line * lineHeight;
 
-        // 计算移动距离和动画时间
-        const baseDistance = 50; // 基础移动距离
-        const totalMoveDistance = position.startX + textWidth + baseDistance;
-
-        // 恒定速度：像素/秒
-        const pixelsPerSecond = window.innerWidth > 768 ? 120 : 100;
+        // 计算移动参数
+        const totalMoveDistance = containerWidth + textWidth + 50; // 完全移出屏幕的距离
+        const pixelsPerSecond = window.innerWidth > 768 ? 120 : 100; // 恒定速度
         const calculatedDuration = totalMoveDistance / pixelsPerSecond;
 
-        // 限制动画时间范围
+        // 限制动画时间
         const originalDuration = sub.end - sub.start;
         const minDuration = Math.max(3, originalDuration * 0.8);
         const maxDuration = originalDuration * 2.5;
         const finalDuration = Math.max(minDuration, Math.min(maxDuration, calculatedDuration));
 
-        // 计算动画结束时字幕右边缘的位置（用于占用记录）
+        // 记录字幕占用的区域和结束时间
         const endTime = currentTime + finalDuration;
-
-        // 记录字幕区域
-        const textHeight = window.innerWidth > 768 ? 20 : 16;
         activeSubtitleAreas.set(subId, {
           x: position.x,
           y: position.y,
-          width: textWidth + 20, // 加一点padding
-          height: textHeight + 10,
+          width: textWidth + 20,
+          height: (window.innerWidth > 768 ? 20 : 16) + 10,
           endTime: endTime
         });
 
-        // 设置字体大小和位置
+        // 设置初始样式和位置
         div.style.fontSize = `${fontSize}px`;
-        div.style.left = `${position.x}px`;
+        div.style.left = `${containerWidth}px`; // 从右边开始
         div.style.top = `${position.y}px`;
         div.style.transition = `left ${finalDuration}s linear`;
 
-        console.log(`Subtitle "${cleanTextForMeasure.substring(0, 20)}..." - Line: ${position.line}, Start: ${position.startX}, Width: ${textWidth}, Duration: ${finalDuration.toFixed(1)}s`);
+        console.log(`弹幕 "${cleanTextForMeasure.substring(0, 20)}..." - 行: ${position.line}, 起始X: ${containerWidth}, 宽度: ${textWidth}, 时长: ${finalDuration.toFixed(1)}s`);
 
-        // 开始弹幕动画
+        // 开始从右到左的动画
         requestAnimationFrame(() => {
-          div.style.left = `-${totalMoveDistance}px`;
+          div.style.left = `-${textWidth + 50}px`; // 移动到左边完全消失
         });
       }
 
