@@ -140,7 +140,6 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   if (overlay && overlay.offsetHeight > 0) {
     containerHeight = overlay.offsetHeight;
   } else {
-    // 后备计算
     const videoContainer = document.getElementById('video-container');
     if (videoContainer && videoContainer.offsetHeight > 0) {
       containerHeight = videoContainer.offsetHeight;
@@ -161,7 +160,7 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   }
 
   // 确保至少有足够的行数显示字幕
-  const minLines = 5; // 最少保证5行
+  const minLines = 8; // 最少保证8行
   const idealMaxLines = Math.floor((containerHeight - 40) / lineHeight);
   const maxLines = Math.max(minLines, idealMaxLines);
   
@@ -169,9 +168,7 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   const adjustedLineHeight = idealMaxLines < minLines ? 
     Math.floor((containerHeight - 40) / minLines) : lineHeight;
 
-  console.log(`容器高度: ${containerHeight}, 最大行数: ${maxLines}, 调整后行高: ${adjustedLineHeight}`);
-
-  // 从第一行开始检查
+  // 从第一行开始检查，优先使用上面的行
   for (let line = 0; line < maxLines; line++) {
     const y = 20 + line * adjustedLineHeight;
     
@@ -179,22 +176,18 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
     if (y + textHeight + 10 <= containerHeight) {
       // 检查这一行是否有空间
       if (!checkHorizontalOverlap(containerWidth, y, textWidth, textHeight, padding)) {
-        console.log(`找到可用位置 - 行: ${line}, Y: ${y}`);
         return {
           x: containerWidth,
           y: y,
           line: line,
           startX: containerWidth
         };
-      } else {
-        console.log(`行 ${line} 被占用或距离不够`);
       }
     }
   }
 
   // 强制显示在最后一行（确保字幕一定显示）
   const forceY = Math.max(20, containerHeight - textHeight - 20);
-  console.log(`强制显示在Y: ${forceY}`);
   return {
     x: containerWidth,
     y: forceY,
@@ -203,10 +196,9 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   };
 }
 
-// 检查水平重叠 - 结合体积检测和距离检测
-// 检查水平重叠 - 使用更可靠的位置检测
+// 检查水平重叠 - 基于字幕左边缘与屏幕右边缘的距离
 function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding) {
-  const minDistance = 120;
+  const minDistance = 120; // 前一个字幕左边缘需要离开屏幕右边缘的最小距离
 
   const newRect = {
     x: startX,
@@ -215,25 +207,29 @@ function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding) {
     height: textHeight + padding
   };
 
-  for (const [subId, area] of activeSubtitleAreas.values()) {
-    // 检查垂直重叠
+  for (const [subId, area] of activeSubtitleAreas.entries()) {
+    // 检查是否在同一行（垂直重叠）
     const verticalOverlap = !(newRect.y + newRect.height < area.y || area.y + area.height < newRect.y);
     
     if (verticalOverlap) {
-      // 同一行，获取前一个字幕的实时位置
-      const previousElement = subtitleElements.get(subId);
-      if (previousElement && previousElement.parentNode) {
-        // 直接使用 style.left，更可靠
-        const computedStyle = window.getComputedStyle(previousElement);
-        const currentLeft = parseFloat(computedStyle.left) || parseFloat(previousElement.style.left) || area.x;
+      // 同一行，获取前一个字幕的当前位置
+      const previousSubElement = subtitleElements.get(subId);
+      if (previousSubElement && previousSubElement.parentNode) {
+        // 获取前一个字幕的当前左边缘位置
+        const computedStyle = window.getComputedStyle(previousSubElement);
+        const currentLeft = parseFloat(computedStyle.left) || parseFloat(previousSubElement.style.left) || area.x;
         
-        // 检查距离
-        const distanceFromRight = startX - currentLeft;
-        if (distanceFromRight < minDistance) {
-          return true; // 距离不够
+        // 计算左边缘与屏幕右边缘的距离
+        const distanceFromRightEdge = startX - currentLeft; // startX 就是屏幕右边缘
+        
+        console.log(`同行检测 - 前字幕左边缘: ${currentLeft}, 屏幕右边: ${startX}, 距离: ${distanceFromRightEdge}, 需要: ${minDistance}`);
+        
+        // 如果距离不够，就有冲突
+        if (distanceFromRightEdge < minDistance) {
+          return true; // 有冲突，需要换行
         }
 
-        // 更新area的实时位置，用于体积检测
+        // 距离够了，再做体积检测
         const updatedArea = {
           x: currentLeft,
           y: area.y,
@@ -241,7 +237,6 @@ function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding) {
           height: area.height
         };
 
-        // 体积重叠检测
         if (isRectOverlapping(newRect, updatedArea)) {
           return true; // 体积重叠
         }
@@ -254,7 +249,7 @@ function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding) {
     }
   }
   
-  return false;
+  return false; // 没有重叠
 }
 
 // 计算字幕文本的实际宽度
