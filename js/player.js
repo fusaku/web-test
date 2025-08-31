@@ -177,7 +177,7 @@ function findAvailablePosition(currentTime, textWidth, containerWidth, moveSpeed
     // 确保不超出容器
     if (y + textHeight + 10 <= containerHeight) {
       // 检查这一行是否有空间
-      if (!checkHorizontalOverlap(containerWidth, y, textWidth, textHeight, padding, line)) {
+      if (!checkHorizontalOverlap(containerWidth, y, textWidth, textHeight, padding, line, moveSpeed)) {
         return {
           x: containerWidth,
           y: y,
@@ -199,7 +199,7 @@ function findAvailablePosition(currentTime, textWidth, containerWidth, moveSpeed
 }
 
 // 检查水平重叠 - 基于字幕左边缘与屏幕右边缘的距离
-function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding, line) {
+function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding, line, moveSpeed) {
   const minDistance = 120; // 前一个字幕左边缘需要离开屏幕右边缘的最小距离
 
   const newRect = {
