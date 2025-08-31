@@ -176,6 +176,7 @@ function findAvailablePosition(currentTime, textWidth, containerWidth, moveSpeed
 
     // 确保不超出容器
     if (y + textHeight + 10 <= containerHeight) {
+      lineMoveSpeeds.set(line, moveSpeed);
       // 检查这一行是否有空间
       if (!checkHorizontalOverlap(containerWidth, y, textWidth, textHeight, padding, line, moveSpeed)) {
         return {
@@ -216,7 +217,7 @@ function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding, line,
 
     if (currentLineSpeed && moveSpeed > currentLineSpeed * 1.03) { // 3%的容差
       console.log(`速度冲突 - 当前行速度: ${currentLineSpeed}, 新字幕速度: ${moveSpeed}, 跳过第${line}行`);
-      continue; // 跳过这一行，寻找下一行
+      return true; // 跳过这一行，寻找下一行
     }
     if (verticalOverlap) {
       // 同一行，获取前一个字幕的当前位置
@@ -550,8 +551,6 @@ function displayCurrentSubtitle(currentTime) {
         // 查找可用的行位置（传入移动速度）
         const position = findAvailablePosition(currentTime, textWidth, containerWidth, moveSpeed);
 
-        // 更新这一行的移动速度记录
-        lineMoveSpeeds.set(position.line, moveSpeed);
         // 记录字幕占用的区域和结束时间
         const endTime = currentTime + finalDuration;
         // 记录字幕移动轨迹占用的空间
