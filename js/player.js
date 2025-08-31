@@ -138,7 +138,6 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
   const textHeight = window.innerWidth > 768 ? 20 : 16;
   const lineHeight = window.innerWidth > 768 ? 25 : 20;
   const padding = 15;
-  const minTimeGap = 0.5; // 同一行字幕之间的最小时间间隔（秒）
 
   // 清理过期的区域记录
   for (const [subId, area] of activeSubtitleAreas.entries()) {
@@ -147,29 +146,39 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
     }
   }
 
-  const maxLines = Math.floor((containerHeight - 40) / lineHeight);
+  // 动态计算最大行数，确保至少有3行可用
+  const minLines = 3;
+  const idealMaxLines = Math.floor((containerHeight - 40) / lineHeight);
+  const maxLines = Math.max(minLines, idealMaxLines);
 
-  // 从第一行开始检查
+  // 如果容器太小，调整行高来适应
+  const adjustedLineHeight = idealMaxLines < minLines ?
+    Math.floor((containerHeight - 40) / minLines) : lineHeight;
+
+  // 从第一行开始检查，优先使用上面的行
   for (let line = 0; line < maxLines; line++) {
-    const y = 20 + line * lineHeight;
-    
-    let lineIsFree = true;
-    
-    for (const area of activeSubtitleAreas.values()) {
-      // 检查是否在同一行
-      const isOnSameLine = !(y + textHeight + padding < area.y || area.y + area.height < y);
-      
-      if (isOnSameLine) {
-        // 同一行，检查时间间隔是否足够
-        const timeGap = currentTime - (area.endTime - (area.endTime - area.startTime || 3));
-        if (timeGap < minTimeGap) {
-          lineIsFree = false;
-          break;
-        }
+    const y = 20 + line * adjustedLineHeight;
+
+    // 确保不会超出容器底部
+    if (y + textHeight + 10 > containerHeight) {
+      // 如果会超出，调整到容器内
+      const maxY = containerHeight - textHeight - 10;
+      const adjustedY = Math.max(20, maxY);
+
+      // 检查调整后的位置是否与现有字幕重叠
+      if (!checkHorizontalOverlap(containerWidth, adjustedY, textWidth, textHeight, padding)) {
+        return {
+          x: containerWidth,
+          y: adjustedY,
+          line: line,
+          startX: containerWidth
+        };
       }
+      break; // 如果调整后还是重叠，就不再尝试更下面的行
     }
 
-    if (lineIsFree) {
+    // 检查这一行的水平空间是否足够（体积检测）
+    if (!checkHorizontalOverlap(containerWidth, y, textWidth, textHeight, padding)) {
       return {
         x: containerWidth,
         y: y,
@@ -179,12 +188,48 @@ function findAvailablePosition(currentTime, textWidth, containerWidth) {
     }
   }
 
+  // 如果所有行都被占用，强制使用第一行（确保字幕一定能显示）
+  const forceY = Math.min(20, containerHeight - textHeight - 10);
   return {
     x: containerWidth,
-    y: 20,
+    y: forceY,
     line: 0,
     startX: containerWidth
   };
+}
+
+// 检查水平重叠 - 基于位置而非时间
+function checkHorizontalOverlap(startX, y, textWidth, textHeight, padding) {
+  const newRect = {
+    x: startX,
+    y: y,
+    width: textWidth + padding,
+    height: textHeight + padding
+  };
+
+  const minDistance = 100; // 前一个字幕的左边缘需要离开屏幕右边的最小距离
+
+  for (const area of activeSubtitleAreas.values()) {
+    // 检查垂直重叠
+    const verticalOverlap = !(newRect.y + newRect.height < area.y || area.y + area.height < newRect.y);
+
+    if (verticalOverlap) {
+      // 同一行，检查前一个字幕是否已经移动足够远
+      // 获取前一个字幕当前的实际位置
+      const previousSubElement = document.querySelector(`[data-subtitle-id="${area.subId}"]`);
+      if (previousSubElement) {
+        const currentLeft = parseFloat(previousSubElement.style.left) || area.x;
+        const rightEdge = currentLeft + area.width;
+
+        // 如果前一个字幕的右边缘还在屏幕右边的安全距离内，就不能放置新字幕
+        if (rightEdge > startX - minDistance) {
+          return true; // 有冲突
+        }
+      }
+    }
+  }
+
+  return false; // 没有冲突
 }
 
 // 计算字幕文本的实际宽度
@@ -473,12 +518,15 @@ function displayCurrentSubtitle(currentTime) {
 
         // 记录字幕占用的区域和结束时间
         const endTime = currentTime + finalDuration;
+        // 记录字幕移动轨迹占用的空间
         activeSubtitleAreas.set(subId, {
-          x: position.x,
+          x: containerWidth, // 起始位置
           y: position.y,
-          width: textWidth + 20,
+          width: textWidth + padding,
           height: (window.innerWidth > 768 ? 20 : 16) + 10,
-          endTime: endTime
+          endTime: endTime,
+          line: position.line,
+          subId: subId // 添加subId，用于查找DOM元素
         });
 
         // 设置初始样式和位置
