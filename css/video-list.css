@@ -1,0 +1,89 @@
+/* 搜索框 */
+#filter {
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #e8e8e8;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+#filter:focus {
+  border-color: #1890ff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+/* 视频网格 */
+#video-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  flex: 1;
+}
+
+.video-item {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #f0f0f0;
+}
+
+.video-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: #1890ff;
+}
+
+.video-item iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  pointer-events: none;
+}
+
+.video-title {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.video-date {
+  padding: 0 16px 12px 16px;
+  font-size: 12px;
+  color: #999;
+  border-top: 1px solid #f5f5f5;
+  margin-top: auto;
+}
+
+/* 加载和错误状态 */
+#loading {
+  text-align: center;
+  margin: 40px 0;
+  color: #666;
+  display: none;
+  padding: 20px;
+}
+
+#error {
+  text-align: center;
+  margin: 40px 20px;
+  padding: 20px;
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 8px;
+  color: #a8071a;
+  display: none;
+}
