@@ -976,8 +976,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await initializeI18n();
   bindEvents();
   initializePage();
-  // 初始化横屏功能
-  initLandscapeMode();
 });
 
 // 移动端横屏标题自动隐藏功能
