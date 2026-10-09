@@ -6,8 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>日本房贷还款计算器 | 40年超长贷·利率变动模拟</title>
   <meta name="description" content="专业独立日本房贷计算器与推演工具。默认支持40年超长贷款(自由自定义1~50年)，深度推演浮动利率(変動金利)下的5年规则、125%规则、未付利息(未払利息)及期末一次性补缴(一括返済)风险。">
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/i18n.js"></script>
+  <link rel="stylesheet" href="css/style.css?v=20261010_03">
   <script>
     // 独立轻量主题防闪烁预处理 (与税金计算器双向同步)
     (function() {
@@ -17,7 +16,27 @@
       document.documentElement.setAttribute('data-theme', theme);
       document.documentElement.style.colorScheme = theme;
     })();
+
+    // 核心双语无条件前置挂载 (确保内联 onclick 绝不报错)
+    window.setAppLanguage = function(lang) {
+      if (window.MortgageI18n && typeof window.MortgageI18n.setLanguage === 'function') {
+        window.MortgageI18n.setLanguage(lang);
+      } else if (window.TaxI18n && typeof window.TaxI18n.setLanguage === 'function') {
+        window.TaxI18n.setLanguage(lang);
+      } else {
+        try { localStorage.setItem('japan_calc_lang', lang); } catch (e) {}
+        location.reload();
+      }
+    };
+    window.toggleAppLanguage = function() {
+      if (window.MortgageI18n && typeof window.MortgageI18n.toggleLanguage === 'function') {
+        window.MortgageI18n.toggleLanguage();
+      } else if (window.TaxI18n && typeof window.TaxI18n.toggleLanguage === 'function') {
+        window.TaxI18n.toggleLanguage();
+      }
+    };
   </script>
+  <script src="js/i18n.js?v=20261010_03"></script>
 </head>
 
 <body>
@@ -29,7 +48,7 @@
       <div class="brand-wrap">
         <div class="brand-icon">¥</div>
         <div class="brand-title">
-          <h1><span data-i18n="brand_title">日本房贷还款计算器</span> <span data-i18n="brand_tag">40年超长贷·5年/125%规则</span></h1>
+          <h1><span class="brand-name" data-i18n="brand_title">日本房贷还款计算器</span> <span class="brand-badge" data-i18n="brand_tag">40年超长贷·5年/125%规则</span></h1>
           <p data-i18n="brand_sub">日本住宅贷款精算 · 全期480期 · 浮动利率5年调整 · 125%还款上限 · 未付利息推演</p>
         </div>
       </div>
@@ -67,6 +86,49 @@
 
     <!-- 主工作区：两列响应式布局 -->
     <main class="main-grid">
+
+      <!-- 移动端专属置顶：实时核心测算结果看板 (手机端最先展现，输入时实时计算响应) -->
+      <section class="mobile-summary-card" aria-label="移动端快速测算结果">
+        <div class="m-summary-header">
+          <div class="m-summary-title">
+            <span>⚡</span>
+            <span data-i18n="m_summary_title">核心测算结果</span>
+          </div>
+          <span class="m-summary-scenario" id="m-summary-scenario-tag">温和加息预测</span>
+        </div>
+
+        <div class="m-summary-grid">
+          <div class="m-kpi-item highlight">
+            <span class="m-kpi-label" data-i18n="kpi_initial_title">初期月供 (前5年)</span>
+            <div class="m-kpi-val" id="m-kpi-initial">¥0</div>
+            <span class="m-kpi-hint" id="m-kpi-initial-hint">第1~5年月供</span>
+          </div>
+
+          <div class="m-kpi-item">
+            <span class="m-kpi-label" data-i18n="kpi_max_title">最高月供</span>
+            <div class="m-kpi-val" id="m-kpi-max">¥0</div>
+            <span class="m-kpi-hint" id="m-kpi-max-hint">峰值</span>
+          </div>
+
+          <div class="m-kpi-item">
+            <span class="m-kpi-label" data-i18n="kpi_total_title">累计总还款</span>
+            <div class="m-kpi-val" id="m-kpi-total">¥0</div>
+            <span class="m-kpi-hint" id="m-kpi-total-hint">含本息</span>
+          </div>
+
+          <div class="m-kpi-item" id="m-kpi-card-balloon">
+            <span class="m-kpi-label" data-i18n="kpi_balloon_title">期末清偿状态</span>
+            <div class="m-kpi-val text-success" id="m-kpi-balloon">顺利结清</div>
+            <span class="m-kpi-hint" id="m-kpi-balloon-hint">✅ 40年如期还清</span>
+          </div>
+        </div>
+
+        <div class="m-summary-footer">
+          <button type="button" class="btn-jump-charts" onclick="document.querySelector('.results-panel').scrollIntoView({behavior:'smooth'})">
+            <span data-i18n="m_jump_charts">查看完整图表与40年逐期明细 📊</span>
+          </button>
+        </div>
+      </section>
 
       <!-- 左侧：参数输入与模拟控制面板 -->
       <aside class="sidebar-panel">
@@ -495,14 +557,31 @@
       </div>
     </footer>
 
+    <!-- 移动端底部悬浮条：随时显示最新月供并直达图表明细 -->
+    <aside class="mobile-sticky-bottom" id="mobile-sticky-bottom" aria-label="移动端底部月供悬浮条">
+      <div class="sticky-info">
+        <div class="sticky-main">
+          <span class="sticky-lbl" data-i18n="m_sticky_initial_lbl">初期月供</span>:
+          <strong class="sticky-val" id="sticky-val-initial">¥0</strong>
+          <span class="sticky-unit">/月</span>
+        </div>
+        <div class="sticky-sub">
+          <span data-i18n="m_sticky_max_lbl">最高</span>: <span id="sticky-val-max">¥0</span> · <span data-i18n="m_sticky_total_lbl">总计</span>: <span id="sticky-val-total">¥0</span>
+        </div>
+      </div>
+      <button type="button" class="sticky-action-btn" onclick="document.querySelector('.chart-box').scrollIntoView({behavior:'smooth'})">
+        <span data-i18n="m_sticky_action_btn">图表明细 📈</span>
+      </button>
+    </aside>
+
   </div>
 
   <!-- 引入用户专属配置文件 (可在此直接修改你的贷款参数) -->
-  <script src="config.js"></script>
+  <script src="config.js?v=20261010_03"></script>
   <!-- 引入 Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- 引入独立应用脚本 -->
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=20261010_03"></script>
 </body>
 
 </html>

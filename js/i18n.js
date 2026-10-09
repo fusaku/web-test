@@ -79,6 +79,14 @@
       'kpi_balloon_hint': '⚠️ 期末一笔还清 (本金: {bal})',
       'kpi_peak_hint': '在第 {year} 年达到峰值',
 
+      // 移动端专属看板
+      'm_summary_title': '核心测算结果',
+      'm_jump_charts': '查看完整图表与40年逐期明细 📊',
+      'm_sticky_initial_lbl': '初期月供',
+      'm_sticky_max_lbl': '最高',
+      'm_sticky_total_lbl': '总计',
+      'm_sticky_action_btn': '图表明细 📈',
+
       // 对比面板
       'comp_title': '📊 机制对照分析：有 5年/125% 规则 (大行) vs 无规则即时调整 (索尼/PayPay)',
       'comp_term_info': '期限：{term}年 (共{months}期)',
@@ -228,6 +236,14 @@
       'kpi_settled_hint': '✅ 第{term}年目に予定通り完済',
       'kpi_balloon_hint': '⚠️ 期末一括返済 (元金残高: {bal})',
       'kpi_peak_hint': '第 {year} 年目にピーク到達',
+
+      // モバイル専用サマリー
+      'm_summary_title': '主要シミュレーション結果',
+      'm_jump_charts': '詳細グラフ・40年返済計画を見る 📊',
+      'm_sticky_initial_lbl': '当初月返済',
+      'm_sticky_max_lbl': '最高',
+      'm_sticky_total_lbl': '総返済',
+      'm_sticky_action_btn': 'グラフ詳細 📈',
 
       // 比較パネル
       'comp_title': '📊 仕組み比較：5年・125%ルールあり（大手行） vs 即時見直し型（ソニー・PayPay等）',

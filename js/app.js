@@ -500,6 +500,58 @@
         balloonCard.classList.add('highlight-primary');
       }
     }
+
+    // --- 移动端专属置顶看板与吸底悬浮条同步 ---
+    const mInitial = document.getElementById('m-kpi-initial');
+    const mInitialHint = document.getElementById('m-kpi-initial-hint');
+    if (mInitial) mInitial.textContent = formatYen(res.initialPayment);
+    if (mInitialHint) mInitialHint.textContent = lang === 'ja' ? `1〜5年目` : `第1~5年月供`;
+
+    const mMax = document.getElementById('m-kpi-max');
+    const mMaxHint = document.getElementById('m-kpi-max-hint');
+    if (mMax) mMax.textContent = formatYen(res.maxPayment);
+    if (mMaxHint) mMaxHint.textContent = lang === 'ja' ? `第${res.maxPaymentYear}年目ピーク` : `第${res.maxPaymentYear}年达峰`;
+
+    const mTotal = document.getElementById('m-kpi-total');
+    const mTotalHint = document.getElementById('m-kpi-total-hint');
+    if (mTotal) mTotal.textContent = formatManYen(res.grandTotalPayment);
+    if (mTotalHint) mTotalHint.textContent = lang === 'ja' ? '元金＋利息' : '含本息合计';
+
+    const mBalloon = document.getElementById('m-kpi-balloon');
+    const mBalloonHint = document.getElementById('m-kpi-balloon-hint');
+    const mBalloonCard = document.getElementById('m-kpi-card-balloon');
+    if (mBalloon && mBalloonCard && mBalloonHint) {
+      if (res.hasBalloonRisk) {
+        mBalloon.textContent = formatYen(res.balloonPayment);
+        mBalloon.className = 'm-kpi-val text-danger';
+        mBalloonHint.textContent = lang === 'ja' ? '⚠️ 満期一括返済' : '⚠️ 期末需一括返済';
+      } else {
+        mBalloon.textContent = lang === 'ja' ? '完済' : '顺利结清';
+        mBalloon.className = 'm-kpi-val text-success';
+        mBalloonHint.textContent = lang === 'ja' ? `✅ ${state.termYears}年満期完済` : `✅ ${state.termYears}年如期还清`;
+      }
+    }
+
+    // 移动端底部吸底浮动条
+    const sInitial = document.getElementById('sticky-val-initial');
+    const sMax = document.getElementById('sticky-val-max');
+    const sTotal = document.getElementById('sticky-val-total');
+    if (sInitial) sInitial.textContent = formatYen(res.initialPayment);
+    if (sMax) sMax.textContent = formatYen(res.maxPayment);
+    if (sTotal) sTotal.textContent = formatManYen(res.grandTotalPayment);
+
+    // 移动端场景标签
+    const mSceneTag = document.getElementById('m-summary-scenario-tag');
+    if (mSceneTag) {
+      const sceneNames = {
+        'mild': lang === 'ja' ? '緩やかな利上げ' : '主流温和预测',
+        'flat': lang === 'ja' ? '金利据え置き' : '基准平稳',
+        'steep': lang === 'ja' ? '段階的利上げ' : '加速快速加息',
+        'extreme': lang === 'ja' ? 'ストレス負荷' : '极端压力测试',
+        'custom': lang === 'ja' ? 'カスタム設定' : '自定义时间轴'
+      };
+      mSceneTag.textContent = sceneNames[state.currentScenario] || state.currentScenario;
+    }
   }
 
   /**
