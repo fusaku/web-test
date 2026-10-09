@@ -31,24 +31,36 @@
 
 ---
 
-## 📁 目录结构
+## 📁 项目目录结构
 
 ```text
-mortgage/
-├── index.html         # 计算器主页入口 (单页应用)
-├── config.js          # ⚙️ 用户专属配置文件 (可在直接修改本金、年限、利率等参数)
+test.kg46.com/
+├── index.html         # 🏠 房贷计算器主页入口 (40年超长房贷 / 5年·125%规则)
+├── config.js          # ⚙️ 房贷计算器用户专属配置文件
 ├── css/
-│   └── style.css      # 独立样式系统 (含深浅色主题、响应式栅格、卡片与表格)
+│   └── style.css      # 房贷计算器独立样式系统 (含深浅色主题、栅格、卡片)
 ├── js/
-│   └── app.js         # 核心推演计算引擎、Chart.js 交互与 CSV 导出
-└── README.md          # 项目说明文档
+│   └── app.js         # 房贷核心推演引擎、Chart.js 可视化与 CSV 导出
+├── tax/               # 💴 正社员税金·房贷减税·故乡税计算器 (神奈川·横滨专版)
+│   ├── index.html     # 税金计算器入口
+│   ├── config.js      # 税金计算器专属配置文件
+│   ├── css/style.css  # 税金计算器样式系统
+│   ├── js/
+│   │   ├── tax-engine.js # 纯税法计算引擎 (健保5.01%、横滨住民税10.025%、保险控除、住宅减税、故乡税)
+│   │   └── app.js     # 税金计算器交互、图表与 CSV 导出
+│   └── README.md      # 税金计算器深度税法原理指南
+├── CNAME              # 域名绑定 (test.kg46.com)
+├── .github/workflows/ # GitHub Pages 自动部署工作流
+├── .gitignore         # Git 忽略配置
+└── README.md          # 项目总说明文档
 ```
 
 ---
 
-## ⚙️ 如何修改默认参数 (`config.js`)
+## ⚙️ 如何修改默认参数
 
-你可以直接使用任何文本编辑器打开 `mortgage/config.js` 文件，修改以下字段后保存并刷新页面即可：
+### 1. 房贷计算器默认参数 (`config.js`)
+你可以使用任何文本编辑器打开根目录下的 `config.js` 文件，修改以下字段保存后刷新页面即可生效：
 
 ```javascript
 window.MORTGAGE_CONFIG = {
@@ -79,21 +91,27 @@ window.MORTGAGE_CONFIG = {
 };
 ```
 
+### 2. 税金计算器默认参数 (`tax/config.js`)
+打开 `tax/config.js` 可自由配置年收入、横滨市社保、商业保险保费（生命险/地震险）、房贷余额及故乡税模式。
+
 ---
 
 ## 🚀 启动与使用
 
 ### 本地直接运行
-直接在浏览器中打开 `mortgage/index.html` 即可完整使用全部功能。
+直接在浏览器中双击打开根目录的 `index.html`（房贷模拟器）或 `tax/index.html`（税金计算器）即可离线使用全部功能。
 
-### 本地轻量服务运行
+### 本地轻量 HTTP 服务运行
 ```bash
-# 在当前目录下启动 HTTP 服务
+# 在当前根目录下启动 HTTP 服务
 python3 -m http.server 8000
 
 # 访问地址：
-# http://localhost:8000/mortgage/
+# 房贷模拟器：http://localhost:8000/
+# 税金计算器：http://localhost:8000/tax/
 ```
+
+两工具之间顶部与底部导航已全面实现双向互通，并支持 URL 参数（如 `?mortgage=3190`）与深色/浅色主题状态自动同步。
 
 ---
 

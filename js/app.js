@@ -19,11 +19,12 @@
   const chipsCfg = cfg.quickChips || {};
   const sceneCfg = cfg.scenarios || {};
 
-  // --- 本地存储主题管理 (独立于其他项目) ---
+  // --- 本地存储主题管理 (与税金计算器双向同步) ---
   const THEME_STORAGE_KEY = 'japan_mortgage_theme';
+  const THEME_ALT_KEY = 'japan_tax_theme';
 
   function initTheme() {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    const saved = localStorage.getItem(THEME_STORAGE_KEY) || localStorage.getItem(THEME_ALT_KEY);
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const theme = saved || (prefersDark ? 'dark' : 'light');
     applyTheme(theme);
@@ -33,6 +34,7 @@
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.style.colorScheme = theme;
     localStorage.setItem(THEME_STORAGE_KEY, theme);
+    localStorage.setItem(THEME_ALT_KEY, theme);
   }
 
   function toggleTheme() {
@@ -292,10 +294,17 @@
       const rateMin = Math.min(...rates);
       const rateMax = Math.max(...rates);
 
+      const payments = yearMonths.map(r => r.payment);
+      const payMin = Math.min(...payments);
+      const payMax = Math.max(...payments);
+
       yearlyRecords.push({
         year: y,
         rateDisplay: rateMin === rateMax ? formatRate(rateMin) : `${formatRate(rateMin)}~${formatRate(rateMax)}`,
         monthlyPayment: yearMonths[0].payment,
+        paymentDisplay: payMin === payMax ? formatYen(payMin) : `${formatYen(payMin)} ~ ${formatYen(payMax)}`,
+        monthlyPaymentMin: payMin,
+        monthlyPaymentMax: payMax,
         yearPayment: yearPayment,
         yearPrincipal: yearPrincipal,
         yearInterest: yearInterest,
@@ -345,6 +354,12 @@
     renderComparison(sim, comp);
     renderCharts(sim);
     renderTable(sim);
+
+    // 动态同步前往税金计算器的参数
+    const navTax = document.getElementById('nav-link-tax');
+    if (navTax) {
+      navTax.href = `./tax/?mortgage=${state.principalMan}`;
+    }
   }
 
   function renderKPIs(res) {
@@ -385,7 +400,7 @@
         <div class="banner-icon">⚠️</div>
         <div class="banner-text">
           <h4>高风险预警：${state.termYears}年贷款到期需一次性补交 ${formatYen(res.balloonPayment)} (一括返済)</h4>
-          <p>受 <strong>125%上限封顶</strong> 影响，月供未能如期冲抵本金。截至第 ${state.termYears} 年末，仍有剩余本金 <strong>${formatYen(res.finalBalance)}</strong>${res.finalUnpaidInterest > 0 ? ` 与未付利息 <strong>${formatYen(res.finalUnpaidInterest)}</strong>` : ''}。银行将在期末要求一次性全额还清，建议提前储备还款资金！</p>
+          <p>${res.is125EverTriggered ? '受 <strong>125%上限封顶</strong> 影响，' : '受 <strong>5年固定还款周期</strong> 影响，'}月供未能如期冲抵本金。截至第 ${state.termYears} 年末，仍有剩余本金 <strong>${formatYen(res.finalBalance)}</strong>${res.finalUnpaidInterest > 0 ? ` 与未付利息 <strong>${formatYen(res.finalUnpaidInterest)}</strong>` : ''}。银行将在期末要求一次性全额还清，建议提前储备还款资金！</p>
         </div>
       `;
     } else if (res.isUnpaidEverTriggered) {
@@ -616,7 +631,7 @@
           ${badgeHtml}
         </td>
         <td>${yRec.rateDisplay}</td>
-        <td style="font-weight: 700;">${formatYen(yRec.monthlyPayment)}</td>
+        <td style="font-weight: 700;">${yRec.paymentDisplay || formatYen(yRec.monthlyPayment)}</td>
         <td>${formatYen(yRec.yearPayment)}</td>
         <td style="color: #10b981;">${formatYen(yRec.yearPrincipal)}</td>
         <td style="color: #ef4444;">${formatYen(yRec.yearInterest)}</td>
@@ -740,6 +755,11 @@
     const container = document.getElementById('custom-milestone-list');
     if (!container) return;
     container.innerHTML = '';
+
+    // 安全约束：节点年份不超出当前贷款总年限
+    state.customMilestones.forEach(m => {
+      if (m.year > state.termYears) m.year = state.termYears;
+    });
 
     // 按绝对月份排序
     state.customMilestones.sort((a, b) => {
@@ -881,6 +901,23 @@
 
   function init() {
     initTheme();
+
+    // 读取 URL 参数 (例如从税金计算器跳过来 ?principal=3500&term=35&rate=1.2)
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('principal')) {
+        const p = parseInt(urlParams.get('principal'));
+        if (!isNaN(p) && p > 0) state.principalMan = p;
+      }
+      if (urlParams.has('term')) {
+        const t = parseInt(urlParams.get('term'));
+        if (!isNaN(t) && t >= 1 && t <= 50) state.termYears = t;
+      }
+      if (urlParams.has('rate')) {
+        const r = parseFloat(urlParams.get('rate'));
+        if (!isNaN(r) && r >= 0) state.initialRate = r;
+      }
+    } catch (e) {}
 
     // 绑定主题切换按钮
     document.querySelectorAll('.theme-toggle-btn').forEach(btn => {

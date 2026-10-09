@@ -971,3 +971,53 @@ input:checked + .slider:before {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* 底部通用页脚 */
+.app-footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 16px;
+}
+
+.footer-links a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+}
+
+/* 打印样式 */
+@media print {
+  .app-header .header-actions,
+  .quick-chips,
+  .btn-header,
+  .chip,
+  .sidebar-panel,
+  .faq-wrap {
+    display: none !important;
+  }
+  .main-grid {
+    display: block !important;
+  }
+  .app-container {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  .results-panel {
+    width: 100% !important;
+  }
+}

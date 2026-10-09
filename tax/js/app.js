@@ -161,6 +161,14 @@
 
     // 2.9 渲染 Chart.js 图表
     renderCharts(result, input);
+
+    // 2.10 动态同步筹码高亮与跨工具导航参数
+    syncChipsState(input.grossAnnualIncomeMan, input.mortgageBalanceMan);
+    const navMort = document.getElementById('nav-link-mortgage');
+    if (navMort) {
+      const mVal = input.enableMortgage && input.mortgageBalanceMan > 0 ? input.mortgageBalanceMan : '';
+      navMort.href = mVal ? `../?principal=${mVal}` : '../';
+    }
   }
 
   // 3. 保险控除节税看板
@@ -567,6 +575,23 @@
     }
   }
 
+  function syncChipsState(incomeVal, mortVal) {
+    const incomeContainer = document.getElementById('chips-income-container');
+    if (incomeContainer) {
+      incomeContainer.querySelectorAll('.chip').forEach(c => {
+        const val = parseInt(c.textContent);
+        c.classList.toggle('active', val === incomeVal);
+      });
+    }
+    const mortContainer = document.getElementById('chips-mortgage-container');
+    if (mortContainer) {
+      mortContainer.querySelectorAll('.chip').forEach(c => {
+        const val = parseInt(c.textContent);
+        c.classList.toggle('active', val === mortVal);
+      });
+    }
+  }
+
   function highlightChips(container, activeChip) {
     container.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
     if (activeChip) activeChip.classList.add('active');
@@ -631,7 +656,9 @@
         const target = current === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', target);
         document.documentElement.style.colorScheme = target;
+        // 同步写入双主题键
         localStorage.setItem('japan_tax_theme', target);
+        localStorage.setItem('japan_mortgage_theme', target);
         updateCalculations();
       });
     }
@@ -725,14 +752,41 @@
     if (furusato.plannedDonationMan !== undefined) {
       document.getElementById('input-furusato-planned').value = furusato.plannedDonationMan;
     }
+
+    // 跨页面 URL 查询参数覆盖 (例如从房贷模拟器跳过来 ?mortgage=3500&income=800)
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('mortgage')) {
+        const mVal = parseFloat(urlParams.get('mortgage'));
+        if (!isNaN(mVal) && mVal > 0) {
+          document.getElementById('input-mortgage-balance').value = mVal;
+          document.getElementById('input-enable-mortgage').checked = true;
+          document.getElementById('mortgage-details-fields').style.display = 'block';
+        }
+      }
+      if (urlParams.has('income')) {
+        const incVal = parseFloat(urlParams.get('income'));
+        if (!isNaN(incVal) && incVal > 0) {
+          document.getElementById('input-income').value = incVal;
+        }
+      }
+    } catch (e) {
+      // 兼容环境处理
+    }
   }
 
   // DOM 就绪入口
-  window.addEventListener('DOMContentLoaded', () => {
+  function init() {
     loadConfigDefaults();
     renderChips();
     bindEvents();
     updateCalculations();
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 
 })();

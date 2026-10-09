@@ -8,9 +8,9 @@
   <meta name="description" content="专业独立日本房贷计算器与推演工具。默认支持40年超长贷款(自由自定义1~50年)，深度推演浮动利率(変動金利)下的5年规则、125%规则、未付利息(未払利息)及期末一次性补缴(一括返済)风险。">
   <link rel="stylesheet" href="css/style.css">
   <script>
-    // 独立轻量主题防闪烁预处理
+    // 独立轻量主题防闪烁预处理 (与税金计算器双向同步)
     (function() {
-      const saved = localStorage.getItem('japan_mortgage_theme');
+      const saved = localStorage.getItem('japan_mortgage_theme') || localStorage.getItem('japan_tax_theme');
       const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       const theme = saved || (prefersDark ? 'dark' : 'light');
       document.documentElement.setAttribute('data-theme', theme);
@@ -34,7 +34,7 @@
       </div>
 
       <div class="header-actions">
-        <a href="../tax/" class="btn-header" title="前往正社员税金与故乡税计算器">
+        <a href="./tax/" id="nav-link-tax" class="btn-header" title="前往正社员税金与故乡税计算器">
           <span>💴</span>
           <span>正社员税金·故乡税</span>
         </a>
@@ -231,7 +231,7 @@
             <div class="scenario-item" data-scenario="steep">
               <div>
                 <h4 class="scenario-item-title">🟠 阶梯快速加息</h4>
-                <p class="scenario-item-desc">第6年1.2%，第11年1.8%，第21年2.8%</p>
+                <p class="scenario-item-desc">第6年起提速加息 (每5年递增 0.5%~0.6%)</p>
               </div>
               <span class="badge badge-orange">加速加息</span>
             </div>
@@ -240,7 +240,7 @@
             <div class="scenario-item" data-scenario="extreme">
               <div>
                 <h4 class="scenario-item-title">🔴 剧烈暴涨 (压力测试)</h4>
-                <p class="scenario-item-desc">第6年飙升至2.8%，第11年飙至4.5% (观察125%封顶与未付利息)</p>
+                <p class="scenario-item-desc">第6年飙升至3.0%，第11年飙至4.5% (观察125%封顶与未付利息)</p>
               </div>
               <span class="badge badge-red">极端测试</span>
             </div>
@@ -459,6 +459,17 @@
             <strong>③ 关注总利息而非仅看月供</strong>：40 年贷款月供虽低，但总支付利息远超 30~35 年期，务必结合推演图表做好全周期规划。
           </p>
         </div>
+      </div>
+    </footer>
+
+    <!-- 底部版权与工具联动导航 -->
+    <footer class="app-footer">
+      <div>
+        <strong>日本住宅ローンシミュレーター</strong> · 40年超長期ローン · 変動金利5年/125%规则对应 · 纯前端离线运行 · 数据安全不上传
+      </div>
+      <div class="footer-links">
+        <a href="./tax/">正社员税金·房贷减税·故乡税计算器</a>
+        <a href="README.md" target="_blank">使用手册 & 算法原理</a>
       </div>
     </footer>
 

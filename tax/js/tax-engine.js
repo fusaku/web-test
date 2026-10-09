@@ -333,7 +333,7 @@
     // 12. 综合主计算引擎 (Main Calculation Flow)
     // --------------------------------------------------------------------------
     calculateAll(input) {
-      const grossIncome = Math.round((parseFloat(input.grossAnnualIncomeMan) || 0) * 10000);
+      const grossIncome = Math.max(0, Math.round((parseFloat(input.grossAnnualIncomeMan) || 0) * 10000));
       const isOver40 = !!input.ageOver40;
 
       // 神奈川県税率与均等割设定
@@ -527,7 +527,9 @@
         finalReconstructionTax = Math.floor(baseIT * 0.021);
         finalNetIncomeTax = baseIT + finalReconstructionTax;
 
-        const furusatoResidentPortion = Math.max(0, actualDonation - 2000) * (1.00 - residentTaxRate - incomeTaxBracket.rate * 1.021);
+        // 確定申告 下住民税控除合計 = 基本分 (10%) + 特例分 (90% - 所得税率 × 1.021)
+        // 合计抵扣 = (寄附金 - 2000) × (1.00 - 所得税率 × 1.021)
+        const furusatoResidentPortion = Math.max(0, actualDonation - 2000) * (1.00 - incomeTaxBracket.rate * 1.021);
         const netResidentIncomeLevy = Math.max(
           0,
           adjustedResidentIncomeLevy - activeMortgage.residentTaxDeducted - Math.floor(furusatoResidentPortion)

@@ -155,10 +155,10 @@ window.TAX_CONFIG = {
 
 ## 🚀 本地运行与访问
 
-1. **直接打开**：在访达（Finder）中直接双击打开 [tax/index.html](file:///Users/ka/Code/kg46.com/tax/index.html)。
+1. **直接打开**：在访达（Finder）或文件管理器中直接双击打开 `tax/index.html`。
 2. **本地静态服务**：
    ```bash
    python3 -m http.server 8000
    ```
    浏览器访问：`http://localhost:8000/tax/`。
-3. **工具联动**：顶部支持一键前往 [40年房贷模拟器](../mortgage/)。
+3. **工具联动**：顶部与底部均支持一键前往 [40年房贷模拟器](../) 并自动同步房贷金额。
