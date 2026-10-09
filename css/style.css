@@ -996,8 +996,228 @@ input:checked + .slider:before {
   text-decoration: none;
 }
 
-.footer-links a:hover {
-  text-decoration: underline;
+/* 语言切换按钮特殊样式 */
+.lang-toggle-btn {
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-light);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+.lang-toggle-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* 移动端横向滚动提示 */
+.mobile-scroll-hint {
+  display: none;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+/* 深度移动端适配 (平板及手机) */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 16px 14px 60px;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+  }
+
+  .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .btn-header {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 40px;
+  }
+
+  /* 解决移动端 iOS 输入框点击放大缩放问题 */
+  .form-input, .form-select, select {
+    font-size: 16px;
+  }
+
+  /* 快捷筹码支持移动端丝滑横向滑动 */
+  .quick-chips {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    gap: 6px;
+  }
+  .quick-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .quick-chips .chip {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* 自定义加息时间轴行在移动端的自适应排版 */
+  .custom-step-row {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+  }
+  .custom-step-row .select-year,
+  .custom-step-row .select-month {
+    flex: 1 1 35%;
+    min-width: 70px;
+  }
+  .custom-step-row .step-date-tag {
+    width: 100%;
+    text-align: center;
+    order: 3;
+    padding: 6px 8px;
+  }
+  .custom-step-row .rate-wrap {
+    flex: 1 1 35%;
+    min-width: 80px;
+  }
+  .custom-step-row .btn-icon-del {
+    order: 2;
+    padding: 6px 10px;
+  }
+
+  /* 卡片紧凑内边距 */
+  .card {
+    padding: 16px 14px;
+    margin-bottom: 16px;
+  }
+
+  /* KPI 指标卡片两列 */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .kpi-item {
+    padding: 12px 14px;
+  }
+  .kpi-num {
+    font-size: 19px;
+  }
+
+  /* 图表区域高度 */
+  .chart-box {
+    padding: 16px 12px;
+    margin-bottom: 16px;
+  }
+  .chart-canvas-wrap {
+    height: 270px;
+  }
+
+  /* 表格区域移动端适配 */
+  .table-box {
+    padding: 16px 12px;
+  }
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .table-scroll {
+    max-height: 440px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mobile-scroll-hint {
+    display: block;
+  }
+
+  /* 避坑指南网格单列 */
+  .faq-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .faq-card {
+    padding: 16px 14px;
+  }
+  .faq-head {
+    font-size: 17px;
+  }
+
+  /* 页脚在移动端垂直居中 */
+  .app-footer {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+    margin-top: 32px;
+  }
+  .footer-links {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+/* 超小屏手机适配 (< 480px) */
+@media (max-width: 480px) {
+  .app-container {
+    padding: 12px 10px 48px;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .brand-title h1 {
+    font-size: 17px;
+  }
+
+  .brand-title h1 span {
+    font-size: 11px;
+    padding: 1px 6px;
+  }
+
+  .brand-title p {
+    font-size: 11px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .compare-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-tabs {
+    flex-direction: column;
+  }
+
+  .tab-btn {
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+  }
+
+  .banner {
+    padding: 12px 14px;
+    font-size: 12px;
+  }
+  .banner-icon {
+    font-size: 20px;
+  }
 }
 
 /* 打印样式 */

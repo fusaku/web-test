@@ -7,6 +7,7 @@
   <title>日本房贷计算器 - 40年超长贷 / 5年规则与125%规则模拟 (日本住宅ローンシミュレーション)</title>
   <meta name="description" content="专业独立日本房贷计算器与推演工具。默认支持40年超长贷款(自由自定义1~50年)，深度推演浮动利率(変動金利)下的5年规则、125%规则、未付利息(未払利息)及期末一次性补缴(一括返済)风险。">
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/i18n.js"></script>
   <script>
     // 独立轻量主题防闪烁预处理 (与税金计算器双向同步)
     (function() {
@@ -28,15 +29,20 @@
       <div class="brand-wrap">
         <div class="brand-icon">¥</div>
         <div class="brand-title">
-          <h1>日本房贷模拟器 <span>40年 / 5年·125%规则版</span></h1>
-          <p>日本住宅ローンシミュレーター · 40年超長期ローン · 変動金利 · 未払利息リスク推計</p>
+          <h1><span data-i18n="brand_title">日本房贷模拟器</span> <span data-i18n="brand_tag">40年 / 5年·125%规则版</span></h1>
+          <p data-i18n="brand_sub">日本住宅ローンシミュレーター · 40年超長期ローン · 変動金利 · 未払利息リスク推計</p>
         </div>
       </div>
 
       <div class="header-actions">
+        <!-- 中日双语切换按钮 -->
+        <button type="button" class="btn-header lang-toggle-btn" id="lang-toggle-btn" aria-label="切换语言" title="切换语言 (日本語 / 中文)">
+          <span>🌐</span>
+          <span id="lang-btn-text">日本語</span>
+        </button>
         <a href="./tax/" id="nav-link-tax" class="btn-header" title="前往正社员税金与故乡税计算器">
           <span>💴</span>
-          <span>正社员税金·故乡税</span>
+          <span data-i18n="nav_tax">正社员税金·故乡税</span>
         </a>
         <button type="button" class="btn-header theme-toggle-btn" aria-label="切换主题" title="切换暗色/浅色模式">
           <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -53,7 +59,7 @@
           <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
-          <span>切换外观</span>
+          <span data-i18n="theme_btn">切换外观</span>
         </button>
       </div>
     </header>
@@ -68,9 +74,9 @@
         <section class="card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <h2 class="card-title" style="margin-bottom: 0;">
-              <span>🏠</span> 贷款基本条件 (借入条件)
+              <span>🏠</span> <span data-i18n="card_loan_cond">贷款基本条件 (借入条件)</span>
             </h2>
-            <span class="label-hint" style="font-size: 11px; color: var(--primary); font-weight: 600;">
+            <span class="label-hint" style="font-size: 11px; color: var(--primary); font-weight: 600;" data-i18n="config_loaded">
               ⚙️ 默认参数已从 config.js 加载
             </span>
           </div>
@@ -78,12 +84,12 @@
           <!-- 贷款总额 -->
           <div class="form-group">
             <label class="form-label" for="input-principal">
-              <span>借款本金金额 (借入金額)</span>
+              <span data-i18n="lbl_principal">借款本金金额 (借入金額)</span>
               <span id="display-principal-yen" class="label-hint">¥31,900,000</span>
             </label>
             <div class="input-addon-wrap">
               <input type="number" id="input-principal" class="form-input" min="100" max="50000" step="10" value="3190">
-              <span class="input-addon">万円</span>
+              <span class="input-addon" data-i18n="unit_man">万円</span>
             </div>
             <div id="chips-principal-container" class="quick-chips">
               <!-- 由 config.js 动态渲染 -->
@@ -93,17 +99,17 @@
           <!-- 贷款年限：默认40年，自由自定义1~50年 -->
           <div class="form-group">
             <label class="form-label" for="input-term">
-              <span>贷款期限 (返済期間 · 默认40年)</span>
-              <span class="label-hint">可任意输入 1~50 年</span>
+              <span data-i18n="lbl_term">贷款期限 (返済期間 · 默认40年)</span>
+              <span class="label-hint" data-i18n="lbl_term_hint">可任意输入 1~50 年</span>
             </label>
             <div class="input-addon-wrap">
               <input type="number" id="input-term" class="form-input" min="1" max="50" step="1" value="40">
-              <span class="input-addon">年</span>
+              <span class="input-addon" data-i18n="unit_year">年</span>
             </div>
             <div id="chips-term-container" class="quick-chips">
               <!-- 由 config.js 动态渲染 -->
             </div>
-            <p style="margin: 6px 0 0; font-size: 11px; color: var(--text-muted);">
+            <p style="margin: 6px 0 0; font-size: 11px; color: var(--text-muted);" data-i18n-html="term_calc_hint">
               💡 40年贷款共 <strong>480期</strong>，在降低初期月供的同时，利息对利率调整极为敏感。
             </p>
           </div>
@@ -111,8 +117,8 @@
           <!-- 起始年利率 -->
           <div class="form-group">
             <label class="form-label" for="input-rate">
-              <span>初始借款年利率 (適用金利)</span>
-              <span class="label-hint">你的当前利率：1.195%</span>
+              <span data-i18n="lbl_rate">初始借款年利率 (適用金利)</span>
+              <span id="display-current-rate-hint" class="label-hint"></span>
             </label>
             <div class="input-addon-wrap">
               <input type="number" id="input-rate" class="form-input" min="0.0" max="15.0" step="0.001" value="1.195">
@@ -123,13 +129,13 @@
           <!-- 借款起始年月 (用于精准对应三菱UFJ日历月) -->
           <div class="form-group">
             <label class="form-label">
-              <span>放款起始年月 (借入開始)</span>
-              <span class="label-hint">用于精确换算实际日历月份</span>
+              <span data-i18n="lbl_start_ym">放款起始年月 (借入開始)</span>
+              <span class="label-hint" data-i18n="lbl_start_ym_hint">用于精确换算实际日历月份</span>
             </label>
             <div style="display: flex; gap: 8px;">
               <div class="input-addon-wrap" style="flex: 3;">
                 <input type="number" id="input-start-year" class="form-input" min="2000" max="2050" step="1" value="2026">
-                <span class="input-addon">年</span>
+                <span class="input-addon" data-i18n="unit_year">年</span>
               </div>
               <div class="input-addon-wrap" style="flex: 2;">
                 <select id="input-start-month" class="form-input" style="padding-right: 14px;">
@@ -153,17 +159,17 @@
           <!-- 还款方式 -->
           <div class="form-group">
             <label class="form-label">
-              <span>还款方式 (返済方式)</span>
+              <span data-i18n="lbl_repay_method">还款方式 (返済方式)</span>
             </label>
             <div class="segmented-control segment-repay-method">
-              <div class="segment-btn active" data-val="equal_payment">
+              <div class="segment-btn active" data-val="equal_payment" data-i18n="repay_equal_pmt">
                 元利均等返済 (等额本息)
               </div>
-              <div class="segment-btn" data-val="equal_principal">
+              <div class="segment-btn" data-val="equal_principal" data-i18n="repay_equal_prn">
                 元金均等返済 (等额本金)
               </div>
             </div>
-            <p id="rule-disabled-notice" style="display: none; margin: 6px 0 0; font-size: 11px; color: var(--danger);">
+            <p id="rule-disabled-notice" style="display: none; margin: 6px 0 0; font-size: 11px; color: var(--danger);" data-i18n-html="equal_prn_notice">
               ⚠️ 注意：元金均等返済每月本金固定，利息据实计算，<strong>不适用</strong> 5年规则与125%规则。
             </p>
           </div>
@@ -172,13 +178,13 @@
         <!-- 5年/125% 规则开关卡片 -->
         <section class="card">
           <h2 class="card-title">
-            <span>🛡️</span> 核心机制开关 (ルール設定)
+            <span>🛡️</span> <span data-i18n="card_rules">核心机制开关 (ルール設定)</span>
           </h2>
 
           <div class="toggle-row">
             <div class="toggle-info">
-              <span class="toggle-title">5年规则 (5年ルール)</span>
-              <span class="toggle-desc">基准利率变动时，5年内实际月供金额固定不变</span>
+              <span class="toggle-title" data-i18n="rule_5yr_title">5年规则 (5年ルール)</span>
+              <span class="toggle-desc" data-i18n="rule_5yr_desc">基准利率变动时，5年内实际月供金额固定不变</span>
             </div>
             <label class="switch">
               <input type="checkbox" id="toggle-5year-rule" checked>
@@ -188,8 +194,8 @@
 
           <div class="toggle-row">
             <div class="toggle-info">
-              <span class="toggle-title">125%规则 (125%ルール)</span>
-              <span class="toggle-desc">每5年重算时，新月供上限为上期月供的1.25倍</span>
+              <span class="toggle-title" data-i18n="rule_125_title">125%规则 (125%ルール)</span>
+              <span class="toggle-desc" data-i18n="rule_125_desc">每5年重算时，新月供上限为上期月供的1.25倍</span>
             </div>
             <label class="switch">
               <input type="checkbox" id="toggle-125-rule" checked>
@@ -197,7 +203,7 @@
             </label>
           </div>
 
-          <p style="margin: 10px 0 0; font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
+          <p style="margin: 10px 0 0; font-size: 12px; color: var(--text-secondary); line-height: 1.5;" data-i18n-html="rule_note">
             💡 <strong>说明</strong>：开启后模拟三菱UFJ、三井住友、瑞穗、住信SBI、auじぶん等主流大行；关闭后模拟索尼银行 (Sony Bank)、PayPay银行等“无规则即时重算”模式。
           </p>
         </section>
@@ -205,66 +211,66 @@
         <!-- 利率走势模拟卡片 -->
         <section class="card">
           <h2 class="card-title">
-            <span>📈</span> 未来加息场景推演 (金利シミュレーション)
+            <span>📈</span> <span data-i18n="card_scenarios">未来加息场景推演 (金利シミュレーション)</span>
           </h2>
 
           <div class="scenario-list">
             <!-- 场景 1: 基准平稳 -->
             <div class="scenario-item" data-scenario="flat">
               <div>
-                <h4 class="scenario-item-title">🟢 全期平稳 (利率不变)</h4>
-                <p class="scenario-item-desc">全程维持当前初始利率不变</p>
+                <h4 class="scenario-item-title" data-i18n="scene_flat_title">🟢 全期平稳 (利率不变)</h4>
+                <p class="scenario-item-desc" data-i18n="scene_flat_desc">全程维持当前初始利率不变</p>
               </div>
-              <span class="badge badge-green">基准场景</span>
+              <span class="badge badge-green" data-i18n="scene_flat_tag">基准场景</span>
             </div>
 
             <!-- 场景 2: 温和加息 (默认) -->
             <div class="scenario-item active" data-scenario="mild">
               <div>
-                <h4 class="scenario-item-title">🟡 温和加息 (+0.25%/5年)</h4>
-                <p class="scenario-item-desc">每5年递增0.25%，40年内平稳走高</p>
+                <h4 class="scenario-item-title" data-i18n="scene_mild_title">🟡 温和加息 (+0.25%/5年)</h4>
+                <p class="scenario-item-desc" data-i18n="scene_mild_desc">每5年递增0.25%，40年内平稳走高</p>
               </div>
-              <span class="badge badge-blue">主流预测</span>
+              <span class="badge badge-blue" data-i18n="scene_mild_tag">主流预测</span>
             </div>
 
             <!-- 场景 3: 阶梯加息 -->
             <div class="scenario-item" data-scenario="steep">
               <div>
-                <h4 class="scenario-item-title">🟠 阶梯快速加息</h4>
-                <p class="scenario-item-desc">第6年起提速加息 (每5年递增 0.5%~0.6%)</p>
+                <h4 class="scenario-item-title" data-i18n="scene_steep_title">🟠 阶梯快速加息</h4>
+                <p class="scenario-item-desc" data-i18n="scene_steep_desc">第6年起提速加息 (每5年递增 0.5%~0.6%)</p>
               </div>
-              <span class="badge badge-orange">加速加息</span>
+              <span class="badge badge-orange" data-i18n="scene_steep_tag">加速加息</span>
             </div>
 
             <!-- 场景 4: 剧烈暴涨 -->
             <div class="scenario-item" data-scenario="extreme">
               <div>
-                <h4 class="scenario-item-title">🔴 剧烈暴涨 (压力测试)</h4>
-                <p class="scenario-item-desc">第6年飙升至3.0%，第11年飙至4.5% (观察125%封顶与未付利息)</p>
+                <h4 class="scenario-item-title" data-i18n="scene_extreme_title">🔴 剧烈暴涨 (压力测试)</h4>
+                <p class="scenario-item-desc" data-i18n="scene_extreme_desc">第6年飙升至3.0%，第11年飙至4.5% (观察125%封顶与未付利息)</p>
               </div>
-              <span class="badge badge-red">极端测试</span>
+              <span class="badge badge-red" data-i18n="scene_extreme_tag">极端测试</span>
             </div>
 
             <!-- 场景 5: 自定义 -->
             <div class="scenario-item" data-scenario="custom">
               <div>
-                <h4 class="scenario-item-title">⚙️ 自定义时间轴节点</h4>
-                <p class="scenario-item-desc">自由设定各个年份节点的利率变化</p>
+                <h4 class="scenario-item-title" data-i18n="scene_custom_title">⚙️ 自定义时间轴节点</h4>
+                <p class="scenario-item-desc" data-i18n="scene_custom_desc">自由设定各个年份节点的利率变化</p>
               </div>
-              <span class="badge badge-blue">自由定制</span>
+              <span class="badge badge-blue" data-i18n="scene_custom_tag">自由定制</span>
             </div>
           </div>
 
           <!-- 自定义时间轴编辑框 -->
           <div id="custom-schedule-box" class="custom-box" style="display: none;">
-            <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">各阶段加息节点设定 (精确到月)：</div>
-            <p style="margin: 0 0 10px; font-size: 11px; color: var(--text-secondary); line-height: 1.5;">
+            <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;" data-i18n="custom_box_title">各阶段加息节点设定 (精确到月)：</div>
+            <p style="margin: 0 0 10px; font-size: 11px; color: var(--text-secondary); line-height: 1.5;" data-i18n-html="custom_box_hint">
               🏦 <strong>三菱UFJ调息规律</strong>：每年4月1日/10月1日检讨基准利率，分别反映在7月/1月的还款扣款中。你可在此自由设置具体第几年第几月生效。
             </p>
             <div id="custom-milestone-list">
               <!-- 动态注入节点 (年+月+实际日历年月) -->
             </div>
-            <button type="button" id="btn-add-step" class="btn-outline-add">
+            <button type="button" id="btn-add-step" class="btn-outline-add" data-i18n="btn_add_step">
               ＋ 添加精确月份加息节点
             </button>
           </div>
@@ -279,7 +285,7 @@
         <div class="kpi-grid">
           <div class="kpi-item highlight-primary">
             <div class="kpi-label">
-              <span>初期月供 (第1~5年)</span>
+              <span data-i18n="kpi_initial_title">初期月供 (第1~5年)</span>
               <span>📅</span>
             </div>
             <div id="kpi-initial-payment" class="kpi-num">¥0</div>
@@ -288,7 +294,7 @@
 
           <div class="kpi-item">
             <div class="kpi-label">
-              <span>最高月供 (最高返済額)</span>
+              <span data-i18n="kpi_max_title">最高月供 (最高返済額)</span>
               <span>🚀</span>
             </div>
             <div id="kpi-max-payment" class="kpi-num">¥0</div>
@@ -297,7 +303,7 @@
 
           <div class="kpi-item">
             <div class="kpi-label">
-              <span>累计总还款额</span>
+              <span data-i18n="kpi_total_title">累计总还款额</span>
               <span>💰</span>
             </div>
             <div id="kpi-total-payment" class="kpi-num">¥0</div>
@@ -306,7 +312,7 @@
 
           <div class="kpi-item" id="kpi-card-balloon">
             <div class="kpi-label">
-              <span>期末清偿状态</span>
+              <span data-i18n="kpi_balloon_title">期末清偿状态</span>
               <span>🎯</span>
             </div>
             <div id="kpi-balloon-status" class="kpi-num">¥0</div>
@@ -323,10 +329,10 @@
         <!-- 数据可视化图表卡片 -->
         <div class="chart-box">
           <div class="chart-tabs">
-            <button type="button" class="tab-btn chart-tab-btn active" data-tab="payment">
+            <button type="button" class="tab-btn chart-tab-btn active" data-tab="payment" data-i18n="tab_payment">
               📊 每月还款额与本金/利息构成
             </button>
-            <button type="button" class="tab-btn chart-tab-btn" data-tab="balance">
+            <button type="button" class="tab-btn chart-tab-btn" data-tab="balance" data-i18n="tab_balance">
               📉 贷款本金残高与未付利息走势
             </button>
           </div>
@@ -343,10 +349,10 @@
         <div class="table-box">
           <div class="table-header">
             <h3 style="margin: 0; font-size: 16px; font-weight: 700;">
-              📋 还款计划明细表 (償還スケジュール)
+              <span data-i18n="table_title">📋 还款计划明细表 (償還スケジュール)</span>
             </h3>
             <div style="display: flex; gap: 8px;">
-              <button type="button" id="btn-toggle-all-months" class="chip">
+              <button type="button" id="btn-toggle-all-months" class="chip" data-i18n="btn_expand_all">
                 展开全部月份
               </button>
               <button type="button" id="btn-export-csv" class="chip" style="font-weight: 700; color: var(--primary);">
@@ -355,24 +361,27 @@
                   <polyline points="7 10 12 15 17 10"></polyline>
                   <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
-                导出 CSV 表格
+                <span data-i18n="btn_export_csv">导出 CSV 表格</span>
               </button>
             </div>
           </div>
+
+          <!-- 移动端左右滑动提示 -->
+          <div class="mobile-scroll-hint" data-i18n="table_scroll_hint">👈 可左右滑动查看完整明细表格 👉</div>
 
           <div class="table-scroll">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>年份</th>
-                  <th>适用利率</th>
-                  <th>月供金额</th>
-                  <th>全年还款总额</th>
-                  <th>本年偿还本金</th>
-                  <th>本年支付利息</th>
-                  <th>年末本金余额</th>
-                  <th>未付利息挂账</th>
-                  <th>逐月明细</th>
+                  <th data-i18n="th_year">年份</th>
+                  <th data-i18n="th_rate">适用利率</th>
+                  <th data-i18n="th_monthly_pmt">月供金额</th>
+                  <th data-i18n="th_year_pmt">全年还款总额</th>
+                  <th data-i18n="th_year_prn">本年偿还本金</th>
+                  <th data-i18n="th_year_int">本年支付利息</th>
+                  <th data-i18n="th_end_bal">年末本金余额</th>
+                  <th data-i18n="th_unpaid">未付利息挂账</th>
+                  <th data-i18n="th_details">逐月明细</th>
                 </tr>
               </thead>
               <tbody id="schedule-tbody">
@@ -389,75 +398,87 @@
     <!-- 底部深度科普百科与防坑指南 -->
     <footer class="faq-wrap">
       <h2 class="faq-head">
-        <span>📖</span> 40年超长房贷与“5年/125%规则”深度解析与避坑指南
+        <span>📖</span> <span data-i18n="faq_heading">40年超长房贷与“5年/125%规则”深度解析与避坑指南</span>
       </h2>
 
       <div class="faq-grid">
         <div class="faq-item faq-card">
-          <h3>1. 为什么 40 年超长贷款更需要警惕 125% 规则？</h3>
-          <p>
-            40 年（480 期）超长房贷在初期每月的本金扣还比例极低（大部分月供都在付利息）。一旦遇到加息，月供中本金被压缩的空间比 35 年期更加有限！
-          </p>
-          <p>
-            受到 125% 上限保护时，月供无法足额增加，会导致<strong>本金偿还进度被大幅拖后</strong>，利息雪球效应在 40 年的超长时间跨度下会被进一步放大。
-          </p>
-        </div>
-
-        <div class="faq-item faq-card">
-          <h3>2. 什么是“5年规则” (5年ルール)？</h3>
-          <p>
-            在选择<strong>变动金利 (元利均等返済)</strong> 时，尽管银行通常每半年 (每年 4 月和 10 月) 评估一次基准利率，但<strong>借款人每月的实际扣款金额在 5年内 (60个月) 严格保持不变</strong>。
-          </p>
-          <p>
-            <strong>注意内幕</strong>：月供金额虽然不变，但内部的<strong>“本金 vs 利息”比例会立即变化</strong>！加息后每月利息增加，本金偿还变慢。
-          </p>
-        </div>
-
-        <div class="faq-item faq-card">
-          <h3>3. 什么是“125%规则” (125%ルール)？</h3>
-          <p>
-            在第 6 年、第 11 年、第 16 年…等每个 5 年周期节点，银行会按最新利率重新核算月供。但银行规定：<strong>新的月供金额不得超过上一个 5 年月供金额的 1.25 倍 (125%)</strong>。
-          </p>
-          <p>
-            <strong>本质</strong>：125% 规则保护的是借款人当期的现金流不至于因加息断供，但<strong>绝非免除利息</strong>，少还的部分全部延后。
-          </p>
-        </div>
-
-        <div class="faq-item faq-card">
-          <h3>4. 什么是“未付利息 (未払利息)”？</h3>
-          <p>
-            当利率出现暴涨时，若每月产生的利息金额<strong>超过了受到 125% 上限封顶的月供金额</strong>，超出部分的利息就会变成“未払利息 (挂账未付利息)”。
-          </p>
-          <p>
-            此时月供全被利息吞噬，<strong>本金一分钱都不减</strong>，反而倒欠银行利息。未付利息将在未来优先扣除，若到期未能还清，将在第 40 年末面临巨额一次性清偿。
-          </p>
-        </div>
-
-        <div class="faq-item faq-card">
-          <h3>5. 日本各大银行规则采用情况一览</h3>
-          <p>并非所有日本银行都采用 5 年与 125% 规则，借款前务必核对银行合同约定：</p>
-          <div class="bank-chips">
-            <span class="bank-chip has-rule">✓ 三菱UFJ银行 (有规则)</span>
-            <span class="bank-chip has-rule">✓ 三井住友银行 (有规则)</span>
-            <span class="bank-chip has-rule">✓ 瑞穗银行 (有规则)</span>
-            <span class="bank-chip has-rule">✓ auじぶん銀行 (有规则)</span>
-            <span class="bank-chip has-rule">✓ 住信SBIネット銀行 (有规则)</span>
-            <span class="bank-chip no-rule">✗ 索尼银行 Sony Bank (无此规则)</span>
-            <span class="bank-chip no-rule">✗ PayPay银行 (无此规则)</span>
-            <span class="bank-chip no-rule">✗ SBI新生银行 (部分方案无规则)</span>
+          <h3 data-i18n="faq_q1">1. 为什么 40 年超长贷款更需要警惕 125% 规则？</h3>
+          <div data-i18n-html="faq_a1">
+            <p>
+              40 年（480 期）超长房贷在初期每月的本金扣还比例极低（大部分月供都在付利息）。一旦遇到加息，月供中本金被压缩的空间比 35 年期更加有限！
+            </p>
+            <p>
+              受到 125% 上限保护时，月供无法足额增加，会导致<strong>本金偿还进度被大幅拖后</strong>，利息雪球效应在 40 年的超长时间跨度下会被进一步放大。
+            </p>
           </div>
-          <p style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">
-            *无规则的银行在加息时月供即刻调整，保证 40 年末绝对清零，不会产生未付利息。
-          </p>
         </div>
 
         <div class="faq-item faq-card">
-          <h3>6. 40年期房贷的 3 大实战避坑建议</h3>
-          <p>
-            <strong>① 储备流动资金</strong>：不要把现金耗尽，留出 1~2 年的生活备用金与提前还款储备。<br>
-            <strong>② 适时提前还款 (繰り上げ返済)</strong>：在加息周期来临时，优先做“期间缩短型”提前还款，大幅削减 40 年后期的利息负担。<br>
-            <strong>③ 关注总利息而非仅看月供</strong>：40 年贷款月供虽低，但总支付利息远超 30~35 年期，务必结合推演图表做好全周期规划。
-          </p>
+          <h3 data-i18n="faq_q2">2. 什么是“5年规则” (5年ルール)？</h3>
+          <div data-i18n-html="faq_a2">
+            <p>
+              在选择<strong>变动金利 (元利均等返済)</strong> 时，尽管银行通常每半年 (每年 4 月和 10 月) 评估一次基准利率，但<strong>借款人每月的实际扣款金额在 5年内 (60个月) 严格保持不变</strong>。
+            </p>
+            <p>
+              <strong>注意内幕</strong>：月供金额虽然不变，但内部的<strong>“本金 vs 利息”比例会立即变化</strong>！加息后每月利息增加，本金偿还变慢。
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item faq-card">
+          <h3 data-i18n="faq_q3">3. 什么是“125%规则” (125%ルール)？</h3>
+          <div data-i18n-html="faq_a3">
+            <p>
+              在第 6 年、第 11 年、第 16 年…等每个 5 年周期节点，银行会按最新利率重新核算月供。但银行规定：<strong>新的月供金额不得超过上一个 5 年月供金额的 1.25 倍 (125%)</strong>。
+            </p>
+            <p>
+              <strong>本质</strong>：125% 规则保护的是借款人当期的现金流不至于因加息断供，但<strong>绝非免除利息</strong>，少还的部分全部延后。
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item faq-card">
+          <h3 data-i18n="faq_q4">4. 什么是“未付利息 (未払利息)”？</h3>
+          <div data-i18n-html="faq_a4">
+            <p>
+              当利率出现暴涨时，若每月产生的利息金额<strong>超过了受到 125% 上限封顶的月供金额</strong>，超出部分的利息就会变成“未払利息 (挂账未付利息)”。
+            </p>
+            <p>
+              此时月供全被利息吞噬，<strong>本金一分钱都不减</strong>，反而倒欠银行利息。未付利息将在未来优先扣除，若到期未能还清，将在第 40 年末面临巨额一次性清偿。
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item faq-card">
+          <h3 data-i18n="faq_q5">5. 日本各大银行规则采用情况一览</h3>
+          <div data-i18n-html="faq_a5">
+            <p>并非所有日本银行都采用 5 年与 125% 规则，借款前务必核对银行合同约定：</p>
+            <div class="bank-chips">
+              <span class="bank-chip has-rule">✓ 三菱UFJ银行 (有规则)</span>
+              <span class="bank-chip has-rule">✓ 三井住友银行 (有规则)</span>
+              <span class="bank-chip has-rule">✓ 瑞穗银行 (有规则)</span>
+              <span class="bank-chip has-rule">✓ auじぶん銀行 (有规则)</span>
+              <span class="bank-chip has-rule">✓ 住信SBIネット銀行 (有规则)</span>
+              <span class="bank-chip no-rule">✗ 索尼银行 Sony Bank (无此规则)</span>
+              <span class="bank-chip no-rule">✗ PayPay银行 (无此规则)</span>
+              <span class="bank-chip no-rule">✗ SBI新生银行 (部分方案无规则)</span>
+            </div>
+            <p style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+              *无规则的银行在加息时月供即刻调整，保证 40 年末绝对清零，不会产生未付利息。
+            </p>
+          </div>
+        </div>
+
+        <div class="faq-item faq-card">
+          <h3 data-i18n="faq_q6">6. 40年期房贷的 3 大实战避坑建议</h3>
+          <div data-i18n-html="faq_a6">
+            <p>
+              <strong>① 储备流动资金</strong>：不要把现金耗尽，留出 1~2 年的生活备用金与提前还款储备。<br>
+              <strong>② 适时提前还款 (繰り上げ返済)</strong>：在加息周期来临时，优先做“期间缩短型”提前还款，大幅削减 40 年后期的利息负担。<br>
+              <strong>③ 关注总利息而非仅看月供</strong>：40 年贷款月供虽低，但总支付利息远超 30~35 年期，务必结合推演图表做好全周期规划。
+            </p>
+          </div>
         </div>
       </div>
     </footer>
@@ -465,11 +486,11 @@
     <!-- 底部版权与工具联动导航 -->
     <footer class="app-footer">
       <div>
-        <strong>日本住宅ローンシミュレーター</strong> · 40年超長期ローン · 変動金利5年/125%规则对应 · 纯前端离线运行 · 数据安全不上传
+        <strong data-i18n="brand_title">日本住宅ローンシミュレーター</strong> · <span data-i18n="footer_text">40年超長期ローン · 変動金利5年/125%规则对应 · 纯前端离线运行 · 数据安全不上传</span>
       </div>
       <div class="footer-links">
-        <a href="./tax/">正社员税金·房贷减税·故乡税计算器</a>
-        <a href="README.md" target="_blank">使用手册 & 算法原理</a>
+        <a href="./tax/" data-i18n="footer_tax_link">正社员税金·房贷减税·故乡税计算器</a>
+        <a href="README.md" target="_blank" data-i18n="footer_doc_link">使用手册 & 算法原理</a>
       </div>
     </footer>
 

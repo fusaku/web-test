@@ -23,6 +23,13 @@
     return (num / 10000).toFixed(1) + ' 万円';
   }
 
+  function t(key) {
+    if (window.TaxI18n && typeof window.TaxI18n.t === 'function') {
+      return window.TaxI18n.t(key);
+    }
+    return key;
+  }
+
   // 1. 获取表单数据
   function getFormData() {
     const regionPrefecture = document.getElementById('select-region').value || 'yokohama';
@@ -98,9 +105,9 @@
     const regionBadge = document.getElementById('region-summary-badge');
     if (regionBadge) {
       if (input.regionPrefecture === 'yokohama') {
-        regionBadge.innerHTML = '📍 神奈川県横浜市 · 健保 5.01% · 住民税 10.025% (含水源税+横浜みどり税)';
+        regionBadge.innerHTML = t('region_yokohama_badge');
       } else {
-        regionBadge.innerHTML = '📍 神奈川県 (その他市町村) · 健保 5.01% · 住民税 10.025% (含水源税)';
+        regionBadge.innerHTML = t('region_other_badge');
       }
     }
 
@@ -108,41 +115,48 @@
     // KPI 1: 住房减税
     if (input.enableMortgage && result.baseMortgageSim.isEligible && result.baseMortgageSim.maxDeduction > 0) {
       document.getElementById('kpi-mortgage-val').textContent = formatYen(result.activeMortgage.totalDeducted);
-      document.getElementById('kpi-mortgage-sub').innerHTML = 
-        `理论减税上限 ${formatYen(result.baseMortgageSim.maxDeduction)} (所得税抵 ${formatYen(result.activeMortgage.incomeTaxDeducted)} + 住民税抵 ${formatYen(result.activeMortgage.residentTaxDeducted)})`;
+      document.getElementById('kpi-mortgage-sub').innerHTML = t('kpi_mortgage_sub_tpl')
+        .replace('{max}', formatYen(result.baseMortgageSim.maxDeduction))
+        .replace('{it}', formatYen(result.activeMortgage.incomeTaxDeducted))
+        .replace('{rt}', formatYen(result.activeMortgage.residentTaxDeducted));
 
       if (result.activeMortgage.wastedDeduction > 0) {
         document.getElementById('kpi-mortgage-badge').className = 'kpi-badge badge-red';
-        document.getElementById('kpi-mortgage-badge').textContent = `⚠️ 未用尽浪费 ${formatYen(result.activeMortgage.wastedDeduction)}`;
+        document.getElementById('kpi-mortgage-badge').textContent = t('kpi_mortgage_waste_badge')
+          .replace('{waste}', formatYen(result.activeMortgage.wastedDeduction));
       } else {
         document.getElementById('kpi-mortgage-badge').className = 'kpi-badge badge-green';
-        document.getElementById('kpi-mortgage-badge').textContent = '✅ 减税全额拿满';
+        document.getElementById('kpi-mortgage-badge').textContent = t('kpi_mortgage_full_badge');
       }
     } else {
       document.getElementById('kpi-mortgage-val').textContent = '¥0';
-      document.getElementById('kpi-mortgage-sub').textContent = input.enableMortgage ? '所得超2000万或余额为0' : '未开启房贷减税';
+      document.getElementById('kpi-mortgage-sub').textContent = input.enableMortgage ? t('kpi_mortgage_fallback_high') : t('kpi_mortgage_fallback_none');
       document.getElementById('kpi-mortgage-badge').className = 'kpi-badge badge-blue';
-      document.getElementById('kpi-mortgage-badge').textContent = '无减免';
+      document.getElementById('kpi-mortgage-badge').textContent = t('kpi_mortgage_badge_none');
     }
 
     // KPI 2: 故乡税上限
     document.getElementById('kpi-furusato-val').textContent = formatYen(result.baseFurusatoLimit);
-    document.getElementById('kpi-furusato-sub').innerHTML = 
-      `实际个人自负仅 <strong>¥2,000</strong> · 约获返礼品价值 <strong>${formatYen(Math.floor(result.baseFurusatoLimit * 0.3))}</strong>`;
+    document.getElementById('kpi-furusato-sub').innerHTML = t('kpi_furusato_sub_tpl')
+      .replace('{gift}', formatYen(Math.floor(result.baseFurusatoLimit * 0.3)));
 
     // KPI 3: 手到手年收入 (手取り) - 包含商业保险扣除与自由现金流
     document.getElementById('kpi-takehome-val').textContent = formatYen(result.standardTakeHomePay);
-    let takeHomeSubHtml = `月均到手约 <strong>${formatYen(result.monthlyTakeHome)}</strong>`;
+    let takeHomeSubHtml = t('kpi_takehome_sub_tpl').replace('{monthly}', formatYen(result.monthlyTakeHome));
     if (result.totalCommercialPremiumsPaid > 0) {
-      takeHomeSubHtml += ` · 扣除商业保费(${formatYen(result.totalCommercialPremiumsPaid)})后净现金 <strong>${formatYen(result.netCashTakeHomePay)}</strong>`;
+      takeHomeSubHtml += t('kpi_takehome_net_cash_tpl')
+        .replace('{prem}', formatYen(result.totalCommercialPremiumsPaid))
+        .replace('{cash}', formatYen(result.netCashTakeHomePay));
     }
     document.getElementById('kpi-takehome-sub').innerHTML = takeHomeSubHtml;
 
     // KPI 4: 每年社保与税金合计
     const totalTaxAndSocial = result.socialInsurance.total + result.totalTaxes;
     document.getElementById('kpi-taxes-val').textContent = formatYen(totalTaxAndSocial);
-    document.getElementById('kpi-taxes-sub').innerHTML = 
-      `社保 ${formatYen(result.socialInsurance.total)} · 所得税 ${formatYen(result.finalNetIncomeTax)} · 住民税 ${formatYen(result.finalResidentTax)}`;
+    document.getElementById('kpi-taxes-sub').innerHTML = t('kpi_taxes_sub_tpl')
+      .replace('{si}', formatYen(result.socialInsurance.total))
+      .replace('{it}', formatYen(result.finalNetIncomeTax))
+      .replace('{rt}', formatYen(result.finalResidentTax));
 
     // 2.4 保险控除实际节税大看板
     renderInsuranceDeductionSummary(result, input);
@@ -184,8 +198,9 @@
     document.getElementById('ins-eq-rt-ded').textContent = formatYen(eq.residentTax);
 
     document.getElementById('ins-total-saved-val').textContent = `+${formatYen(result.totalInsuranceTaxSavings)}`;
-    document.getElementById('ins-total-saved-sub').innerHTML = 
-      `所得税减税 <strong>${formatYen(result.insuranceIncomeTaxSaved)}</strong> + 住民税减税 <strong>${formatYen(result.insuranceResidentTaxSaved)}</strong> (年末调整退税到账)`;
+    document.getElementById('ins-total-saved-sub').innerHTML = t('ins_total_saved_sub_tpl')
+      .replace('{it}', formatYen(result.insuranceIncomeTaxSaved))
+      .replace('{rt}', formatYen(result.insuranceResidentTaxSaved));
   }
 
   // 4. 房贷减税进度条
@@ -205,8 +220,10 @@
       document.getElementById('legend-wasted-val').textContent = `${formatYen(result.activeMortgage.wastedDeduction)} (${pctWasted.toFixed(0)}%)`;
       document.getElementById('mortgage-bar-container').style.display = 'block';
 
-      document.getElementById('mortgage-res-cap-text').textContent = 
-        `前年课税所得5%或${input.moveInYear >= 2022 ? '97,500円' : '136,500円'}封顶，当前住民税转嫁上限为 ${formatYen(result.baseMortgageSim.residentTaxCap)}`;
+      const capText = input.moveInYear >= 2022 ? '97,500円' : '136,500円';
+      document.getElementById('mortgage-res-cap-text').textContent = t('mortgage_res_cap_tpl')
+        .replace('{cap}', capText)
+        .replace('{amount}', formatYen(result.baseMortgageSim.residentTaxCap));
     } else {
       document.getElementById('mortgage-bar-container').style.display = 'none';
     }
@@ -233,9 +250,9 @@
         alertBox.innerHTML = `
           <span class="alert-icon">⚠️</span>
           <div>
-            <strong>注意：確定申告会造成房贷减税损失约 ${formatYen(loss)}！</strong><br>
-            原因：確定申告会将故乡税走所得税寄附金控除，减少所得税课税所得；房贷减税被挤入住民税时撞上了 <strong>${formatYen(result.baseMortgageSim.residentTaxCap)}</strong> 转移上限，多余减税额永久失效。<br>
-            💡 <strong>实战避坑建议</strong>：若处于买房第 2 年及以后，<strong>强烈推荐选择ワンストップ特例 (One-Stop)</strong>，可 100% 拿满全部房贷减税！若属于买房第 1 年必须確定申告，建议故乡税控制在 <strong>${formatYen(safeLimit)}</strong> 以内以防亏损。
+            <strong>${t('alert_loss_title').replace('{loss}', formatYen(loss))}</strong><br>
+            ${t('alert_loss_reason').replace('{cap}', formatYen(result.baseMortgageSim.residentTaxCap))}<br>
+            ${t('alert_loss_advice').replace('{safe}', formatYen(safeLimit))}
           </div>
         `;
       } else {
@@ -243,8 +260,8 @@
         alertBox.innerHTML = `
           <span class="alert-icon">🎉</span>
           <div>
-            <strong>好消息：在此年收入和房贷余额下，两种申报模式均不会损失房贷减税！</strong><br>
-            您的所得税与住民税额度充裕，故乡税扣减后依然有足够空间消化房贷减税。若入居第 1 年可放心进行確定申告。
+            <strong>${t('alert_safe_title')}</strong><br>
+            ${t('alert_safe_body')}
           </div>
         `;
       }
@@ -252,9 +269,7 @@
       alertBox.className = 'alert-box alert-info';
       alertBox.innerHTML = `
         <span class="alert-icon">ℹ️</span>
-        <div>
-          当前未启用房贷减税。ワンストップ特例与確定申告对故乡税的减免总额在数学上完全一致（均享受自己自负 2,000 円的上限福利）。
-        </div>
+        <div>${t('alert_no_mortgage')}</div>
       `;
     }
   }
@@ -279,7 +294,70 @@
     const tbody = document.getElementById('source-table-body');
     if (!tbody) return;
 
-    tbody.innerHTML = `
+    const isJa = (window.TaxI18n && window.TaxI18n.getLang() === 'ja');
+
+    tbody.innerHTML = isJa ? `
+      <tr>
+        <td><strong>支払金額 (額面年収)</strong><span class="source-ticket-tag">① 源泉票左上</span></td>
+        <td class="num">${formatYen(result.grossIncome)}</td>
+        <td style="color:var(--text-muted);font-size:12px;">1年間の支払給与・賞与の総支給額</td>
+      </tr>
+      <tr>
+        <td><strong>給与所得控除後の金額</strong><span class="source-ticket-tag">② 所得金額</span></td>
+        <td class="num">${formatYen(result.employmentIncome)}</td>
+        <td style="color:var(--text-muted);font-size:12px;">給与所得控除額 (${formatYen(result.employmentDeduction)}) を差し引いた金額</td>
+      </tr>
+      <tr>
+        <td><strong>社会保険料等の金額</strong><span class="source-ticket-tag">社保控除</span></td>
+        <td class="num">${formatYen(result.socialInsurance.total)}</td>
+        <td style="color:var(--text-muted);font-size:12px;">健康保険(5.01%)+厚生年金(9.15%)+雇用保険(0.60%)等</td>
+      </tr>
+      <tr>
+        <td><strong>生命保険料の控除額</strong><span class="source-ticket-tag">新制度3区分</span></td>
+        <td class="num">${formatYen(result.lifeDed.incomeTaxTotal)}</td>
+        <td style="color:var(--text-muted);font-size:12px;">一般(${formatYen(result.lifeDed.general.incomeTax)})＋介護医療(${formatYen(result.lifeDed.medical.incomeTax)})＋個人年金(${formatYen(result.lifeDed.annuity.incomeTax)})</td>
+      </tr>
+      <tr>
+        <td><strong>地震保険料の控除額</strong><span class="source-ticket-tag">地震保険</span></td>
+        <td class="num">${formatYen(result.eqDed.incomeTax)}</td>
+        <td style="color:var(--text-muted);font-size:12px;">最高 50,000 円 (実支払保険料: ${formatYen(result.eqDed.premium)})</td>
+      </tr>
+      <tr>
+        <td><strong>所得控除の額の合計額</strong><span class="source-ticket-tag">③ 控除合計</span></td>
+        <td class="num">${formatYen(result.incomeTaxDeductionsTotal)}</td>
+        <td style="color:var(--text-muted);font-size:12px;">社保＋基礎控除(${formatYen(result.basicDed.incomeTax)})＋保険料控除＋配偶者・扶養控除等</td>
+      </tr>
+      <tr>
+        <td><strong>課税給与所得金額</strong><span class="source-ticket-tag">千円未満切捨</span></td>
+        <td class="num">${formatYen(result.incomeTaxableIncome)}</td>
+        <td style="color:var(--text-muted);font-size:12px;">税額計算の課税標準 (適用限界税率: ${result.incomeTaxBracket.label})</td>
+      </tr>
+      <tr>
+        <td><strong>算出所得税額 (住宅控除前)</strong><span class="source-ticket-tag">税率速算後</span></td>
+        <td class="num">${formatYen(result.rawIncomeTax)}</td>
+        <td style="color:var(--text-muted);font-size:12px;">住宅借入金等特別控除を差し引く前の所得税額</td>
+      </tr>
+      <tr>
+        <td><strong>住宅借入金等特別控除の額</strong><span class="source-ticket-tag">④ 住宅ローン控除</span></td>
+        <td class="num" style="color:var(--success);">- ${formatYen(result.activeMortgage.incomeTaxDeducted)}</td>
+        <td style="color:var(--text-muted);font-size:12px;">所得税から直接差し引かれる住宅減税額</td>
+      </tr>
+      <tr>
+        <td><strong>源泉徴収税額 (所得税納付額)</strong><span class="source-ticket-tag">⑤ 年末最終税額</span></td>
+        <td class="num" style="color:var(--primary);font-weight:700;">${formatYen(result.finalNetIncomeTax)}</td>
+        <td style="color:var(--text-muted);font-size:12px;">復興特別所得税 (2.1%・${formatYen(result.finalReconstructionTax)}) を含む</td>
+      </tr>
+      <tr style="background:var(--bg-subtle);">
+        <td><strong>翌年度 住民税所得割 住宅控除額</strong><span class="source-ticket-tag">横浜市住民税充当</span></td>
+        <td class="num" style="color:var(--primary);">- ${formatYen(result.activeMortgage.residentTaxDeducted)}</td>
+        <td style="color:var(--text-muted);font-size:12px;">翌年6月分住民税より減額 (上限: ${formatYen(result.baseMortgageSim.residentTaxCap)})</td>
+      </tr>
+      <tr style="background:var(--bg-subtle);">
+        <td><strong>翌年度 住民税納付年額 (概算)</strong><span class="source-ticket-tag">横浜市 10.025%</span></td>
+        <td class="num" style="font-weight:700;">${formatYen(result.finalResidentTax)}</td>
+        <td style="color:var(--text-muted);font-size:12px;">所得割 10.025% ＋ 均等割等 ${formatYen(result.residentPerCapitaLevy)} (水源税・横浜みどり税含む)</td>
+      </tr>
+    ` : `
       <tr>
         <td><strong>支払金額 (税前年收入)</strong><span class="source-ticket-tag">① 票面最左上</span></td>
         <td class="num">${formatYen(result.grossIncome)}</td>
@@ -350,6 +428,7 @@
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const textColor = isDark ? '#94a3b8' : '#475569';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+    const isJa = (window.TaxI18n && window.TaxI18n.getLang() === 'ja');
 
     // 图表 1: 收入流向与商业保费 (环形饼图)
     const ctxComp = document.getElementById('chart-composition');
@@ -362,15 +441,18 @@
         result.finalResidentTax,
         result.actualDonation
       ];
+      const compLabels = t('chart_comp_labels');
 
       if (taxCompositionChart) {
+        taxCompositionChart.data.labels = compLabels;
         taxCompositionChart.data.datasets[0].data = compData;
+        taxCompositionChart.options.plugins.legend.labels.color = textColor;
         taxCompositionChart.update();
       } else {
         taxCompositionChart = new Chart(ctxComp, {
           type: 'doughnut',
           data: {
-            labels: ['自由现金手取り', '商业保险保费', '社会保险费', '所得税', '横浜市民住民税', '故乡税捐款'],
+            labels: compLabels,
             datasets: [{
               data: compData,
               backgroundColor: ['#0284c7', '#14b8a6', '#818cf8', '#10b981', '#f59e0b', '#ec4899'],
@@ -412,17 +494,21 @@
       const afterIT = result.finalNetIncomeTax;
       const afterRT = result.finalResidentTax;
 
+      const compareLabels = t('chart_compare_labels');
+      const labelBefore = t('chart_dataset_before');
+      const labelAfter = t('chart_dataset_after');
+
       const compareData = {
-        labels: ['所得税', '横浜住民税', '二税合计'],
+        labels: compareLabels,
         datasets: [
           {
-            label: '减税前原始税金',
+            label: labelBefore,
             data: [rawIT, rawRT, rawIT + rawRT],
             backgroundColor: isDark ? 'rgba(148, 163, 184, 0.4)' : 'rgba(148, 163, 184, 0.6)',
             borderRadius: 6
           },
           {
-            label: '实际应缴税金 (享房贷+故乡税)',
+            label: labelAfter,
             data: [afterIT, afterRT, afterIT + afterRT],
             backgroundColor: '#10b981',
             borderRadius: 6
@@ -432,6 +518,7 @@
 
       if (taxComparisonChart) {
         taxComparisonChart.data = compareData;
+        taxComparisonChart.options.plugins.legend.labels.color = textColor;
         taxComparisonChart.options.scales.x.ticks.color = textColor;
         taxComparisonChart.options.scales.y.ticks.color = textColor;
         taxComparisonChart.options.scales.y.grid.color = gridColor;
@@ -458,7 +545,7 @@
               y: {
                 ticks: {
                   color: textColor,
-                  callback: val => '¥' + (val / 10000).toFixed(0) + '万'
+                  callback: val => '¥' + (val / 10000).toFixed(0) + (isJa ? '万' : '万')
                 },
                 grid: { color: gridColor }
               }
@@ -473,14 +560,62 @@
   function exportCSV() {
     const input = getFormData();
     const result = window.TaxEngine.calculateAll(input);
+    const isJa = (window.TaxI18n && window.TaxI18n.getLang() === 'ja');
 
-    const rows = [
-      ['指标分类', '指标项目', '金额 (円/或说明)'],
+    const catCol = t('csv_category');
+    const itemCol = t('csv_item');
+    const amtCol = t('csv_amount_desc');
+
+    const rows = isJa ? [
+      [catCol, itemCol, amtCol],
+      ['基準・制度', '基準地域・税制基準', result.region.name],
+      ['基準・制度', '健康保険料率 (協会けんぽ神奈川支部)', result.region.healthRate],
+      ['基準・制度', '住民税所得割率 (水源税含む)', result.region.residentTaxRate],
+      ['基準・制度', '住民税均等割等年額 (横浜みどり税含む)', result.region.perCapitaLevy],
+      ['額面給与', '額面年収 (支払金額)', result.grossIncome],
+      ['額面給与', '給与所得控除額', result.employmentDeduction],
+      ['額面給与', '給与所得金額', result.employmentIncome],
+      ['社会保険料', '社会保険料年額合計', result.socialInsurance.total],
+      ['社会保険料', '健康保険料概算 (5.01%)', result.socialInsurance.health],
+      ['社会保険料', '厚生年金概算 (9.15%)', result.socialInsurance.pension],
+      ['社会保険料', '雇用保険概算 (0.60%)', result.socialInsurance.employment],
+      ['社会保険料', '介護保険概算 (0.80%)', result.socialInsurance.nursing],
+      ['商業保険料', '一般生命保険料支払年額', result.lifeDed.general.premium],
+      ['商業保険料', '介護医療保険料支払年額', result.lifeDed.medical.premium],
+      ['商業保険料', '個人年金保険料支払年額', result.lifeDed.annuity.premium],
+      ['商業保険料', '地震保険料支払年額', result.eqDed.premium],
+      ['保険料控除', '所得税 生命保険料控除額', result.lifeDed.incomeTaxTotal],
+      ['保険料控除', '住民税 生命保険料控除額', result.lifeDed.residentTaxTotal],
+      ['保険料控除', '所得税 地震保険料控除額', result.eqDed.incomeTax],
+      ['保険料控除', '住民税 地震保険料控除額', result.eqDed.residentTax],
+      ['保険料控除', '商業保険料控除 年間節税効果', result.totalInsuranceTaxSavings],
+      ['所得税', '課税給与所得金額', result.incomeTaxableIncome],
+      ['所得税', '算出所得税額', result.rawIncomeTax],
+      ['所得税', '住宅借入金等特別控除額 (所得税控除)', result.activeMortgage.incomeTaxDeducted],
+      ['所得税', '源泉徴収税額 (復興特別所得税含む)', result.finalNetIncomeTax],
+      ['住民税', '課税住民税所得金額', result.residentTaxableIncome],
+      ['住民税', '算出所得割額 (10.025%)', result.rawResidentIncomeLevy],
+      ['住民税', '調整控除額', result.adjustmentDeduction],
+      ['住民税', '住宅借入金等特別控除額 (住民税充当)', result.activeMortgage.residentTaxDeducted],
+      ['住民税', '翌年度住民税納付年額 (概算)', result.finalResidentTax],
+      ['住宅ローン控除', '年末ローン残高', input.enableMortgage ? (input.mortgageBalanceMan * 10000) : 0],
+      ['住宅ローン控除', '理論上の減税上限額', result.baseMortgageSim.maxDeduction],
+      ['住宅ローン控除', '実際の減税総額', result.activeMortgage.totalDeducted],
+      ['住宅ローン控除', '控除しきれず失効した額', result.activeMortgage.wastedDeduction],
+      ['ふるさと納税', '実質負担2,000円上限目安額', result.baseFurusatoLimit],
+      ['ふるさと納税', '予定寄附金額', result.actualDonation],
+      ['ふるさと納税', '返礼品相当額 (約30%)', result.estimatedGiftValue],
+      ['手取り額', '法定税引後年間手取り額', result.standardTakeHomePay],
+      ['手取り額', '保険料支払後自由現金手取り', result.netCashTakeHomePay],
+      ['手取り額', '月平均法定手取り額 (12分割)', result.monthlyTakeHome],
+      ['手取り額', '月平均自由現金手取り (12分割)', result.monthlyNetCash]
+    ] : [
+      [catCol, itemCol, amtCol],
       ['计算标准', '所在地区与税制标准', result.region.name],
       ['计算标准', '健康保险率 (協会けんぽ神奈川支部)', result.region.healthRate],
       ['计算标准', '住民税所得割率 (含水源税)', result.region.residentTaxRate],
       ['计算标准', '住民税均等割等年额 (含横滨绿税等)', result.region.perCapitaLevy],
-      ['基本收入', '额面年收入 (支払金額)', result.grossIncome],
+      ['基本收入', '额面年收入 (支払金额)', result.grossIncome],
       ['基本收入', '给与所得控除额', result.employmentDeduction],
       ['基本收入', '给与所得金额', result.employmentIncome],
       ['社会保险', '社会保险料年额合计', result.socialInsurance.total],
@@ -528,7 +663,8 @@
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `横滨市正社员税金试算表_${input.grossAnnualIncomeMan}万年收.csv`);
+    const filename = t('csv_filename_tpl').replace('{income}', input.grossAnnualIncomeMan);
+    link.setAttribute('download', filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -662,6 +798,19 @@
         updateCalculations();
       });
     }
+
+    const langBtn = document.getElementById('lang-toggle-btn');
+    if (langBtn) {
+      langBtn.addEventListener('click', () => {
+        if (window.TaxI18n) {
+          window.TaxI18n.toggleLanguage();
+        }
+      });
+    }
+
+    window.addEventListener('tax-lang-changed', () => {
+      updateCalculations();
+    });
   }
 
   // 12. 加载 config.js 预设值
@@ -778,6 +927,9 @@
   // DOM 就绪入口
   function init() {
     loadConfigDefaults();
+    if (window.TaxI18n) {
+      window.TaxI18n.setLanguage(window.TaxI18n.getLang());
+    }
     renderChips();
     bindEvents();
     updateCalculations();

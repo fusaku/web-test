@@ -768,8 +768,179 @@ input:checked + .slider:before {
   text-decoration: none;
 }
 
-.footer-links a:hover {
-  text-decoration: underline;
+/* 语言切换按钮特殊样式 */
+.lang-toggle-btn {
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-light);
+  border-color: rgba(2, 132, 199, 0.2);
+}
+
+.lang-toggle-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* 图表双列响应式容器 */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 860px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+/* 移动端横向滑动提示 */
+.mobile-scroll-hint {
+  display: none;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+/* 深度移动端适配 (平板及手机) */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 16px 14px 60px;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+  }
+
+  .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .btn-header {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 40px;
+  }
+
+  /* 解决移动端 iOS 输入框点击自动放大缩放问题 */
+  .form-input, .form-select, select {
+    font-size: 16px;
+  }
+
+  /* 快捷筹码支持移动端丝滑横向滑动 */
+  .quick-chips {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    gap: 6px;
+  }
+  .quick-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .quick-chips .chip {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* 卡片紧凑内边距 */
+  .card {
+    padding: 16px 14px;
+    margin-bottom: 16px;
+  }
+
+  /* KPI 指标卡片两列 */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .kpi-card {
+    padding: 14px 12px;
+  }
+  .kpi-value {
+    font-size: 20px;
+  }
+
+  /* 图表区域高度 */
+  .chart-container-wrap {
+    height: 250px;
+  }
+
+  /* 表格区域移动端适配 */
+  .tax-table-wrap {
+    -webkit-overflow-scrolling: touch;
+  }
+  .mobile-scroll-hint {
+    display: block;
+  }
+
+  /* 对比卡片单列 */
+  .comparison-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* 页脚在移动端垂直居中 */
+  .app-footer {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+    margin-top: 32px;
+  }
+  .footer-links {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+/* 超小屏手机适配 (< 480px) */
+@media (max-width: 480px) {
+  .app-container {
+    padding: 12px 10px 48px;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .brand-title h1 {
+    font-size: 17px;
+  }
+
+  .brand-title h1 span {
+    font-size: 11px;
+    padding: 1px 6px;
+  }
+
+  .brand-title p {
+    font-size: 11px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-value {
+    font-size: 22px;
+  }
 }
 
 /* 打印样式 */

@@ -7,6 +7,7 @@
   <title>日本正社员税金计算器 (神奈川·横滨标准版) - 住宅减税·故乡税·保险控除</title>
   <meta name="description" content="专为神奈川县及横滨市正社员打造的年度税金试算与节税推演工具。严格适配协会健保神奈川支部(5.01%)、横滨市个人住民税(10.025%含水源税与横滨绿税)、完整商业保险料控除、住宅借入金等特别控除(住宅ローン減税)及ふるさと納税(故乡税)One-Stop与确定申告联动避坑分析。">
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/i18n.js"></script>
   <script>
     // 独立轻量主题防闪烁预处理 (与房贷模拟器双向同步)
     (function() {
@@ -28,16 +29,22 @@
       <div class="brand-wrap">
         <div class="brand-icon">税</div>
         <div class="brand-title">
-          <h1>日本正社员税金计算器 <span style="background:rgba(16,185,129,0.12); color:#10b981;">神奈川·横滨标准版</span></h1>
-          <p>協会けんぽ神奈川支部 (5.01%) · 横浜市 住民税 (10.025% / 横浜みどり税) · 房贷减税 · 故乡税上限 · 保险控除</p>
+          <h1><span data-i18n="brand_title">日本正社员税金计算器</span> <span style="background:rgba(16,185,129,0.12); color:#10b981;" data-i18n="brand_tag">神奈川·横滨标准版</span></h1>
+          <p data-i18n="brand_sub">協会けんぽ神奈川支部 (5.01%) · 横浜市 住民税 (10.025% / 横浜みどり税) · 房贷减税 · 故乡税上限 · 保险控除</p>
         </div>
       </div>
 
       <div class="header-actions">
+        <!-- 中日双语切换按钮 -->
+        <button type="button" class="btn-header lang-toggle-btn" id="lang-toggle-btn" aria-label="切换语言" title="切换语言 (日本語 / 中文)">
+          <span>🌐</span>
+          <span id="lang-btn-text">日本語</span>
+        </button>
+
         <!-- 跨工具导航：前往房贷计算器 -->
         <a href="../" id="nav-link-mortgage" class="btn-header" title="前往日本房贷模拟器">
           <span>🏠</span>
-          <span>40年房贷模拟器</span>
+          <span data-i18n="nav_mortgage">40年房贷模拟器</span>
         </a>
 
         <button type="button" class="btn-header theme-toggle-btn" aria-label="切换主题" title="切换暗色/浅色模式">
@@ -55,7 +62,7 @@
           <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
-          <span>外观</span>
+          <span data-i18n="theme_btn">外观</span>
         </button>
       </div>
     </header>
@@ -66,10 +73,10 @@
         📍 <strong>神奈川県横浜市</strong> · 健保 5.01% · 住民税所得割 10.025% (含水源税+横浜みどり税)
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:12px; color:var(--text-muted);">切换地区标准：</span>
+        <span style="font-size:12px; color:var(--text-muted);" data-i18n="lbl_select_region">切换地区标准：</span>
         <select id="select-region" class="form-select" style="padding:4px 10px; font-size:12px; width:auto;">
-          <option value="yokohama" selected>神奈川県 横浜市 (均等割等 6,200円)</option>
-          <option value="kanagawa_other">神奈川県 その他市町村 (川崎市等 5,300円)</option>
+          <option value="yokohama" selected data-i18n="opt_yokohama">神奈川県 横浜市 (均等割等 6,200円)</option>
+          <option value="kanagawa_other" data-i18n="opt_kanagawa_other">神奈川県 その他市町村 (川崎市等 5,300円)</option>
         </select>
       </div>
     </div>
@@ -83,19 +90,19 @@
         <!-- 1. 年收入与社保设定 -->
         <section class="card">
           <div class="card-title">
-            <span class="title-text">💴 额面年收与社保 (給与条件)</span>
+            <span class="title-text" data-i18n="card_income_title">💴 额面年收与社保 (給与条件)</span>
             <span class="label-hint" style="color: var(--primary); font-weight:600;">已载入 config.js</span>
           </div>
 
           <!-- 年收入输入 -->
           <div class="form-group">
             <label class="form-label" for="input-income">
-              <span>税前额面年收入 (支払金額)</span>
+              <span data-i18n="lbl_gross_income">税前额面年收入 (支払金額)</span>
               <span id="display-income-yen" class="label-hint">¥7,000,000</span>
             </label>
             <div class="input-addon-wrap">
               <input type="number" id="input-income" class="form-input" min="100" max="10000" step="10" value="700">
-              <span class="input-addon">万円</span>
+              <span class="input-addon" data-i18n="unit_man">万円</span>
             </div>
             <div id="chips-income-container" class="quick-chips">
               <!-- 由 app.js 动态渲染快捷筹码 -->
@@ -106,8 +113,8 @@
           <div class="form-group" style="margin-top: 14px;">
             <label class="toggle-wrap">
               <div>
-                <span style="font-size:13px; font-weight:600; color:var(--text-secondary);">年满 40 岁 (介護保険対象)</span>
-                <p style="font-size:11px; color:var(--text-muted); margin-top:2px;">40~64岁加缴约 0.80% 介护保险料</p>
+                <span style="font-size:13px; font-weight:600; color:var(--text-secondary);" data-i18n="lbl_age_40">年满 40 岁 (介護保険対象)</span>
+                <p style="font-size:11px; color:var(--text-muted); margin-top:2px;" data-i18n="hint_age_40">40~64岁加缴约 0.80% 介护保险料</p>
               </div>
               <label class="switch">
                 <input type="checkbox" id="input-age-40">
@@ -119,24 +126,24 @@
           <!-- 社会保险费模式 -->
           <div class="form-group" style="margin-top: 14px;">
             <label class="form-label">
-              <span>社会保险费估算方式</span>
+              <span data-i18n="lbl_si_mode">社会保险费估算方式</span>
             </label>
-            <div style="display:flex; gap:16px; font-size:13px; color:var(--text-secondary);">
+            <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:var(--text-secondary);">
               <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
                 <input type="radio" name="si-mode" value="auto" checked>
-                <span>按神奈川支部标准估算 (约14.76%)</span>
+                <span data-i18n="si_mode_auto">按神奈川支部标准估算 (约14.76%)</span>
               </label>
               <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
                 <input type="radio" name="si-mode" value="manual">
-                <span>手动输入税单金额</span>
+                <span data-i18n="si_mode_manual">手动输入税单金额</span>
               </label>
             </div>
             <div id="wrap-manual-si" style="display:none; margin-top:10px;">
               <div class="input-addon-wrap">
                 <input type="number" id="input-manual-si" class="form-input" min="0" max="2000" step="1" value="105">
-                <span class="input-addon">万円</span>
+                <span class="input-addon" data-i18n="unit_man">万円</span>
               </div>
-              <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">填写源泉征收票上的「社会保険料等の金額」</p>
+              <p style="font-size:11px; color:var(--text-muted); margin-top:4px;" data-i18n="hint_manual_si">填写源泉征收票上的「社会保険料等の金額」</p>
             </div>
           </div>
         </section>
@@ -144,18 +151,18 @@
         <!-- 2. 商业保险料与保险控除 (生命保险·地震保险) - 重点专区 -->
         <section class="card" style="border-left: 4px solid #14b8a6;">
           <div class="card-title">
-            <span class="title-text">🛡️ 商业保险料控除 (新制三项+地震)</span>
-            <span class="kpi-badge badge-green" style="font-size:11px;">年末调整真金节税</span>
+            <span class="title-text" data-i18n="card_insurance_title">🛡️ 商业保险料控除 (新制三项+地震)</span>
+            <span class="kpi-badge badge-green" style="font-size:11px;" data-i18n="badge_insurance_yearend">年末调整真金节税</span>
           </div>
-          <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">
+          <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;" data-i18n-html="desc_insurance">
             正社员申报商业保费可享受所得税最高 <strong>12万</strong> + 住民税最高 <strong>7万</strong> 控除，有效提高到手现金：
           </p>
 
           <!-- ① 一般生命保险 -->
           <div class="form-group">
             <label class="form-label" for="input-life-general">
-              <span>① 一般生命保险料 (死亡险/学资险)</span>
-              <span class="label-hint">年缴8万即拿满控除4万/2.8万</span>
+              <span data-i18n="lbl_ins_general">① 一般生命保险料 (死亡险/学资险)</span>
+              <span class="label-hint" data-i18n="hint_ins_general">年缴8万即拿满控除4万/2.8万</span>
             </label>
             <div class="input-addon-wrap">
               <input type="number" id="input-life-general" class="form-input" min="0" max="100" step="1" value="8">
@@ -166,8 +173,8 @@
           <!-- ② 医疗介护保险 -->
           <div class="form-group">
             <label class="form-label" for="input-life-medical">
-              <span>② 医疗介护保险料 (医疗险/癌症/重疾)</span>
-              <span class="label-hint">最高控除所得税4万/住民2.8万</span>
+              <span data-i18n="lbl_ins_medical">② 医疗介护保险料 (医疗险/癌症/重疾)</span>
+              <span class="label-hint" data-i18n="hint_ins_medical">最高控除所得税4万/住民2.8万</span>
             </label>
             <div class="input-addon-wrap">
               <input type="number" id="input-life-medical" class="form-input" min="0" max="100" step="1" value="8">
@@ -178,8 +185,8 @@
           <!-- ③ 个人年金保险 -->
           <div class="form-group">
             <label class="form-label" for="input-life-annuity">
-              <span>③ 个人年金保险料 (商业养老定存年金)</span>
-              <span class="label-hint">最高控除所得税4万/住民2.8万</span>
+              <span data-i18n="lbl_ins_annuity">③ 个人年金保险料 (商业养老定存年金)</span>
+              <span class="label-hint" data-i18n="hint_ins_annuity">最高控除所得税4万/住民2.8万</span>
             </label>
             <div class="input-addon-wrap">
               <input type="number" id="input-life-annuity" class="form-input" min="0" max="100" step="1" value="0">
@@ -190,8 +197,8 @@
           <!-- ④ 地震保险 -->
           <div class="form-group">
             <label class="form-label" for="input-eq-ins">
-              <span>④ 地震保险料 (房屋火灾附带地震险)</span>
-              <span class="label-hint">所得税最高5万/住民2.5万</span>
+              <span data-i18n="lbl_ins_earthquake">④ 地震保险料 (房屋火灾附带地震险)</span>
+              <span class="label-hint" data-i18n="hint_ins_earthquake">所得税最高5万/住民2.5万</span>
             </label>
             <div class="input-addon-wrap">
               <input type="number" id="input-eq-ins" class="form-input" min="0" max="20" step="0.5" value="1.5">
@@ -203,38 +210,38 @@
         <!-- 3. 配偶与抚养家庭、iDeCo -->
         <section class="card">
           <div class="card-title">
-            <span class="title-text">👨‍👩‍👧 配偶与抚养亲属 (人的控除)</span>
+            <span class="title-text" data-i18n="card_dependents_title">👨‍👩‍👧 配偶与抚养亲属 (人的控除)</span>
           </div>
 
           <!-- 配偶者控除 -->
           <div class="form-group">
-            <label class="form-label" for="select-spouse">配偶者状况</label>
+            <label class="form-label" for="select-spouse" data-i18n="lbl_spouse_status">配偶者状况</label>
             <select id="select-spouse" class="form-select">
-              <option value="none">独身 / 无配偶</option>
-              <option value="dependent">配偶专职主妇(夫) / 年收≤150万 (控除满额38万)</option>
-              <option value="part_time">配偶兼职年收 150~201万 (享部分控除)</option>
-              <option value="independent">配偶共计纳税 / 年收>201.6万 (无控除)</option>
+              <option value="none" data-i18n="spouse_opt_none">独身 / 无配偶</option>
+              <option value="dependent" data-i18n="spouse_opt_dep">配偶专职主妇(夫) / 年收≤150万 (控除满额38万)</option>
+              <option value="part_time" data-i18n="spouse_opt_part">配偶兼职年收 150~201万 (享部分控除)</option>
+              <option value="independent" data-i18n="spouse_opt_indep">配偶共计纳税 / 年收>201.6万 (无控除)</option>
             </select>
           </div>
 
           <!-- 抚养亲属 (16岁以上) -->
           <div class="form-group">
             <label class="form-label">
-              <span>抚养亲属人数</span>
-              <span class="label-hint">16岁以下由儿童手当覆盖不计</span>
+              <span data-i18n="lbl_dependents">抚养亲属人数</span>
+              <span class="label-hint" data-i18n="hint_dependents">16岁以下由儿童手当覆盖不计</span>
             </label>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
               <div>
-                <span style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:4px;">一般抚养(16~18岁)</span>
+                <span style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:4px;" data-i18n="lbl_dep_1618">一般抚养(16~18岁)</span>
                 <input type="number" id="input-dep-1618" class="form-input" min="0" max="10" value="0">
               </div>
               <div>
-                <span style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:4px;">特定抚养(19~22岁)</span>
+                <span style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:4px;" data-i18n="lbl_dep_1922">特定抚养(19~22岁)</span>
                 <input type="number" id="input-dep-1922" class="form-input" min="0" max="10" value="0">
               </div>
             </div>
             <div style="margin-top:10px;">
-              <span style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:4px;">老人抚养(70岁以上同居)</span>
+              <span style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:4px;" data-i18n="lbl_dep_elder">老人抚养(70岁以上同居)</span>
               <input type="number" id="input-dep-elder" class="form-input" min="0" max="10" value="0">
             </div>
           </div>
@@ -242,8 +249,8 @@
           <!-- iDeCo -->
           <div class="form-group" style="margin-top:14px; border-top:1px dashed var(--border-color); padding-top:12px;">
             <label class="form-label" for="input-ideco">
-              <span>iDeCo / 确定拠出年金 年缴额</span>
-              <span class="label-hint">全额所得控除</span>
+              <span data-i18n="lbl_ideco">iDeCo / 确定拠出年金 年缴额</span>
+              <span class="label-hint" data-i18n="hint_ideco">全额所得控除</span>
             </label>
             <div class="input-addon-wrap">
               <input type="number" id="input-ideco" class="form-input" min="0" max="100" step="0.1" value="0">
@@ -255,7 +262,7 @@
         <!-- 4. 住宅借入金等特別控除 (住宅ローン減税) -->
         <section class="card" style="border-left: 4px solid var(--success);">
           <div class="card-title">
-            <span class="title-text">🏠 住宅借入金等特別控除 (房贷减税)</span>
+            <span class="title-text" data-i18n="card_mortgage_title">🏠 住宅借入金等特別控除 (房贷减税)</span>
             <label class="switch">
               <input type="checkbox" id="input-enable-mortgage" checked>
               <span class="slider"></span>
@@ -265,12 +272,12 @@
           <div id="mortgage-details-fields">
             <div class="form-group">
               <label class="form-label" for="input-mortgage-balance">
-                <span>年末贷款余额 (借入残高)</span>
+                <span data-i18n="lbl_mortgage_balance">年末贷款余额 (借入残高)</span>
                 <span id="display-mortgage-yen" class="label-hint">¥31,900,000</span>
               </label>
               <div class="input-addon-wrap">
                 <input type="number" id="input-mortgage-balance" class="form-input" min="100" max="20000" step="10" value="3190">
-                <span class="input-addon">万円</span>
+                <span class="input-addon" data-i18n="unit_man">万円</span>
               </div>
               <div id="chips-mortgage-container" class="quick-chips">
                 <!-- 房贷快捷筹码 -->
@@ -278,38 +285,38 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="select-house-type">房屋环保性能类别 (贷款上限)</label>
+              <label class="form-label" for="select-house-type" data-i18n="lbl_house_type">房屋环保性能类别 (贷款上限)</label>
               <select id="select-house-type" class="form-select">
-                <option value="energy_saving" selected>省节能标准适配住宅 (上限 3,000~4,000万)</option>
-                <option value="zeh">ZEH 水准省能住宅 (上限 3,500~4,500万)</option>
-                <option value="certified">认定长期优良/低碳住宅 (上限 4,500~5,000万)</option>
-                <option value="general">一般其他住宅 (上限 2,000万)</option>
-                <option value="custom">自定义贷款上限额</option>
+                <option value="energy_saving" selected data-i18n="house_opt_energy">省节能标准适配住宅 (上限 3,000~4,000万)</option>
+                <option value="zeh" data-i18n="house_opt_zeh">ZEH 水准省能住宅 (上限 3,500~4,500万)</option>
+                <option value="certified" data-i18n="house_opt_cert">认定长期优良/低碳住宅 (上限 4,500~5,000万)</option>
+                <option value="general" data-i18n="house_opt_gen">一般其他住宅 (上限 2,000万)</option>
+                <option value="custom" data-i18n="house_opt_custom">自定义贷款上限额</option>
               </select>
             </div>
 
             <div id="wrap-custom-limit" class="form-group" style="display:none;">
-              <label class="form-label" for="input-custom-limit">自定义贷款上限额</label>
+              <label class="form-label" for="input-custom-limit" data-i18n="lbl_custom_limit">自定义贷款上限额</label>
               <div class="input-addon-wrap">
                 <input type="number" id="input-custom-limit" class="form-input" min="100" max="10000" step="50" value="4000">
-                <span class="input-addon">万円</span>
+                <span class="input-addon" data-i18n="unit_man">万円</span>
               </div>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
               <div class="form-group">
-                <label class="form-label" for="input-deduction-rate">控除率</label>
+                <label class="form-label" for="input-deduction-rate" data-i18n="lbl_deduction_rate">控除率</label>
                 <select id="input-deduction-rate" class="form-select">
-                  <option value="0.7" selected>0.7% (2022年起现行)</option>
-                  <option value="1.0">1.0% (旧税制标准)</option>
+                  <option value="0.7" selected data-i18n="ded_rate_07">0.7% (2022年起现行)</option>
+                  <option value="1.0" data-i18n="ded_rate_10">1.0% (旧税制标准)</option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label class="form-label" for="select-move-in-year">入居年份</label>
+                <label class="form-label" for="select-move-in-year" data-i18n="lbl_movein_year">入居年份</label>
                 <select id="select-move-in-year" class="form-select">
-                  <option value="2024" selected>2022年之后 (住民上限9.75万)</option>
-                  <option value="2020">2021年之前 (住民上限13.65万)</option>
+                  <option value="2024" selected data-i18n="movein_post2022">2022年之后 (住民上限9.75万)</option>
+                  <option value="2020" data-i18n="movein_pre2022">2021年之前 (住民上限13.65万)</option>
                 </select>
               </div>
             </div>
@@ -319,28 +326,28 @@
         <!-- 5. ふるさと納税 (故乡税) 设定 -->
         <section class="card" style="border-left: 4px solid var(--accent);">
           <div class="card-title">
-            <span class="title-text">🎁 ふるさと納税 购买规划</span>
+            <span class="title-text" data-i18n="card_furusato_title">🎁 ふるさと納税 购买规划</span>
           </div>
 
           <div class="form-group">
             <label class="form-label">
-              <span>申报抵扣制度选择</span>
-              <span class="label-hint">直接决定是否吃掉房贷减税</span>
+              <span data-i18n="lbl_furusato_mode">申报抵扣制度选择</span>
+              <span class="label-hint" data-i18n="hint_furusato_mode">直接决定是否吃掉房贷减税</span>
             </label>
             <div style="display:flex; flex-direction:column; gap:8px; font-size:13px; color:var(--text-secondary); margin-top:4px;">
               <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
                 <input type="radio" name="furusato-method" value="onestop" checked style="margin-top:3px;">
                 <div>
-                  <strong style="color:var(--text-primary);">ワンストップ特例 (One-Stop特例) · 推荐</strong>
-                  <p style="font-size:11px; color:var(--text-muted);">自治体≤5个，冲抵翌年横滨住民税，100%保全所得税房贷减税</p>
+                  <strong style="color:var(--text-primary);" data-i18n="furusato_onestop_title">ワンストップ特例 (One-Stop特例) · 推荐</strong>
+                  <p style="font-size:11px; color:var(--text-muted);" data-i18n="furusato_onestop_desc">自治体≤5个，冲抵翌年横滨住民税，100%保全所得税房贷减税</p>
                 </div>
               </label>
 
               <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
                 <input type="radio" name="furusato-method" value="shinkoku" style="margin-top:3px;">
                 <div>
-                  <strong style="color:var(--text-primary);">確定申告 (买房第1年必须申告)</strong>
-                  <p style="font-size:11px; color:var(--text-muted);">冲减所得税，可能导致房贷减税被挤入住民税受9.75万上限卡死</p>
+                  <strong style="color:var(--text-primary);" data-i18n="furusato_shinkoku_title">確定申告 (买房第1年必须申告)</strong>
+                  <p style="font-size:11px; color:var(--text-muted);" data-i18n="furusato_shinkoku_desc">冲减所得税，可能导致房贷减税被挤入住民税受9.75万上限卡死</p>
                 </div>
               </label>
             </div>
@@ -348,16 +355,16 @@
 
           <div class="form-group" style="margin-top:14px;">
             <label class="form-label" for="input-furusato-planned">
-              <span>计划捐款金额 (寄附金額)</span>
-              <button type="button" id="btn-fill-furusato-max" style="background:none; border:none; color:var(--primary); font-size:11px; font-weight:600; cursor:pointer;">
+              <span data-i18n="lbl_planned_furusato">计划捐款金额 (寄附金額)</span>
+              <button type="button" id="btn-fill-furusato-max" style="background:none; border:none; color:var(--primary); font-size:11px; font-weight:600; cursor:pointer;" data-i18n="btn_fill_furusato">
                 填入系统推荐上限 ⚡
               </button>
             </label>
             <div class="input-addon-wrap">
               <input type="number" id="input-furusato-planned" class="form-input" min="0" max="200" step="0.5" value="0">
-              <span class="input-addon">万円</span>
+              <span class="input-addon" data-i18n="unit_man">万円</span>
             </div>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">输入 0 则默认按系统测算的上限额计算</p>
+            <p style="font-size:11px; color:var(--text-muted); margin-top:4px;" data-i18n="hint_furusato_zero">输入 0 则默认按系统测算的上限额计算</p>
           </div>
         </section>
 
@@ -371,7 +378,7 @@
           <!-- KPI 1: 住房减税 -->
           <div class="kpi-card highlight-mortgage">
             <div class="kpi-header">
-              <span class="kpi-title">🏠 房贷减税实际减免</span>
+              <span class="kpi-title" data-i18n="kpi_mortgage_title">🏠 房贷减税实际减免</span>
               <span id="kpi-mortgage-badge" class="kpi-badge badge-green">减税全额拿满</span>
             </div>
             <div id="kpi-mortgage-val" class="kpi-value">¥0</div>
@@ -381,8 +388,8 @@
           <!-- KPI 2: 故乡税上限 -->
           <div class="kpi-card highlight-furusato">
             <div class="kpi-header">
-              <span class="kpi-title">🎁 故乡税最佳上限额</span>
-              <span class="kpi-badge badge-indigo">自负仅2,000円</span>
+              <span class="kpi-title" data-i18n="kpi_furusato_title">🎁 故乡税最佳上限额</span>
+              <span class="kpi-badge badge-indigo" data-i18n="kpi_badge_furusato_sub">自负仅2,000円</span>
             </div>
             <div id="kpi-furusato-val" class="kpi-value">¥0</div>
             <div id="kpi-furusato-sub" class="kpi-sub">计算中...</div>
@@ -391,8 +398,8 @@
           <!-- KPI 3: 手到手年收入 -->
           <div class="kpi-card highlight-takehome">
             <div class="kpi-header">
-              <span class="kpi-title">💴 实到手年收入 (手取り)</span>
-              <span class="kpi-badge badge-blue">税后可支配现金</span>
+              <span class="kpi-title" data-i18n="kpi_takehome_title">💴 实到手年收入 (手取り)</span>
+              <span class="kpi-badge badge-blue" data-i18n="kpi_badge_takehome_sub">税后可支配现金</span>
             </div>
             <div id="kpi-takehome-val" class="kpi-value">¥0</div>
             <div id="kpi-takehome-sub" class="kpi-sub">计算中...</div>
@@ -401,8 +408,8 @@
           <!-- KPI 4: 社保与税金总计 -->
           <div class="kpi-card">
             <div class="kpi-header">
-              <span class="kpi-title">📊 社保与实缴税金 (横浜)</span>
-              <span class="kpi-badge badge-amber">年度扣除合计</span>
+              <span class="kpi-title" data-i18n="kpi_taxes_title">📊 社保与实缴税金 (横浜)</span>
+              <span class="kpi-badge badge-amber" data-i18n="kpi_badge_taxes_sub">年度扣除合计</span>
             </div>
             <div id="kpi-taxes-val" class="kpi-value">¥0</div>
             <div id="kpi-taxes-sub" class="kpi-sub">计算中...</div>
@@ -412,33 +419,33 @@
         <!-- 🛡️ 商业保险控除节税收益看板 (新增) -->
         <section class="card" id="insurance-summary-box" style="border: 1px solid rgba(20, 184, 166, 0.4); background: linear-gradient(to bottom right, var(--bg-surface), rgba(20, 184, 166, 0.04));">
           <div class="card-title">
-            <span class="title-text">🛡️ 商业保险料控除节税收益分析 (年末调整退税)</span>
+            <span class="title-text" data-i18n="box_ins_savings_title">🛡️ 商业保险料控除节税收益分析 (年末调整退税)</span>
             <span class="kpi-badge badge-green" id="ins-total-saved-val">+¥0</span>
           </div>
 
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:8px;">
             <div style="background:var(--bg-subtle); padding:10px 14px; border-radius:var(--radius-md);">
-              <span style="font-size:11px; color:var(--text-muted); display:block;">生命保险 所得税控除额</span>
+              <span style="font-size:11px; color:var(--text-muted); display:block;" data-i18n="ins_life_it_lbl">生命保险 所得税控除额</span>
               <strong id="ins-life-it-ded" style="font-size:16px; color:var(--text-primary);">¥0</strong>
-              <span style="font-size:11px; color:var(--text-muted);"> (最高12万円)</span>
+              <span style="font-size:11px; color:var(--text-muted);" data-i18n="max_12man"> (最高12万円)</span>
             </div>
 
             <div style="background:var(--bg-subtle); padding:10px 14px; border-radius:var(--radius-md);">
-              <span style="font-size:11px; color:var(--text-muted); display:block;">生命保险 横滨住民税控除额</span>
+              <span style="font-size:11px; color:var(--text-muted); display:block;" data-i18n="ins_life_rt_lbl">生命保险 横滨住民税控除额</span>
               <strong id="ins-life-rt-ded" style="font-size:16px; color:var(--text-primary);">¥0</strong>
-              <span style="font-size:11px; color:var(--text-muted);"> (最高7万円)</span>
+              <span style="font-size:11px; color:var(--text-muted);" data-i18n="max_7man"> (最高7万円)</span>
             </div>
 
             <div style="background:var(--bg-subtle); padding:10px 14px; border-radius:var(--radius-md);">
-              <span style="font-size:11px; color:var(--text-muted); display:block;">地震保险 所得税控除额</span>
+              <span style="font-size:11px; color:var(--text-muted); display:block;" data-i18n="ins_eq_it_lbl">地震保险 所得税控除额</span>
               <strong id="ins-eq-it-ded" style="font-size:16px; color:var(--text-primary);">¥0</strong>
-              <span style="font-size:11px; color:var(--text-muted);"> (最高5万円)</span>
+              <span style="font-size:11px; color:var(--text-muted);" data-i18n="max_5man"> (最高5万円)</span>
             </div>
 
             <div style="background:var(--bg-subtle); padding:10px 14px; border-radius:var(--radius-md);">
-              <span style="font-size:11px; color:var(--text-muted); display:block;">地震保险 横滨住民税控除额</span>
+              <span style="font-size:11px; color:var(--text-muted); display:block;" data-i18n="ins_eq_rt_lbl">地震保险 横滨住民税控除额</span>
               <strong id="ins-eq-rt-ded" style="font-size:16px; color:var(--text-primary);">¥0</strong>
-              <span style="font-size:11px; color:var(--text-muted);"> (最高2.5万円)</span>
+              <span style="font-size:11px; color:var(--text-muted);" data-i18n="max_25man"> (最高2.5万円)</span>
             </div>
           </div>
 
@@ -450,11 +457,11 @@
         <!-- 1. 住宅借入金等特別控除 深度减免剖析卡片 -->
         <section class="card" id="card-mortgage-breakdown">
           <div class="card-title">
-            <span class="title-text">🏡 住宅ローン減税 抵扣进度与结构分析</span>
+            <span class="title-text" data-i18n="card_mortgage_flow_title">🏡 住宅ローン減税 抵扣进度与结构分析</span>
           </div>
 
           <div id="mortgage-bar-container">
-            <p style="font-size:13px; color:var(--text-secondary); margin-bottom:8px;">
+            <p style="font-size:13px; color:var(--text-secondary); margin-bottom:8px;" data-i18n-html="mortgage_flow_desc">
               减税额按法定抵扣顺位消化：<strong>① 优先全额抵扣当年所得税</strong> → <strong>② 剩余部分转入翌年横滨住民税 (受9.75万法定上限限制)</strong> → <strong>③ 超出部分失效应额</strong>
             </p>
 
@@ -468,15 +475,15 @@
               <div class="deduction-legend">
                 <div class="legend-item">
                   <span class="legend-dot seg-income"></span>
-                  <span>所得税直接抵扣：<strong id="legend-income-val">¥0</strong></span>
+                  <span><span data-i18n="prog_lbl_it">所得税直接抵扣：</span><strong id="legend-income-val">¥0</strong></span>
                 </div>
                 <div class="legend-item">
                   <span class="legend-dot seg-resident"></span>
-                  <span>翌年住民税转嫁抵扣：<strong id="legend-resident-val">¥0</strong></span>
+                  <span><span data-i18n="prog_lbl_rt">翌年住民税转嫁抵扣：</span><strong id="legend-resident-val">¥0</strong></span>
                 </div>
                 <div class="legend-item">
                   <span class="legend-dot seg-wasted"></span>
-                  <span>未用尽浪费失效：<strong id="legend-wasted-val">¥0</strong></span>
+                  <span><span data-i18n="prog_lbl_waste">未用尽浪费失效：</span><strong id="legend-wasted-val">¥0</strong></span>
                 </div>
               </div>
             </div>
@@ -495,53 +502,53 @@
         <!-- 2. One-Stop 特例 vs 確定申告 深度联动对比 -->
         <section class="card">
           <div class="card-title">
-            <span class="title-text">⚡ 故乡税申告方式对比：One-Stop 特例 vs 確定申告</span>
+            <span class="title-text" data-i18n="card_compare_mode_title">⚡ 故乡税申告方式对比：One-Stop 特例 vs 確定申告</span>
           </div>
 
-          <p style="font-size:13px; color:var(--text-secondary);">
+          <p style="font-size:13px; color:var(--text-secondary);" data-i18n-html="compare_mode_desc">
             当同时拥有<strong>房贷减税</strong>与<strong>故乡税</strong>时，申报方式会直接影响所得税基数，进而影响房贷减税是否能被充分抵扣：
           </p>
 
           <div class="comparison-grid">
             <div class="method-card recommended">
-              <span class="method-badge badge-green">推荐 (买房第2年起)</span>
+              <span class="method-badge badge-green" data-i18n="badge_onestop_rec">推荐 (买房第2年起)</span>
               <div class="method-title">ワンストップ特例 (One-Stop)</div>
-              <div class="method-desc">
+              <div class="method-desc" data-i18n="desc_onestop">
                 适合自治体不超过5个的正社员。故乡税扣减全部在翌年横滨住民税中体现，完全不干扰所得税。
               </div>
               <div class="method-stats">
                 <div class="method-row">
-                  <span>房贷减税实际到手：</span>
+                  <span data-i18n="row_lbl_mort_got">房贷减税实际到手：</span>
                   <strong id="onestop-mortgage-ded" style="color:var(--success);">¥0</strong>
                 </div>
                 <div class="method-row">
-                  <span>故乡税实际减免税额：</span>
+                  <span data-i18n="row_lbl_fur_got">故乡税实际减免税额：</span>
                   <strong id="onestop-furusato-ded">¥0</strong>
                 </div>
                 <div class="method-row bold">
-                  <span>房贷减税浪费失效额：</span>
+                  <span data-i18n="row_lbl_mort_waste">房贷减税浪费失效额：</span>
                   <strong id="onestop-wasted">¥0</strong>
                 </div>
               </div>
             </div>
 
             <div class="method-card">
-              <span class="method-badge badge-amber">买房第1年必须办理</span>
+              <span class="method-badge badge-amber" data-i18n="badge_shinkoku_req">买房第1年必须办理</span>
               <div class="method-title">確定申告 (Kakutei Shinkoku)</div>
-              <div class="method-desc">
+              <div class="method-desc" data-i18n="desc_shinkoku">
                 故乡税走所得税寄附金控除，先扣减所得税所得，导致算出所得税下降，房贷减税可能被溢出挤压。
               </div>
               <div class="method-stats">
                 <div class="method-row">
-                  <span>房贷减税实际到手：</span>
+                  <span data-i18n="row_lbl_mort_got">房贷减税实际到手：</span>
                   <strong id="shinkoku-mortgage-ded">¥0</strong>
                 </div>
                 <div class="method-row">
-                  <span>故乡税实际减免税额：</span>
+                  <span data-i18n="row_lbl_fur_got">故乡税实际减免税额：</span>
                   <strong id="shinkoku-furusato-ded">¥0</strong>
                 </div>
                 <div class="method-row bold">
-                  <span>房贷减税浪费失效额：</span>
+                  <span data-i18n="row_lbl_mort_waste">房贷减税浪费失效额：</span>
                   <strong id="shinkoku-wasted">¥0</strong>
                 </div>
               </div>
@@ -556,32 +563,32 @@
         <!-- 3. ふるさと納税 购买计划收益模拟器 -->
         <section class="card">
           <div class="card-title">
-            <span class="title-text">🎁 故乡税购买计划与经济实惠测算</span>
+            <span class="title-text" data-i18n="card_furusato_plan_title">🎁 故乡税购买计划与经济实惠测算</span>
           </div>
 
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-top:8px;">
             <div style="background:var(--bg-subtle); padding:12px 14px; border-radius:var(--radius-md);">
-              <span style="font-size:12px; color:var(--text-muted); display:block;">计划寄附金额</span>
+              <span style="font-size:12px; color:var(--text-muted); display:block;" data-i18n="lbl_plan_donation">计划寄附金额</span>
               <strong id="plan-donation-display" style="font-size:18px; color:var(--text-primary);">¥0</strong>
             </div>
 
             <div style="background:var(--bg-subtle); padding:12px 14px; border-radius:var(--radius-md);">
-              <span style="font-size:12px; color:var(--text-muted); display:block;">个人实际出资</span>
+              <span style="font-size:12px; color:var(--text-muted); display:block;" data-i18n="lbl_plan_self_burden">个人实际出资</span>
               <strong id="plan-self-burden" style="font-size:18px; color:var(--warning);">¥2,000</strong>
             </div>
 
             <div style="background:var(--bg-subtle); padding:12px 14px; border-radius:var(--radius-md);">
-              <span style="font-size:12px; color:var(--text-muted); display:block;">抵扣所得税/住民税</span>
+              <span style="font-size:12px; color:var(--text-muted); display:block;" data-i18n="lbl_plan_tax_cut">抵扣所得税/住民税</span>
               <strong id="plan-tax-deduction" style="font-size:18px; color:var(--success);">¥0</strong>
             </div>
 
             <div style="background:var(--bg-subtle); padding:12px 14px; border-radius:var(--radius-md);">
-              <span style="font-size:12px; color:var(--text-muted); display:block;">返礼品估算价值 (30%)</span>
+              <span style="font-size:12px; color:var(--text-muted); display:block;" data-i18n="lbl_plan_gift">返礼品估算价值 (30%)</span>
               <strong id="plan-gift-val" style="font-size:18px; color:var(--accent);">¥0</strong>
             </div>
 
             <div style="background:var(--bg-subtle); padding:12px 14px; border-radius:var(--radius-md);">
-              <span style="font-size:12px; color:var(--text-muted); display:block;">综合节税净收益</span>
+              <span style="font-size:12px; color:var(--text-muted); display:block;" data-i18n="lbl_plan_net_gain">综合节税净收益</span>
               <strong id="plan-net-profit" style="font-size:18px; color:var(--primary); font-weight:800;">+¥0</strong>
             </div>
           </div>
@@ -590,12 +597,12 @@
         <!-- 4. 数据图表可视化 -->
         <section class="card">
           <div class="card-title">
-            <span class="title-text">📊 数据可视化：税费构成与减税对比</span>
+            <span class="title-text" data-i18n="card_charts_title">📊 数据可视化：税费构成与减税对比</span>
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+          <div class="charts-grid">
             <div>
-              <h4 style="font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:8px; text-align:center;">
+              <h4 style="font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:8px; text-align:center;" data-i18n="chart_title_comp">
                 收入流向与商业保费 (自由现金·保费·社保·税金)
               </h4>
               <div class="chart-container-wrap">
@@ -604,7 +611,7 @@
             </div>
 
             <div>
-              <h4 style="font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:8px; text-align:center;">
+              <h4 style="font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:8px; text-align:center;" data-i18n="chart_title_compare">
                 减税前后实缴税金对比 (房贷减税+故乡税成效)
               </h4>
               <div class="chart-container-wrap">
@@ -617,17 +624,18 @@
         <!-- 5. 日本源泉徴収票（税单）字段对照表 -->
         <section class="card">
           <div class="card-title">
-            <span class="title-text">📄 源泉徴収票（日本年末调整税单）字段对照表</span>
-            <span class="label-hint">包含商业保险料控除、房贷所得税抵扣与横滨住民税</span>
+            <span class="title-text" data-i18n="card_ticket_title">📄 源泉徴収票（日本年末调整税单）字段对照表</span>
+            <span class="label-hint" data-i18n="hint_ticket">包含商业保险料控除、房贷所得税抵扣与横滨住民税</span>
           </div>
 
+          <div class="mobile-scroll-hint" data-i18n="table_scroll_hint">👈 可左右滑动查看完整明细表格 👉</div>
           <div class="tax-table-wrap">
             <table class="tax-table">
               <thead>
                 <tr>
-                  <th>票面指标名称 (源泉徴収票の項目)</th>
-                  <th style="text-align:right;">金额</th>
-                  <th>字段说明与税法依据</th>
+                  <th data-i18n="th_ticket_field">票面指标名称 (源泉徴収票の項目)</th>
+                  <th style="text-align:right;" data-i18n="th_ticket_amount">金额</th>
+                  <th data-i18n="th_ticket_desc">字段说明与税法依据</th>
                 </tr>
               </thead>
               <tbody id="source-table-body">
@@ -639,10 +647,10 @@
           <!-- 导出与打印按钮 -->
           <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:16px;">
             <button type="button" id="btn-export-csv" class="btn btn-outline">
-              <span>💾 导出 CSV 详细报表</span>
+              <span data-i18n="btn_export_csv">💾 导出 CSV 详细报表</span>
             </button>
             <button type="button" id="btn-print" class="btn btn-primary">
-              <span>🖨️ 打印 / 保存 PDF 报告</span>
+              <span data-i18n="btn_print">🖨️ 打印 / 保存 PDF 报告</span>
             </button>
           </div>
         </section>
@@ -652,12 +660,12 @@
 
     <!-- 底部 Footer -->
     <footer class="app-footer">
-      <div>
-        <strong>日本正社員税金計算器</strong> · 神奈川県横浜市标准对应 · 纯前端离线运行 · 数据安全不上传服务器
+      <div data-i18n="footer_text">
+        日本正社員税金計算器 · 神奈川県横浜市标准对应 · 纯前端离线运行 · 数据安全不上传服务器
       </div>
       <div class="footer-links">
-        <a href="../">40年房贷模拟器</a>
-        <a href="README.md" target="_blank">使用手册 & 税法原理</a>
+        <a href="../" data-i18n="footer_mort_link">40年房贷模拟器</a>
+        <a href="README.md" target="_blank" data-i18n="footer_doc_link">使用手册 & 税法原理</a>
       </div>
     </footer>
 

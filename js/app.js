@@ -363,27 +363,38 @@
   }
 
   function renderKPIs(res) {
+    const lang = window.MortgageI18n ? window.MortgageI18n.getLang() : 'zh';
+    const t = (k) => window.MortgageI18n ? window.MortgageI18n.t(k, lang) : k;
+
     document.getElementById('kpi-initial-payment').textContent = formatYen(res.initialPayment);
-    document.getElementById('kpi-initial-hint').textContent = `第1~5年月供 (${formatRate(state.initialRate)})`;
+    document.getElementById('kpi-initial-hint').textContent = lang === 'ja'
+      ? `1〜5年目返済 (${formatRate(state.initialRate)})`
+      : `第1~5年月供 (${formatRate(state.initialRate)})`;
 
     document.getElementById('kpi-max-payment').textContent = formatYen(res.maxPayment);
-    document.getElementById('kpi-max-hint').textContent = `在第 ${res.maxPaymentYear} 年达到峰值`;
+    document.getElementById('kpi-max-hint').textContent = lang === 'ja'
+      ? `第 ${res.maxPaymentYear} 年目にピーク到達`
+      : `在第 ${res.maxPaymentYear} 年达到峰值`;
 
     document.getElementById('kpi-total-payment').textContent = formatYen(res.grandTotalPayment);
-    document.getElementById('kpi-total-hint').textContent = `本金 ${formatManYen(state.principalMan * 10000)} + 利息`;
+    document.getElementById('kpi-total-hint').textContent = lang === 'ja'
+      ? `元金 ${formatManYen(state.principalMan * 10000)} ＋ 利息`
+      : `本金 ${formatManYen(state.principalMan * 10000)} + 利息`;
 
     const statusEl = document.getElementById('kpi-balloon-status');
     const balloonCard = document.getElementById('kpi-card-balloon');
     if (res.hasBalloonRisk) {
       statusEl.textContent = formatYen(res.balloonPayment);
       statusEl.className = 'kpi-num text-danger';
-      document.getElementById('kpi-balloon-hint').textContent = `⚠️ 期末一笔还清 (本金: ${formatYen(res.finalBalance)})`;
+      document.getElementById('kpi-balloon-hint').textContent = lang === 'ja'
+        ? `⚠️ 期末一括返済 (残債: ${formatYen(res.finalBalance)})`
+        : `⚠️ 期末一笔还清 (本金: ${formatYen(res.finalBalance)})`;
       balloonCard.classList.add('highlight-danger');
       balloonCard.classList.remove('highlight-primary');
     } else {
-      statusEl.textContent = '¥0 (顺利结清)';
+      statusEl.textContent = t('kpi_settled');
       statusEl.className = 'kpi-num text-success';
-      document.getElementById('kpi-balloon-hint').textContent = `✅ 第${state.termYears}年贷款如期还清`;
+      document.getElementById('kpi-balloon-hint').textContent = t('kpi_settled_hint').replace('{term}', state.termYears);
       balloonCard.classList.remove('highlight-danger');
       balloonCard.classList.add('highlight-primary');
     }
@@ -392,37 +403,68 @@
   function renderBanners(res) {
     const bannerEl = document.getElementById('alert-banner');
     if (!bannerEl) return;
+    const lang = window.MortgageI18n ? window.MortgageI18n.getLang() : 'zh';
 
     if (res.hasBalloonRisk) {
       bannerEl.className = 'banner danger';
       bannerEl.style.display = 'flex';
-      bannerEl.innerHTML = `
-        <div class="banner-icon">⚠️</div>
-        <div class="banner-text">
-          <h4>高风险预警：${state.termYears}年贷款到期需一次性补交 ${formatYen(res.balloonPayment)} (一括返済)</h4>
-          <p>${res.is125EverTriggered ? '受 <strong>125%上限封顶</strong> 影响，' : '受 <strong>5年固定还款周期</strong> 影响，'}月供未能如期冲抵本金。截至第 ${state.termYears} 年末，仍有剩余本金 <strong>${formatYen(res.finalBalance)}</strong>${res.finalUnpaidInterest > 0 ? ` 与未付利息 <strong>${formatYen(res.finalUnpaidInterest)}</strong>` : ''}。银行将在期末要求一次性全额还清，建议提前储备还款资金！</p>
-        </div>
-      `;
+      if (lang === 'ja') {
+        bannerEl.innerHTML = `
+          <div class="banner-icon">⚠️</div>
+          <div class="banner-text">
+            <h4>高リスク警告：${state.termYears}年満期時に一括返済 ${formatYen(res.balloonPayment)} が必要です (一括返済)</h4>
+            <p>${res.is125EverTriggered ? '<strong>125%上限ルール</strong>の影響により、' : '<strong>5年固定返済ルール</strong>の影響により、'}毎月の返済で元金が予定通り減少しませんでした。第 ${state.termYears} 年目満期時点で、元金残高 <strong>${formatYen(res.finalBalance)}</strong>${res.finalUnpaidInterest > 0 ? ` および未払利息 <strong>${formatYen(res.finalUnpaidInterest)}</strong>` : ''} が残存します。金融機関より一括返済が請求されますので、事前の資金準備が必要です！</p>
+          </div>
+        `;
+      } else {
+        bannerEl.innerHTML = `
+          <div class="banner-icon">⚠️</div>
+          <div class="banner-text">
+            <h4>高风险预警：${state.termYears}年贷款到期需一次性补交 ${formatYen(res.balloonPayment)} (一括返済)</h4>
+            <p>${res.is125EverTriggered ? '受 <strong>125%上限封顶</strong> 影响，' : '受 <strong>5年固定还款周期</strong> 影响，'}月供未能如期冲抵本金。截至第 ${state.termYears} 年末，仍有剩余本金 <strong>${formatYen(res.finalBalance)}</strong>${res.finalUnpaidInterest > 0 ? ` 与未付利息 <strong>${formatYen(res.finalUnpaidInterest)}</strong>` : ''}。银行将在期末要求一次性全额还清，建议提前储备还款资金！</p>
+          </div>
+        `;
+      }
     } else if (res.isUnpaidEverTriggered) {
       bannerEl.className = 'banner warning';
       bannerEl.style.display = 'flex';
-      bannerEl.innerHTML = `
-        <div class="banner-icon">⚡</div>
-        <div class="banner-text">
-          <h4>提示：模拟周期内曾发生“未付利息 (未払利息)”</h4>
-          <p>在加息高峰月份，月供甚至不足以支付当月利息，导致本金一度停止扣减。虽然后续周期已追回并在第 ${state.termYears} 年末顺利结清，但累积总利息支出显著提高。</p>
-        </div>
-      `;
+      if (lang === 'ja') {
+        bannerEl.innerHTML = `
+          <div class="banner-icon">⚡</div>
+          <div class="banner-text">
+            <h4>注意：返済期間中に「未払利息」が発生した履歴があります</h4>
+            <p>金利急騰期において、毎月の返済額が当月利息を下回り、元金充当が一時ストップしました。その後の返済で挽回し第 ${state.termYears} 年目に完済されたものの、支払利息総額が大幅に増加しています。</p>
+          </div>
+        `;
+      } else {
+        bannerEl.innerHTML = `
+          <div class="banner-icon">⚡</div>
+          <div class="banner-text">
+            <h4>提示：模拟周期内曾发生“未付利息 (未払利息)”</h4>
+            <p>在加息高峰月份，月供甚至不足以支付当月利息，导致本金一度停止扣减。虽然后续周期已追回并在第 ${state.termYears} 年末顺利结清，但累积总利息支出显著提高。</p>
+          </div>
+        `;
+      }
     } else if (res.is125EverTriggered) {
       bannerEl.className = 'banner warning';
       bannerEl.style.display = 'flex';
-      bannerEl.innerHTML = `
-        <div class="banner-icon">🛡️</div>
-        <div class="banner-text">
-          <h4>保护机制生效：125%规则成功封顶月供涨幅</h4>
-          <p>在调价节点，理论所需月供已超出上期的 1.25 倍。125%规则起到了安全阀作用，平滑了家庭每月开支，并在第 ${state.termYears} 年如期完成贷款偿还。</p>
-        </div>
-      `;
+      if (lang === 'ja') {
+        bannerEl.innerHTML = `
+          <div class="banner-icon">🛡️</div>
+          <div class="banner-text">
+            <h4>安全機能作動：125%ルールにより返済額の急増が抑制されました</h4>
+            <p>金利見直し期において、再計算された返済額が前回の1.25倍を超過しました。125%ルールが上限キャップとして機能し、家計の支出急増を防ぎながら第 ${state.termYears} 年目に完済に至りました。</p>
+          </div>
+        `;
+      } else {
+        bannerEl.innerHTML = `
+          <div class="banner-icon">🛡️</div>
+          <div class="banner-text">
+            <h4>保护机制生效：125%规则成功封顶月供涨幅</h4>
+            <p>在调价节点，理论所需月供已超出上期的 1.25 倍。125%规则起到了安全阀作用，平滑了家庭每月开支，并在第 ${state.termYears} 年如期完成贷款偿还。</p>
+          </div>
+        `;
+      }
     } else {
       bannerEl.style.display = 'none';
     }
@@ -431,36 +473,45 @@
   function renderComparison(sim, comp) {
     const compBox = document.getElementById('comparison-box');
     if (!compBox) return;
+    const lang = window.MortgageI18n ? window.MortgageI18n.getLang() : 'zh';
+    const t = (k) => window.MortgageI18n ? window.MortgageI18n.t(k, lang) : k;
 
     const diff = sim.grandTotalInterest - comp.grandTotalInterest;
-    const diffTxt = diff > 0 ? `多支付 ${formatYen(diff)}` : (diff < 0 ? `少支付 ${formatYen(Math.abs(diff))}` : '持平');
+    const diffTxt = diff > 0 
+      ? t('comp_diff_more').replace('{val}', formatYen(diff)) 
+      : (diff < 0 ? t('comp_diff_less').replace('{val}', formatYen(Math.abs(diff))) : t('comp_diff_equal'));
+
+    const statusTxt = state.enable5YearRule ? t('comp_status_on') : t('comp_status_off');
+    const termInfo = t('comp_term_info').replace('{term}', state.termYears).replace('{months}', state.termYears * 12);
+    const curModeTitle = t('comp_current_mode').replace('{status}', statusTxt);
+    const settleGuaranteed = t('comp_guaranteed').replace('{term}', state.termYears);
 
     compBox.innerHTML = `
       <div class="compare-head">
-        <h4>📊 机制对照分析：有 5年/125% 规则 (大行) vs 无规则即时调整 (索尼/PayPay)</h4>
-        <span class="label-hint">期限：${state.termYears}年 (共${state.termYears * 12}期)</span>
+        <h4>${t('comp_title')}</h4>
+        <span class="label-hint">${termInfo}</span>
       </div>
       <div class="compare-grid">
         <div class="compare-card ${state.enable5YearRule ? 'highlight' : ''}">
           <div class="compare-title">
-            <span>🛡️ 当前模式 (5年 & 125%规则${state.enable5YearRule ? '开启' : '关闭'})</span>
-            <span class="badge ${sim.hasBalloonRisk ? 'badge-red' : 'badge-green'}">${sim.hasBalloonRisk ? '期末需补款' : '平稳过渡'}</span>
+            <span>${curModeTitle}</span>
+            <span class="badge ${sim.hasBalloonRisk ? 'badge-red' : 'badge-green'}">${sim.hasBalloonRisk ? t('comp_balloon_risk') : t('comp_smooth')}</span>
           </div>
-          <div class="compare-row"><span class="lbl">最高月供支出:</span><span class="val">${formatYen(sim.maxPayment)}</span></div>
-          <div class="compare-row"><span class="lbl">总利息支出:</span><span class="val">${formatYen(sim.grandTotalInterest)}</span></div>
-          <div class="compare-row"><span class="lbl">期末补款 (一括返済):</span><span class="val ${sim.balloonPayment > 0 ? 'text-danger' : ''}">${formatYen(sim.balloonPayment)}</span></div>
-          <div class="compare-row"><span class="lbl">还款月供稳定性:</span><span class="val text-success">★★★★★ (5年内固定)</span></div>
+          <div class="compare-row"><span class="lbl">${t('comp_lbl_max_pay')}</span><span class="val">${formatYen(sim.maxPayment)}</span></div>
+          <div class="compare-row"><span class="lbl">${t('comp_lbl_interest')}</span><span class="val">${formatYen(sim.grandTotalInterest)}</span></div>
+          <div class="compare-row"><span class="lbl">${t('comp_lbl_balloon')}</span><span class="val ${sim.balloonPayment > 0 ? 'text-danger' : ''}">${formatYen(sim.balloonPayment)}</span></div>
+          <div class="compare-row"><span class="lbl">${t('comp_lbl_stability')}</span><span class="val text-success">${t('comp_stab_high')}</span></div>
         </div>
 
         <div class="compare-card ${!state.enable5YearRule ? 'highlight' : ''}">
           <div class="compare-title">
-            <span>⚡ 即时变动模式 (如索尼银行)</span>
-            <span class="badge badge-blue">保证${state.termYears}年还清</span>
+            <span>${t('comp_instant_mode')}</span>
+            <span class="badge badge-blue">${settleGuaranteed}</span>
           </div>
-          <div class="compare-row"><span class="lbl">最高月供支出:</span><span class="val">${formatYen(comp.maxPayment)}</span></div>
-          <div class="compare-row"><span class="lbl">总利息支出:</span><span class="val">${formatYen(comp.grandTotalInterest)} (${diffTxt})</span></div>
-          <div class="compare-row"><span class="lbl">期末补款 (一括返済):</span><span class="val text-success">¥0 (精准结清)</span></div>
-          <div class="compare-row"><span class="lbl">还款月供稳定性:</span><span class="val text-warning">★★★☆☆ (加息立即涨月供)</span></div>
+          <div class="compare-row"><span class="lbl">${t('comp_lbl_max_pay')}</span><span class="val">${formatYen(comp.maxPayment)}</span></div>
+          <div class="compare-row"><span class="lbl">${t('comp_lbl_interest')}</span><span class="val">${formatYen(comp.grandTotalInterest)} (${diffTxt})</span></div>
+          <div class="compare-row"><span class="lbl">${t('comp_lbl_balloon')}</span><span class="val text-success">¥0 (${lang === 'ja' ? '完全完済' : '精准结清'})</span></div>
+          <div class="compare-row"><span class="lbl">${t('comp_lbl_stability')}</span><span class="val text-warning">${t('comp_stab_low')}</span></div>
         </div>
       </div>
     `;
@@ -468,12 +519,14 @@
 
   function renderCharts(res) {
     if (typeof Chart === 'undefined') return;
+    const lang = window.MortgageI18n ? window.MortgageI18n.getLang() : 'zh';
+    const t = (k) => window.MortgageI18n ? window.MortgageI18n.t(k, lang) : k;
 
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
     const textColor = isDark ? '#94a3b8' : '#64748b';
 
-    const labels = res.yearlyRecords.map(r => `第${r.year}年`);
+    const labels = res.yearlyRecords.map(r => lang === 'ja' ? `第${r.year}年目` : `第${r.year}年`);
 
     // 图表 1: 月还款与本息构成
     const ctxPayment = document.getElementById('paymentChart')?.getContext('2d');
@@ -487,7 +540,7 @@
           datasets: [
             {
               type: 'line',
-              label: '实还月供 (円/月)',
+              label: t('chart_legend_pmt'),
               data: res.yearlyRecords.map(r => r.monthlyPayment),
               borderColor: '#2563eb',
               backgroundColor: '#2563eb',
@@ -498,7 +551,7 @@
             },
             {
               type: 'bar',
-              label: '全年偿还本金 (万円)',
+              label: t('chart_legend_prn'),
               data: res.yearlyRecords.map(r => Math.round(r.yearPrincipal / 10000)),
               backgroundColor: 'rgba(16, 185, 129, 0.75)',
               stack: 'stack1',
@@ -506,7 +559,7 @@
             },
             {
               type: 'bar',
-              label: '全年支付利息 (万円)',
+              label: t('chart_legend_int'),
               data: res.yearlyRecords.map(r => Math.round(r.yearInterest / 10000)),
               backgroundColor: 'rgba(239, 68, 68, 0.75)',
               stack: 'stack1',
@@ -523,7 +576,7 @@
             tooltip: {
               callbacks: {
                 label: function (ctx) {
-                  if (ctx.dataset.type === 'line') return `月供金额: ¥${Math.round(ctx.raw).toLocaleString('ja-JP')} /月`;
+                  if (ctx.dataset.type === 'line') return `${t('chart_legend_pmt')}: ¥${Math.round(ctx.raw).toLocaleString('ja-JP')} /月`;
                   return `${ctx.dataset.label}: ${ctx.raw} 万円`;
                 }
               }
@@ -536,14 +589,14 @@
               position: 'left',
               grid: { color: gridColor },
               ticks: { color: textColor, callback: (v) => '¥' + (v / 1000).toFixed(0) + 'k' },
-              title: { display: true, text: '每月还款额 (円)', color: textColor }
+              title: { display: true, text: t('chart_axis_pmt'), color: textColor }
             },
             y1: {
               type: 'linear',
               position: 'right',
               grid: { drawOnChartArea: false },
               ticks: { color: textColor, callback: (v) => v + '万' },
-              title: { display: true, text: '全年总额 (万円)', color: textColor }
+              title: { display: true, text: t('chart_axis_year_total'), color: textColor }
             }
           }
         }
@@ -561,7 +614,7 @@
           labels: labels,
           datasets: [
             {
-              label: '贷款本金余额 (万円)',
+              label: t('chart_legend_bal'),
               data: res.yearlyRecords.map(r => Math.round(r.endBalance / 10000)),
               borderColor: '#3b82f6',
               backgroundColor: 'rgba(59, 130, 246, 0.15)',
@@ -572,7 +625,7 @@
             },
             {
               type: 'bar',
-              label: '未付利息累积 (万円)',
+              label: t('chart_legend_unpaid'),
               data: res.yearlyRecords.map(r => Math.round(r.endUnpaidInterest / 10000)),
               backgroundColor: 'rgba(239, 68, 68, 0.85)',
               borderWidth: 0,
@@ -597,7 +650,7 @@
             y: {
               grid: { color: gridColor },
               ticks: { color: textColor, callback: (v) => v + '万' },
-              title: { display: true, text: '金额 (万円)', color: textColor }
+              title: { display: true, text: t('chart_axis_man'), color: textColor }
             }
           }
         }
@@ -610,6 +663,9 @@
     if (!tbody) return;
     tbody.innerHTML = '';
 
+    const lang = window.MortgageI18n ? window.MortgageI18n.getLang() : 'zh';
+    const t = (k) => window.MortgageI18n ? window.MortgageI18n.t(k, lang) : k;
+
     res.yearlyRecords.forEach(yRec => {
       const tr = document.createElement('tr');
       if (yRec.isPeriodStart) tr.classList.add('period-start');
@@ -618,15 +674,16 @@
 
       const startCal = getCalendarDate((yRec.year - 1) * 12 + 1);
       const endCal = getCalendarDate(yRec.year * 12);
+      const yrLabel = lang === 'ja' ? `第 ${yRec.year} 年目` : `第 ${yRec.year} 年`;
 
       let badgeHtml = '';
-      if (yRec.has125Rule) badgeHtml += `<span class="pill pill-cap" title="触发125%上限封顶">⚡ 125%封顶</span> `;
-      if (yRec.hasUnpaid) badgeHtml += `<span class="pill pill-unpaid" title="产生未付利息">⚠️ 未付利息</span> `;
-      if (yRec.isPeriodStart && yRec.year > 1) badgeHtml += `<span class="pill pill-cycle">🔄 5年调价</span>`;
+      if (yRec.has125Rule) badgeHtml += `<span class="pill pill-cap" title="${t('pill_cap')}">${t('pill_cap')}</span> `;
+      if (yRec.hasUnpaid) badgeHtml += `<span class="pill pill-unpaid" title="${t('pill_unpaid')}">${t('pill_unpaid')}</span> `;
+      if (yRec.isPeriodStart && yRec.year > 1) badgeHtml += `<span class="pill pill-cycle">${t('pill_cycle')}</span>`;
 
       tr.innerHTML = `
         <td style="font-weight: 600;">
-          第 ${yRec.year} 年
+          ${yrLabel}
           <span style="font-size: 11px; color: var(--text-muted); font-weight: normal; margin-left: 2px;">(${startCal.shortLabel}~${endCal.shortLabel})</span>
           ${badgeHtml}
         </td>
@@ -639,7 +696,7 @@
         <td class="${yRec.endUnpaidInterest > 0 ? 'text-danger' : ''}">${formatYen(yRec.endUnpaidInterest)}</td>
         <td>
           <button type="button" class="btn-toggle-month chip" style="font-size: 11px;" data-year="${yRec.year}">
-            详情 ▾
+            ${t('btn_detail_open')}
           </button>
         </td>
       `;
@@ -654,35 +711,44 @@
       let monthlyRowsHtml = '';
       yRec.months.forEach(m => {
         const mCal = getCalendarDate(m.month);
+        const mTermLabel = lang === 'ja' ? `第 ${m.month} 回` : `第 ${m.month} 期`;
+        let statusBadge = '-';
+        if (m.rule125Triggered) {
+          statusBadge = `<span class="pill pill-cap">${t('pill_cap')}</span>`;
+        } else if (m.unpaidAdded > 0) {
+          statusBadge = `<span class="pill pill-unpaid">${lang === 'ja' ? '未払利息+' : '未付利息+'}${formatYen(m.unpaidAdded)}</span>`;
+        }
+
         monthlyRowsHtml += `
           <tr>
-            <td><strong>第 ${m.month} 期</strong> <span style="color: var(--text-secondary); margin-left: 4px;">(${mCal.label})</span></td>
+            <td><strong>${mTermLabel}</strong> <span style="color: var(--text-secondary); margin-left: 4px;">(${mCal.label})</span></td>
             <td><strong>${formatRate(m.rate)}</strong></td>
             <td style="font-weight: 600;">${formatYen(m.payment)}</td>
             <td style="color: #10b981;">${formatYen(m.principalPaid)}</td>
             <td style="color: #ef4444;">${formatYen(m.interestPaid)}</td>
             <td>${formatYen(m.balance)}</td>
             <td class="${m.unpaidInterest > 0 ? 'text-danger' : ''}">${formatYen(m.unpaidInterest)}</td>
-            <td>${m.rule125Triggered ? '<span class="pill pill-cap">125%触发</span>' : (m.unpaidAdded > 0 ? '<span class="pill pill-unpaid">未付利息+' + formatYen(m.unpaidAdded) + '</span>' : '-')}</td>
+            <td>${statusBadge}</td>
           </tr>
         `;
       });
 
+      const subHeader = t('sub_month_header').replace('{year}', yRec.year).replace('{start}', startCal.label).replace('{end}', endCal.label);
       subTr.innerHTML = `
         <td colspan="9">
           <div style="padding: 10px 14px;">
-            <strong style="font-size: 12px; color: var(--text-secondary);">第 ${yRec.year} 年逐月还款明细 (${startCal.label} ~ ${endCal.label})：</strong>
+            <strong style="font-size: 12px; color: var(--text-secondary);">${subHeader}</strong>
             <table class="month-table">
               <thead>
                 <tr>
-                  <th style="text-align: left;">还款期数与日历月</th>
-                  <th>适用年利率</th>
-                  <th>当月还款额</th>
-                  <th>偿还本金</th>
-                  <th>支付利息</th>
-                  <th>月末本金余额</th>
-                  <th>未付利息挂账</th>
-                  <th>状态说明</th>
+                  <th style="text-align: left;">${t('sub_th_month')}</th>
+                  <th>${t('sub_th_rate')}</th>
+                  <th>${t('sub_th_pmt')}</th>
+                  <th>${t('sub_th_prn')}</th>
+                  <th>${t('sub_th_int')}</th>
+                  <th>${t('sub_th_bal')}</th>
+                  <th>${t('sub_th_unpaid')}</th>
+                  <th>${t('sub_th_status')}</th>
                 </tr>
               </thead>
               <tbody>${monthlyRowsHtml}</tbody>
@@ -700,23 +766,27 @@
         if (!targetRow) return;
         const isHidden = targetRow.style.display === 'none';
         targetRow.style.display = isHidden ? 'table-row' : 'none';
-        e.currentTarget.textContent = isHidden ? '收起 ▴' : '详情 ▾';
+        e.currentTarget.textContent = isHidden ? t('btn_detail_close') : t('btn_detail_open');
       });
     });
   }
 
   function exportCSV() {
     const res = runSimulation();
-    const rows = [
-      ['还款期数', '日历年月', '贷款年份', '年内月序', '适用年利率(%)', '当期还款额(円)', '偿还本金(円)', '支付利息(円)', '月末本金余额(円)', '未付利息挂账(円)', '状态说明']
-    ];
+    const lang = window.MortgageI18n ? window.MortgageI18n.getLang() : 'zh';
+    const isJa = lang === 'ja';
+    const headerCols = isJa
+      ? ['返済回', '年月', '年次', '年内月序', '適用金利(%)', '当月返済額(円)', '元金充当(円)', '支払利息(円)', '月末残高(円)', '未払利息(円)', '備考']
+      : ['还款期数', '日历年月', '贷款年份', '年内月序', '适用年利率(%)', '当期还款额(円)', '偿还本金(円)', '支付利息(円)', '月末本金余额(円)', '未付利息挂账(円)', '状态说明'];
+
+    const rows = [headerCols];
 
     res.monthlyRecords.forEach(m => {
       const mCal = getCalendarDate(m.month);
       let mark = '';
-      if (m.rule125Triggered) mark += '触发125%上限; ';
-      if (m.unpaidAdded > 0) mark += `产生未付利息${m.unpaidAdded}円; `;
-      if (m.isPeriodStart) mark += '5年重评节点; ';
+      if (m.rule125Triggered) mark += isJa ? '125%上限適用; ' : '触发125%上限; ';
+      if (m.unpaidAdded > 0) mark += isJa ? `未払利息発生${m.unpaidAdded}円; ` : `产生未付利息${m.unpaidAdded}円; `;
+      if (m.isPeriodStart) mark += isJa ? '5年見直し期; ' : '5年重评节点; ';
 
       rows.push([
         m.month,
@@ -735,7 +805,9 @@
 
     if (res.hasBalloonRisk) {
       const endCal = getCalendarDate(state.termYears * 12);
-      rows.push(['期末一次性结清', endCal.label, state.termYears, 12, '-', res.balloonPayment, res.finalBalance, res.finalUnpaidInterest, 0, 0, '期末一括返済补齐剩余本息']);
+      const balloonLabel = isJa ? '満期時一括返済' : '期末一次性结清';
+      const balloonNote = isJa ? '満期時残債一括清算' : '期末一括返済补齐剩余本息';
+      rows.push([balloonLabel, endCal.label, state.termYears, 12, '-', res.balloonPayment, res.finalBalance, res.finalUnpaidInterest, 0, 0, balloonNote]);
     }
 
     const csvContent = '\uFEFF' + rows.map(e => e.map(v => `"${v}"`).join(',')).join('\n');
@@ -743,7 +815,10 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `日本房贷还款计划_${state.termYears}年_${state.principalMan}万.csv`;
+    const filename = isJa
+      ? `住宅ローン返済計画_${state.termYears}年_${state.principalMan}万円.csv`
+      : `日本房贷还款计划_${state.termYears}年_${state.principalMan}万.csv`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -755,6 +830,7 @@
     const container = document.getElementById('custom-milestone-list');
     if (!container) return;
     container.innerHTML = '';
+    const lang = window.MortgageI18n ? window.MortgageI18n.getLang() : 'zh';
 
     // 安全约束：节点年份不超出当前贷款总年限
     state.customMilestones.forEach(m => {
@@ -770,26 +846,29 @@
       const currentMo = m.month || 1;
       const absMonth = ((m.year - 1) * 12) + currentMo;
       const cal = getCalendarDate(absMonth);
+      const yrLabel = (y) => lang === 'ja' ? `第 ${y} 年目` : `第 ${y} 年`;
+      const moLabel = (mo) => lang === 'ja' ? `第 ${mo} か月目` : `第 ${mo} 月`;
+      const termLabel = lang === 'ja' ? `第${absMonth}回 · ${cal.label}` : `第${absMonth}期 · ${cal.label}`;
 
       const row = document.createElement('div');
       row.className = 'custom-step-row';
       row.innerHTML = `
         <select class="select-year step-year-select" data-idx="${idx}">
           ${Array.from({ length: state.termYears }, (_, i) => i + 1).map(y => `
-            <option value="${y}" ${y === m.year ? 'selected' : ''}>第 ${y} 年</option>
+            <option value="${y}" ${y === m.year ? 'selected' : ''}>${yrLabel(y)}</option>
           `).join('')}
         </select>
         <select class="select-month step-month-select" data-idx="${idx}">
           ${Array.from({ length: 12 }, (_, i) => i + 1).map(mo => `
-            <option value="${mo}" ${mo === currentMo ? 'selected' : ''}>第 ${mo} 月</option>
+            <option value="${mo}" ${mo === currentMo ? 'selected' : ''}>${moLabel(mo)}</option>
           `).join('')}
         </select>
-        <span class="step-date-tag" title="对应还款期数与日历年月">第${absMonth}期 · ${cal.label}</span>
+        <span class="step-date-tag" title="${lang === 'ja' ? '返済回と年月' : '对应还款期数与日历年月'}">${termLabel}</span>
         <div class="rate-wrap">
           <input type="number" step="0.001" min="0" max="15" value="${m.rate}" class="form-input step-rate-input" data-idx="${idx}" />
           <span class="input-addon">%</span>
         </div>
-        <button type="button" class="btn-icon-del" data-idx="${idx}" title="删除此节点">✕</button>
+        <button type="button" class="btn-icon-del" data-idx="${idx}" title="${lang === 'ja' ? 'この見直しノードを削除' : '删除此节点'}">✕</button>
       `;
       container.appendChild(row);
     });
@@ -835,13 +914,16 @@
 
   // --- 动态渲染筹码按钮 (根据 config.js) ---
   function renderDynamicChips() {
+    const lang = window.MortgageI18n ? window.MortgageI18n.getLang() : 'zh';
+    const myTag = lang === 'ja' ? ' (初期値)' : ' (我的)';
+
     // 渲染本金筹码
     const principalChipsContainer = document.getElementById('chips-principal-container');
     if (principalChipsContainer) {
       const list = chipsCfg.principalList || [2000, 2500, 3000, 3190, 3500, 4000, 5000];
       principalChipsContainer.innerHTML = list.map(val => `
         <button type="button" class="chip chip-principal ${val === state.principalMan ? 'active' : ''}" data-val="${val}">
-          ${val.toLocaleString()}万${val === loanCfg.principalMan ? ' (我的)' : ''}
+          ${val.toLocaleString()}万${val === loanCfg.principalMan ? myTag : ''}
         </button>
       `).join('');
 
@@ -867,7 +949,7 @@
       const list = chipsCfg.termList || [20, 25, 30, 35, 40, 45, 50];
       termChipsContainer.innerHTML = list.map(val => `
         <button type="button" class="chip chip-term ${val === state.termYears ? 'active' : ''}" data-val="${val}">
-          ${val}年${val === loanCfg.termYears ? ' (我的)' : ''}
+          ${val}年${val === loanCfg.termYears ? myTag : ''}
         </button>
       `).join('');
 
@@ -901,6 +983,26 @@
 
   function init() {
     initTheme();
+
+    // 初始化语言并监听语言变更
+    if (window.MortgageI18n) {
+      window.MortgageI18n.setLanguage(window.MortgageI18n.getLang());
+    }
+
+    const langToggleBtn = document.getElementById('lang-toggle-btn');
+    if (langToggleBtn) {
+      langToggleBtn.addEventListener('click', () => {
+        if (window.MortgageI18n) {
+          window.MortgageI18n.toggleLanguage();
+        }
+      });
+    }
+
+    window.addEventListener('mortgage-lang-changed', () => {
+      renderDynamicChips();
+      renderCustomMilestones();
+      updateUI();
+    });
 
     // 读取 URL 参数 (例如从税金计算器跳过来 ?principal=3500&term=35&rate=1.2)
     try {
@@ -1100,14 +1202,17 @@
     const btnToggleAll = document.getElementById('btn-toggle-all-months');
     if (btnToggleAll) {
       btnToggleAll.addEventListener('click', () => {
+        const lang = window.MortgageI18n ? window.MortgageI18n.getLang() : 'zh';
+        const t = (k) => window.MortgageI18n ? window.MortgageI18n.t(k, lang) : k;
+
         state.isTableExpanded = !state.isTableExpanded;
-        btnToggleAll.textContent = state.isTableExpanded ? '收起全部明细' : '展开全部月份';
+        btnToggleAll.textContent = state.isTableExpanded ? t('btn_collapse_all') : t('btn_expand_all');
 
         document.querySelectorAll('.sub-row').forEach(row => {
           row.style.display = state.isTableExpanded ? 'table-row' : 'none';
         });
         document.querySelectorAll('.btn-toggle-month').forEach(btn => {
-          btn.textContent = state.isTableExpanded ? '收起 ▴' : '详情 ▾';
+          btn.textContent = state.isTableExpanded ? t('btn_detail_close') : t('btn_detail_open');
         });
       });
     }
