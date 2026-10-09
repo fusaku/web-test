@@ -3,8 +3,8 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>日本房贷计算器 - 40年超长贷 / 5年规则与125%规则模拟 (日本住宅ローンシミュレーション)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>日本房贷还款计算器 | 40年超长贷·利率变动模拟</title>
   <meta name="description" content="专业独立日本房贷计算器与推演工具。默认支持40年超长贷款(自由自定义1~50年)，深度推演浮动利率(変動金利)下的5年规则、125%规则、未付利息(未払利息)及期末一次性补缴(一括返済)风险。">
   <link rel="stylesheet" href="css/style.css">
   <script src="js/i18n.js"></script>
@@ -29,17 +29,18 @@
       <div class="brand-wrap">
         <div class="brand-icon">¥</div>
         <div class="brand-title">
-          <h1><span data-i18n="brand_title">日本房贷模拟器</span> <span data-i18n="brand_tag">40年 / 5年·125%规则版</span></h1>
-          <p data-i18n="brand_sub">日本住宅ローンシミュレーター · 40年超長期ローン · 変動金利 · 未払利息リスク推計</p>
+          <h1><span data-i18n="brand_title">日本房贷还款计算器</span> <span data-i18n="brand_tag">40年超长贷·5年/125%规则</span></h1>
+          <p data-i18n="brand_sub">日本住宅贷款精算 · 全期480期 · 浮动利率5年调整 · 125%还款上限 · 未付利息推演</p>
         </div>
       </div>
 
       <div class="header-actions">
-        <!-- 中日双语切换按钮 -->
-        <button type="button" class="btn-header lang-toggle-btn" id="lang-toggle-btn" aria-label="切换语言" title="切换语言 (日本語 / 中文)">
-          <span>🌐</span>
-          <span id="lang-btn-text">日本語</span>
-        </button>
+        <!-- 中日双语切换分段控制 (即时反馈，防止混淆) -->
+        <div class="lang-switch-box" role="group" aria-label="Language Selector">
+          <span class="lang-icon" aria-hidden="true">🌐</span>
+          <button type="button" class="lang-btn active" id="btn-lang-zh" onclick="window.setAppLanguage('zh')">中文</button>
+          <button type="button" class="lang-btn" id="btn-lang-ja" onclick="window.setAppLanguage('ja')">日本語</button>
+        </div>
         <a href="./tax/" id="nav-link-tax" class="btn-header" title="前往正社员税金与故乡税计算器">
           <span>💴</span>
           <span data-i18n="nav_tax">正社员税金·故乡税</span>

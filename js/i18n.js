@@ -13,10 +13,11 @@
   const dict = {
     'zh': {
       // 页面元信息
-      'page_title': '日本房贷计算器 - 40年超长贷 / 5年规则与125%规则模拟 (日本住宅ローンシミュレーション)',
-      'brand_title': '日本房贷模拟器',
-      'brand_tag': '40年 / 5年·125%规则版',
-      'brand_sub': '日本住宅ローンシミュレーター · 40年超長期ローン · 変動金利 · 未払利息リスク推計',
+      'page_title': '日本房贷还款计算器 | 40年超长贷·利率变动模拟',
+      'brand_title': '日本房贷还款计算器',
+      'brand_badge': '40年超长贷·5年/125%规则',
+      'brand_tag': '40年超长贷·5年/125%规则',
+      'brand_sub': '日本住宅贷款精算 · 全期480期 · 浮动利率5年调整 · 125%还款上限 · 未付利息推演',
       'nav_tax': '正社员税金·故乡税',
       'theme_btn': '外观',
       'lang_btn': '日本語',
@@ -313,6 +314,20 @@
   };
 
   // 获取当前语言 (优先级: URL ?lang= -> localStorage -> 浏览器语言 -> 'zh')
+  function safeGetStorage() {
+    try {
+      return localStorage.getItem(STORAGE_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function safeSetStorage(val) {
+    try {
+      localStorage.setItem(STORAGE_KEY, val);
+    } catch (e) {}
+  }
+
   function getInitialLang() {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -323,7 +338,7 @@
       }
     } catch (e) {}
 
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = safeGetStorage();
     if (saved && (saved === 'ja' || saved === 'zh')) return saved;
 
     const navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
@@ -341,10 +356,10 @@
   function setLanguage(newLang) {
     if (newLang !== 'zh' && newLang !== 'ja') return;
     currentLang = newLang;
-    localStorage.setItem(STORAGE_KEY, newLang);
+    safeSetStorage(newLang);
     document.documentElement.setAttribute('lang', newLang === 'ja' ? 'ja' : 'zh-CN');
 
-    // 动态替换带有 data-i18n 的 DOM 元素
+    // 1. 动态替换带有 data-i18n 的 DOM 元素
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
       const text = t(key, newLang);
@@ -353,6 +368,7 @@
       }
     });
 
+    // 2. 动态替换带有 data-i18n-html 的 DOM 元素
     document.querySelectorAll('[data-i18n-html]').forEach(el => {
       const key = el.getAttribute('data-i18n-html');
       const html = t(key, newLang);
@@ -361,23 +377,85 @@
       }
     });
 
-    // 网页标题
+    // 3. 动态替换带有 data-i18n-title 的 DOM 元素
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      const key = el.getAttribute('data-i18n-title');
+      const text = t(key, newLang);
+      if (text !== undefined) {
+        el.setAttribute('title', text);
+      }
+    });
+
+    // 4. 浏览器标签页标题
     document.title = t('page_title', newLang);
 
-    // 语言切换按钮文案
+    // 5. 更新分段式语言切换按钮的高亮状态
+    const btnZh = document.getElementById('btn-lang-zh');
+    const btnJa = document.getElementById('btn-lang-ja');
+    if (btnZh && btnJa) {
+      btnZh.classList.toggle('active', newLang === 'zh');
+      btnJa.classList.toggle('active', newLang === 'ja');
+      btnZh.setAttribute('aria-pressed', newLang === 'zh' ? 'true' : 'false');
+      btnJa.setAttribute('aria-pressed', newLang === 'ja' ? 'true' : 'false');
+    }
     const langBtnText = document.getElementById('lang-btn-text');
     if (langBtnText) {
       langBtnText.textContent = newLang === 'zh' ? '日本語' : '中文';
     }
 
-    // 广播语言变化事件
-    window.dispatchEvent(new CustomEvent('mortgage-lang-changed', { detail: { lang: newLang } }));
+    // 6. 广播语言变化事件
+    try {
+      window.dispatchEvent(new CustomEvent('mortgage-lang-changed', { detail: { lang: newLang } }));
+    } catch (e) {
+      const evt = document.createEvent('CustomEvent');
+      evt.initCustomEvent('mortgage-lang-changed', true, true, { lang: newLang });
+      window.dispatchEvent(evt);
+    }
   }
 
   function toggleLanguage() {
     const target = currentLang === 'zh' ? 'ja' : 'zh';
     setLanguage(target);
     return target;
+  }
+
+  function bindLangSwitchers() {
+    const btnZh = document.getElementById('btn-lang-zh');
+    const btnJa = document.getElementById('btn-lang-ja');
+    if (btnZh) {
+      btnZh.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLanguage('zh');
+      });
+    }
+    if (btnJa) {
+      btnJa.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLanguage('ja');
+      });
+    }
+    const singleBtn = document.getElementById('lang-toggle-btn');
+    if (singleBtn) {
+      singleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleLanguage();
+      });
+    }
+  }
+
+  // 自主就绪初始化 (彻底脱离对外部异步脚本的依赖)
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        setLanguage(currentLang);
+        bindLangSwitchers();
+      });
+    } else {
+      setLanguage(currentLang);
+      bindLangSwitchers();
+    }
   }
 
   window.MortgageI18n = {
@@ -387,5 +465,9 @@
     toggleLanguage,
     dict
   };
+
+  // 全局无条件快捷函数
+  window.setAppLanguage = setLanguage;
+  window.toggleAppLanguage = toggleLanguage;
 
 })(window);

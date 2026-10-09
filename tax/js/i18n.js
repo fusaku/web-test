@@ -13,11 +13,11 @@
   const dict = {
     'zh': {
       // 页面元信息
-      'page_title': '日本正社员税金计算器 (神奈川·横滨标准版) - 住宅减税·故乡税·保险控除',
-      'brand_title': '日本正社员税金计算器',
+      'page_title': '税金・到手收入计算器 | 神奈川·横滨标准',
+      'brand_title': '正社员税金·到手计算器',
       'brand_tag': '神奈川·横滨标准版',
       'brand_sub': '協会けんぽ神奈川支部 (5.01%) · 横浜市 住民税 (10.025% / 横浜みどり税) · 房贷减税 · 故乡税上限 · 保险控除',
-      'nav_mortgage': '40年房贷模拟器',
+      'nav_mortgage': '40年房贷计算器',
       'theme_btn': '外观',
       'lang_btn': '日本語',
 
@@ -203,11 +203,11 @@
 
     'ja': {
       // ページメタ情報
-      'page_title': '日本正社員の税金・手取り計算シミュレーター (神奈川県・横浜市基準) - 住宅ローン控除・ふるさと納税・保険料控除',
+      'page_title': '税金・手取り計算機 | 神奈川・横浜基準',
       'brand_title': '正社員 税金・手取り計算機',
-      'brand_tag': '神奈川県・横浜市基準対応',
+      'brand_tag': '神奈川・横浜基準',
       'brand_sub': '協会けんぽ神奈川支部 (5.01%) · 横浜市 住民税 (10.025% / 横浜みどり税) · 住宅ローン控除 · ふるさと納税限度額 · 保険料控除',
-      'nav_mortgage': '40年住宅ローンシミュレーター',
+      'nav_mortgage': '40年住宅ローン計算機',
       'theme_btn': '外観切替',
       'lang_btn': '中文',
 
@@ -392,6 +392,27 @@
     }
   };
 
+  function safeGetStorage(key) {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem(key);
+      }
+    } catch (e) {
+      console.warn('[tax-i18n] localStorage access denied:', e);
+    }
+    return null;
+  }
+
+  function safeSetStorage(key, value) {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, value);
+      }
+    } catch (e) {
+      console.warn('[tax-i18n] localStorage write denied:', e);
+    }
+  }
+
   function getInitialLang() {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -402,7 +423,7 @@
       }
     } catch (e) {}
 
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = safeGetStorage(STORAGE_KEY);
     if (saved && (saved === 'ja' || saved === 'zh')) return saved;
 
     const navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
@@ -420,9 +441,10 @@
   function setLanguage(newLang) {
     if (newLang !== 'zh' && newLang !== 'ja') return;
     currentLang = newLang;
-    localStorage.setItem(STORAGE_KEY, newLang);
+    safeSetStorage(STORAGE_KEY, newLang);
     document.documentElement.setAttribute('lang', newLang === 'ja' ? 'ja' : 'zh-CN');
 
+    // 1. 批量更新纯文本标签
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
       const text = t(key, newLang);
@@ -431,6 +453,7 @@
       }
     });
 
+    // 2. 批量更新含富文本标签
     document.querySelectorAll('[data-i18n-html]').forEach(el => {
       const key = el.getAttribute('data-i18n-html');
       const html = t(key, newLang);
@@ -439,20 +462,76 @@
       }
     });
 
+    // 3. 页面标题更新
     document.title = t('page_title', newLang);
 
+    // 4. 更新分段式/单按钮的显示状态与激活样式
+    const btnZh = document.getElementById('btn-lang-zh');
+    const btnJa = document.getElementById('btn-lang-ja');
+    if (btnZh && btnJa) {
+      btnZh.classList.toggle('active', newLang === 'zh');
+      btnJa.classList.toggle('active', newLang === 'ja');
+      btnZh.setAttribute('aria-pressed', newLang === 'zh' ? 'true' : 'false');
+      btnJa.setAttribute('aria-pressed', newLang === 'ja' ? 'true' : 'false');
+    }
     const langBtnText = document.getElementById('lang-btn-text');
     if (langBtnText) {
       langBtnText.textContent = newLang === 'zh' ? '日本語' : '中文';
     }
 
-    window.dispatchEvent(new CustomEvent('tax-lang-changed', { detail: { lang: newLang } }));
+    // 5. 广播语言变更自定义事件
+    try {
+      window.dispatchEvent(new CustomEvent('tax-lang-changed', { detail: { lang: newLang } }));
+    } catch (e) {
+      const evt = document.createEvent('CustomEvent');
+      evt.initCustomEvent('tax-lang-changed', true, true, { lang: newLang });
+      window.dispatchEvent(evt);
+    }
   }
 
   function toggleLanguage() {
     const target = currentLang === 'zh' ? 'ja' : 'zh';
     setLanguage(target);
     return target;
+  }
+
+  function bindLangSwitchers() {
+    const btnZh = document.getElementById('btn-lang-zh');
+    const btnJa = document.getElementById('btn-lang-ja');
+    if (btnZh) {
+      btnZh.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLanguage('zh');
+      });
+    }
+    if (btnJa) {
+      btnJa.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLanguage('ja');
+      });
+    }
+    const singleBtn = document.getElementById('lang-toggle-btn');
+    if (singleBtn) {
+      singleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleLanguage();
+      });
+    }
+  }
+
+  // 自主就绪初始化 (彻底脱离对外部异步脚本的依赖)
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        setLanguage(currentLang);
+        bindLangSwitchers();
+      });
+    } else {
+      setLanguage(currentLang);
+      bindLangSwitchers();
+    }
   }
 
   window.TaxI18n = {
@@ -462,5 +541,9 @@
     toggleLanguage,
     dict
   };
+
+  // 全局无条件快捷函数
+  window.setAppLanguage = setLanguage;
+  window.toggleAppLanguage = toggleLanguage;
 
 })(window);
