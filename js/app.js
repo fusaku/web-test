@@ -39,9 +39,11 @@
     termYears: loanCfg.termYears ?? 40,
     // 初始借款年利率（%）
     initialRate: loanCfg.initialRate ?? 1.195,
-    // 放款起贷日历年份与月份（精准推算实际月份）
+    // 放款起贷日历年月日（精准推算实际月份与首期日割利息）
     startYear: loanCfg.startYear ?? 2026,
     startMonth: loanCfg.startMonth ?? 11,
+    startDay: loanCfg.startDay ?? 20,
+    repayDay: loanCfg.repayDay ?? 31,
     // 还款方式：equal_payment(元利均等/等额本息) 或 equal_principal(元金均等/等额本金)
     repayMethod: loanCfg.repayMethod ?? 'equal_payment',
     // 核心保护机制开关
@@ -50,7 +52,7 @@
     // 三菱UFJ银行调息模式：'semiannual'(年2回型) | 'monthly'(毎月型)
     mufgMode: loanCfg.mufgMode ?? 'semiannual',
     // 加息情景：'mufg' | 'mild' | 'flat' | 'steep' | 'extreme' | 'custom'
-    currentScenario: sceneCfg.defaultScenario ?? 'mild',
+    currentScenario: sceneCfg.defaultScenario ?? 'mufg',
     // 自定义加息时间轴节点（支持按第几年第几月精确设置）
     customMilestones: sceneCfg.customMilestones
       ? JSON.parse(JSON.stringify(sceneCfg.customMilestones))
@@ -123,10 +125,12 @@
     const calYear = Math.floor(totalMonths / 12);
     const calMonth = (totalMonths % 12) + 1;
     const moStr = calMonth < 10 ? '0' + calMonth : calMonth.toString();
+    const reiwa = calYear >= 2019 ? `令和${calYear - 2018}年` : `${calYear}年`;
     return {
       year: calYear,
       month: calMonth,
-      label: `${calYear}年${calMonth}月`,
+      reiwa: reiwa,
+      label: `${calYear}年${calMonth}月 (${reiwa})`,
       shortLabel: `${calYear}.${moStr}`
     };
   }
@@ -186,13 +190,14 @@
           return +(base + 0.60 + p * 0.20).toFixed(3);
         } else {
           // 年2回型 (4月/10月检视，7月/1月扣款)
-          // 2026年11月、12月还款维持初始利率
-          // 2027年1月扣款生效 (10月检视·12月还款日后利率生效)
-          if (calYear < 2027 || (calYear === 2027 && calMonth === 0)) return base;
-          if (calYear === 2027 && calMonth < 7) return +(base + 0.15).toFixed(3); // 2027年1月~6月
-          if (calYear === 2027) return +(base + 0.30).toFixed(3); // 2027年7月~12月
-          if (calYear === 2028 && calMonth < 7) return +(base + 0.45).toFixed(3); // 2028年1月~6月
-          if (calYear === 2028) return +(base + 0.60).toFixed(3); // 2028年7月~12月
+          // 令和8年(2026年)11月20日借入，10月调息已包含在1.195%初始利率中
+          // 下一次检视期为2027年4月1日，在2027年7月还款时首次反映新利息
+          if (calYear < 2027) return base;
+          if (calYear === 2027 && calMonth < 7) return base; // 2027年1月~6月维持初始利率
+          if (calYear === 2027) return +(base + 0.15).toFixed(3); // 2027年7月~12月
+          if (calYear === 2028 && calMonth < 7) return +(base + 0.30).toFixed(3); // 2028年1月~6月
+          if (calYear === 2028) return +(base + 0.45).toFixed(3); // 2028年7月~12月
+          if (calYear === 2029 && calMonth < 7) return +(base + 0.60).toFixed(3); // 2029年1月~6月
           const year = Math.ceil(month / 12);
           if (year <= 5) return +(base + 0.60).toFixed(3);
           const p = Math.floor((month - 61) / 60) + 1;
@@ -283,19 +288,19 @@
 
       let rule125TriggeredThisMonth = false;
 
-      // 步骤 1: 确定本月应付月供额 (Current Payment)
+      // 步骤 1: 确定本月应付月供额 (Current Payment, 银行实务采用截断舍去)
       if (repayMethod === 'equal_payment') {
         if (m === 1) {
-          // 首期月供计算
-          currentPayment = Math.round(calcPMT(balance, monthlyRate, remainingMonths));
+          // 首期月供计算 (对应三菱UFJ 3190万 40年 1.195% = 83,634円)
+          currentPayment = Math.floor(calcPMT(balance, monthlyRate, remainingMonths));
           prev5YearPayment = currentPayment;
         } else if (enable5YearRule) {
           // 5年规则：仅在第 61、121、181、241... 个月（每5年节点）重算月供
           if ((m - 1) % 60 === 0) {
-            const unconstrainedPMT = Math.round(calcPMT(balance, monthlyRate, remainingMonths));
+            const unconstrainedPMT = Math.floor(calcPMT(balance, monthlyRate, remainingMonths));
 
             if (enable125Rule) {
-              const maxAllowedCap = Math.round(prev5YearPayment * 1.25);
+              const maxAllowedCap = Math.floor(prev5YearPayment * 1.25);
               if (unconstrainedPMT > maxAllowedCap) {
                 currentPayment = maxAllowedCap;
                 rule125TriggeredThisMonth = true;
@@ -313,13 +318,13 @@
           // 无5年规则模式 (如索尼银行模式)：每当利率变动或每月即时重算
           const prevRate = getRateForMonth(m - 1, termYears);
           if (rate !== prevRate || m === 1) {
-            currentPayment = Math.round(calcPMT(balance, monthlyRate, remainingMonths));
+            currentPayment = Math.floor(calcPMT(balance, monthlyRate, remainingMonths));
           }
         }
       } else {
         // 元金均等返済：每月固定偿还本金，利息据实结算
-        const fixedPrincipal = Math.round(principal / totalMonths);
-        const currentInterest = Math.round(balance * monthlyRate);
+        const fixedPrincipal = Math.floor(principal / totalMonths);
+        const currentInterest = Math.floor(balance * monthlyRate);
         currentPayment = fixedPrincipal + currentInterest;
       }
 
@@ -329,15 +334,27 @@
         maxPaymentYear = year;
       }
 
-      // 步骤 2: 本金与利息核算分配 (拆分本息与未付利息处理)
-      const interestDue = Math.round(balance * monthlyRate);
+      // 步骤 2: 本金与利息核算分配 (拆分本息与首期端数日割利息处理)
+      let interestDue = Math.floor(balance * monthlyRate);
+      let oddInterest = 0;
+      let actualRepayThisMonth = currentPayment;
+
+      // 若为第1期且放款日不在月末，计算放款日至月末的日割利息 (三菱UFJ实务：令和8年11月20日借入，10天日割利息10,443円)
+      if (m === 1 && state.startDay && state.startDay < 30) {
+        const oddDays = 30 - state.startDay;
+        oddInterest = Math.floor(principal * (rate / 100) * oddDays / 365);
+        interestDue += oddInterest;
+        actualRepayThisMonth = (currentPayment - Math.floor(balance * monthlyRate)) + interestDue;
+      }
+
       let principalPaid = 0;
       let interestPaid = 0;
       let unpaidInterestAdded = 0;
 
       if (repayMethod === 'equal_payment') {
-        if (currentPayment >= interestDue) {
-          let surplus = currentPayment - interestDue;
+        const stdInterest = Math.floor(balance * monthlyRate);
+        if (currentPayment >= stdInterest) {
+          let surplus = currentPayment - stdInterest;
 
           // 若有历史累积的未付利息，月供结余优先冲抵未付利息
           let paidFromUnpaid = 0;
@@ -359,9 +376,10 @@
           principalPaid = 0; // 本金完全停止减少
         }
       } else {
-        principalPaid = Math.min(balance, Math.round(principal / totalMonths));
+        principalPaid = Math.min(balance, Math.floor(principal / totalMonths));
         balance = Math.max(0, balance - principalPaid);
         interestPaid = interestDue;
+        actualRepayThisMonth = principalPaid + interestPaid;
       }
 
       monthlyRecords.push({
@@ -369,6 +387,18 @@
         year: year,
         monthInYear: ((m - 1) % 12) + 1,
         rate: rate,
+        payment: actualRepayThisMonth,
+        stdPayment: currentPayment,
+        oddInterest: oddInterest,
+        principalPaid: principalPaid,
+        interestPaid: interestPaid,
+        balance: balance,
+        unpaidInterest: accumulatedUnpaidInterest,
+        unpaidAdded: unpaidInterestAdded,
+        rule125Triggered: rule125TriggeredThisMonth,
+        isPeriodStart: (m - 1) % 60 === 0
+      });
+    }
         payment: currentPayment,
         principalPaid: principalPaid,
         interestPaid: interestPaid,
@@ -434,7 +464,10 @@
     return {
       monthlyRecords,
       yearlyRecords,
-      initialPayment: monthlyRecords[0].payment,
+      initialPayment: monthlyRecords.length > 1 ? monthlyRecords[1].payment : monthlyRecords[0].payment,
+      firstActualPayment: monthlyRecords[0].payment,
+      hasOddInterest: (monthlyRecords[0].oddInterest || 0) > 0,
+      firstOddInterest: monthlyRecords[0].oddInterest || 0,
       maxPayment,
       maxPaymentYear,
       totalPaymentRegular: cumulativePayment,
@@ -490,9 +523,15 @@
     const elInitialHint = document.getElementById('kpi-initial-hint');
     if (elInitial) elInitial.textContent = formatYen(res.initialPayment);
     if (elInitialHint) {
-      elInitialHint.textContent = lang === 'ja'
-        ? `1〜5年目返済 (${formatRate(state.initialRate)})`
-        : `第1~5年月供 (${formatRate(state.initialRate)})`;
+      if (res.hasOddInterest) {
+        elInitialHint.textContent = lang === 'ja'
+          ? `次回(令和9年1月4日): ${formatYen(res.firstActualPayment)} ➔ ${formatYen(res.initialPayment)}/月`
+          : `次回首期: ${formatYen(res.firstActualPayment)} ➔ 后续固定${formatYen(res.initialPayment)}/月`;
+      } else {
+        elInitialHint.textContent = lang === 'ja'
+          ? `1〜5年目返済 (${formatRate(state.initialRate)})`
+          : `第1~5年月供 (${formatRate(state.initialRate)})`;
+      }
     }
 
     // KPI 2: 最高月供
@@ -542,7 +581,15 @@
     const mInitial = document.getElementById('m-kpi-initial');
     const mInitialHint = document.getElementById('m-kpi-initial-hint');
     if (mInitial) mInitial.textContent = formatYen(res.initialPayment);
-    if (mInitialHint) mInitialHint.textContent = lang === 'ja' ? `1〜5年目` : `第1~5年月供`;
+    if (mInitialHint) {
+      if (res.hasOddInterest) {
+        mInitialHint.textContent = lang === 'ja'
+          ? `初回${formatYen(res.firstActualPayment)} ➔ ${formatYen(res.initialPayment)}/月`
+          : `首期${formatYen(res.firstActualPayment)} ➔ ${formatYen(res.initialPayment)}/月`;
+      } else {
+        mInitialHint.textContent = lang === 'ja' ? `1〜5年目` : `第1~5年月供`;
+      }
+    }
 
     const mMax = document.getElementById('m-kpi-max');
     const mMaxHint = document.getElementById('m-kpi-max-hint');
@@ -922,9 +969,14 @@
           statusBadge = `<span class="pill pill-unpaid">${lang === 'ja' ? '未払利息+' : '未付利息+'}${formatYen(m.unpaidAdded)}</span>`;
         }
 
+        let oddNoticeHtml = '';
+        if (m.month === 1 && m.oddInterest > 0) {
+          oddNoticeHtml = `<div style="font-size: 10px; color: #10b981; margin-top: 2px;">🏦 ${lang === 'ja' ? '次回引落(令和9年1月4日) 端数利息10,443円含' : '首期扣款(令和9年1月4日) 含10天日割利息¥10,443'}</div>`;
+        }
+
         monthlyRowsHtml += `
           <tr>
-            <td><strong>${mTermLabel}</strong> <span style="color: var(--text-secondary); margin-left: 4px;">(${mCal.label})</span></td>
+            <td><strong>${mTermLabel}</strong> <span style="color: var(--text-secondary); margin-left: 4px;">(${mCal.label})</span>${oddNoticeHtml}</td>
             <td><strong>${formatRate(m.rate)}</strong></td>
             <td style="font-weight: 600;">${formatYen(m.payment)}</td>
             <td style="color: #10b981;">${formatYen(m.principalPaid)}</td>
@@ -1315,6 +1367,19 @@
         const val = parseInt(e.target.value);
         if (!isNaN(val) && val >= 1 && val <= 12) {
           state.startMonth = val;
+          renderCustomMilestones();
+          updateUI();
+        }
+      });
+    }
+
+    const inputStartDay = document.getElementById('input-start-day');
+    if (inputStartDay) {
+      inputStartDay.value = state.startDay;
+      inputStartDay.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        if (!isNaN(val) && val >= 1 && val <= 31) {
+          state.startDay = val;
           renderCustomMilestones();
           updateUI();
         }

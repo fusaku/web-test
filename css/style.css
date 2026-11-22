@@ -555,6 +555,35 @@ input:checked + .slider:before {
   margin-bottom: 12px;
 }
 
+.mufg-contract-banner {
+  margin-top: 8px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid #10b981;
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.mufg-contract-banner strong {
+  color: var(--text-primary);
+}
+
+.mufg-contract-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.mufg-contract-body div {
+  margin-bottom: 2px;
+}
+
 .custom-step-row {
   display: flex;
   align-items: center;
