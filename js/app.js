@@ -34,16 +34,15 @@
   const STORAGE_KEY_ACTIVE_PLAN_ID = 'mortgage_active_plan_id_v2';
   const STORAGE_KEY_ACTIVE_SCENARIO = 'mortgage_active_scenario_v2';
 
-  // 1.3 获取 config.js 默认加息节点
+  // 1.3 获取 config.js 默认加息节点 (符合日本央行中立利率与大行理性预期)
   function getDefaultConfigMilestones() {
     return sceneCfg.customMilestones
       ? JSON.parse(JSON.stringify(sceneCfg.customMilestones))
       : [
           { year: 1, month: 8, rate: 1.445 },
-          { year: 2, month: 2, rate: 1.695 },
-          { year: 2, month: 8, rate: 1.945 },
-          { year: 3, month: 2, rate: 2.195 },
-          { year: 6, month: 1, rate: 2.445 }
+          { year: 3, month: 2, rate: 1.695 },
+          { year: 6, month: 1, rate: 1.895 },
+          { year: 11, month: 1, rate: 2.095 }
         ];
   }
 
@@ -248,31 +247,26 @@
         const calMonth = cal.month;
 
         if (state.mufgMode === 'monthly') {
-          // 毎月型: 2026年12月起即反映调息 (+0.25% ➔ 1.445%)
+          // 毎月型: 2026年12月起即反映调息 (+0.25% ➔ 1.445%)，之后平稳过渡
           if (calYear < 2026 || (calYear === 2026 && calMonth < 12)) return base;
-          if (calYear === 2026 && calMonth === 12) return +(base + 0.25).toFixed(3);
-          if (calYear === 2027 && calMonth <= 5) return +(base + 0.25).toFixed(3);
-          if (calYear === 2027 && calMonth <= 11) return +(base + 0.50).toFixed(3);
-          if (calYear === 2028 && calMonth <= 5) return +(base + 0.75).toFixed(3);
-          if (calYear === 2028 && calMonth <= 11) return +(base + 1.00).toFixed(3);
+          if (calYear <= 2028) return +(base + 0.25).toFixed(3); // 2026年12月~2028年末维持 1.445%
+          if (calYear <= 2031) return +(base + 0.50).toFixed(3); // 2029年~2031年末维持 1.695%
           const year = Math.ceil(month / 12);
-          if (year <= 5) return +(base + 1.00).toFixed(3);
+          if (year <= 5) return +(base + 0.50).toFixed(3);
           const p = Math.floor((month - 61) / 60) + 1;
-          return +(base + 1.00 + p * 0.25).toFixed(3);
+          return +(base + 0.50 + Math.min(0.40, p * 0.20)).toFixed(3); // 长期中枢在 1.895% ~ 2.095%
         } else {
-          // 年2回型 (4月/10月检视，7月/1月扣款，每次加息 +0.25%)
+          // 年2回型 (4月/10月检视，7月/1月扣款)
           // 令和8年(2026年)11月20日借入，10月调息已包含在1.195%初始利率中
-          // 下一次检视期为2027年4月1日，在2027年7月还款时首次反映新利息 (+0.25% ➔ 1.445%)
+          // 2027年4月检视，在2027年7月还款时首次反映12月调息 (+0.25% ➔ 1.445%)
           if (calYear < 2027) return base;
-          if (calYear === 2027 && calMonth < 7) return base; // 2027年1月~6月维持初始利率
-          if (calYear === 2027) return +(base + 0.25).toFixed(3); // 2027年7月~12月 (1.445%)
-          if (calYear === 2028 && calMonth < 7) return +(base + 0.50).toFixed(3); // 2028年1月~6月 (1.695%)
-          if (calYear === 2028) return +(base + 0.75).toFixed(3); // 2028年7月~12月 (1.945%)
-          if (calYear === 2029 && calMonth < 7) return +(base + 1.00).toFixed(3); // 2029年1月~6月 (2.195%)
+          if (calYear === 2027 && calMonth < 7) return base; // 2027年1月~6月维持初始利率 1.195%
+          if (calYear <= 2028) return +(base + 0.25).toFixed(3); // 2027年7月~2028年末平稳维持 1.445%
+          if (calYear <= 2031) return +(base + 0.50).toFixed(3); // 2029年1月~2031年末微调至 1.695%
           const year = Math.ceil(month / 12);
-          if (year <= 5) return +(base + 1.00).toFixed(3);
+          if (year <= 5) return +(base + 0.50).toFixed(3);
           const p = Math.floor((month - 61) / 60) + 1;
-          return +(base + 1.00 + p * 0.25).toFixed(3);
+          return +(base + 0.50 + Math.min(0.40, p * 0.20)).toFixed(3); // 长期中枢在 1.895% ~ 2.095%
         }
       }
 

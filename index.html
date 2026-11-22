@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>日本房贷还款计算器 | 40年超长贷·利率变动模拟</title>
   <meta name="description" content="专业独立日本房贷计算器与推演工具。默认支持40年超长贷款(自由自定义1~50年)，深度推演浮动利率(変動金利)下的5年规则、125%规则、未付利息(未払利息)及期末一次性补缴(一括返済)风险。">
-  <link rel="stylesheet" href="css/style.css?v=20261122_04">
+  <link rel="stylesheet" href="css/style.css?v=20261122_05">
   <script>
     // 独立轻量主题防闪烁预处理 (与税金计算器双向同步)
     (function() {
@@ -36,7 +36,7 @@
       }
     };
   </script>
-  <script src="js/i18n.js?v=20261122_04"></script>
+  <script src="js/i18n.js?v=20261122_05"></script>
 </head>
 
 <body>
@@ -307,7 +307,7 @@
             <div class="scenario-item active" data-scenario="mufg">
               <div>
                 <h4 class="scenario-item-title" data-i18n="scene_mufg_title">🏦 三菱UFJ加息预测 (含12月/1月调息)</h4>
-                <p class="scenario-item-desc" data-i18n="scene_mufg_desc">贴合三菱真实规律：2026年12月/2027年1月调息(+0.25%)，随后按年2回渐进走高</p>
+                <p class="scenario-item-desc" data-i18n="scene_mufg_desc">贴合三菱真实实务：首轮反映12月调息(+0.25%至1.445%)，随宏观经济温和微调至中立利率区间</p>
               </div>
               <span class="badge badge-purple" data-i18n="scene_mufg_tag">三菱真实推演</span>
             </div>
@@ -661,11 +661,11 @@
   </div>
 
   <!-- 引入用户专属配置文件 (可在此直接修改你的贷款参数) -->
-  <script src="config.js?v=20261122_04"></script>
+  <script src="config.js?v=20261122_05"></script>
   <!-- 引入 Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- 引入独立应用脚本 -->
-  <script src="js/app.js?v=20261122_04"></script>
+  <script src="js/app.js?v=20261122_05"></script>
 </body>
 
 </html>
