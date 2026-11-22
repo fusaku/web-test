@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>日本房贷还款计算器 | 40年超长贷·利率变动模拟</title>
   <meta name="description" content="专业独立日本房贷计算器与推演工具。默认支持40年超长贷款(自由自定义1~50年)，深度推演浮动利率(変動金利)下的5年规则、125%规则、未付利息(未払利息)及期末一次性补缴(一括返済)风险。">
-  <link rel="stylesheet" href="css/style.css?v=20261122_03">
+  <link rel="stylesheet" href="css/style.css?v=20261122_04">
   <script>
     // 独立轻量主题防闪烁预处理 (与税金计算器双向同步)
     (function() {
@@ -36,7 +36,7 @@
       }
     };
   </script>
-  <script src="js/i18n.js?v=20261122_03"></script>
+  <script src="js/i18n.js?v=20261122_04"></script>
 </head>
 
 <body>
@@ -353,6 +353,34 @@
           <div id="custom-schedule-box" class="custom-box" style="display: none;">
             <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px;" data-i18n="custom_box_title">各阶段加息节点设定 (精确到月)：</div>
 
+            <!-- 自定义加息方案存档与多方案管理条 -->
+            <div class="custom-plan-toolbar">
+              <div class="custom-plan-select-wrap">
+                <span class="custom-plan-icon" aria-hidden="true">📂</span>
+                <select id="custom-plan-select" class="custom-plan-select" aria-label="选择自定义加息方案">
+                  <!-- 动态填充方案列表 -->
+                </select>
+                <span id="custom-plan-badge" class="custom-plan-badge" data-i18n="badge_saved_auto">🟢 已自动保存</span>
+              </div>
+              <div class="custom-plan-btns">
+                <button type="button" id="btn-save-plan" class="btn-plan-action" title="手动立即保存当前方案" data-i18n="btn_save_plan">
+                  💾 <span data-i18n="txt_save">保存</span>
+                </button>
+                <button type="button" id="btn-save-as-plan" class="btn-plan-action" title="将当前节点另存为新方案" data-i18n="btn_save_as_plan">
+                  ➕ <span data-i18n="txt_save_as">另存为</span>
+                </button>
+                <button type="button" id="btn-reset-plan" class="btn-plan-action" title="恢复为 config.js 预设" data-i18n="btn_reset_plan">
+                  🔄 <span data-i18n="txt_reset">恢复默认</span>
+                </button>
+                <button type="button" id="btn-copy-plan" class="btn-plan-action" title="复制为可直接粘贴至 config.js 的代码" data-i18n="btn_copy_plan">
+                  📋 <span data-i18n="txt_copy_config">复制代码</span>
+                </button>
+                <button type="button" id="btn-delete-plan" class="btn-plan-action btn-danger-action" title="删除当前自定义方案" data-i18n="btn_delete_plan" style="display: none;">
+                  🗑️
+                </button>
+              </div>
+            </div>
+
             <!-- 三菱UFJ调息规则模式选择器 -->
             <div class="mufg-mode-wrapper">
               <span class="mufg-mode-lbl" data-i18n="mufg_mode_lbl">🏦 三菱UFJ 调息规则模式：</span>
@@ -633,11 +661,11 @@
   </div>
 
   <!-- 引入用户专属配置文件 (可在此直接修改你的贷款参数) -->
-  <script src="config.js?v=20261122_03"></script>
+  <script src="config.js?v=20261122_04"></script>
   <!-- 引入 Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- 引入独立应用脚本 -->
-  <script src="js/app.js?v=20261122_03"></script>
+  <script src="js/app.js?v=20261122_04"></script>
 </body>
 
 </html>

@@ -27,11 +27,87 @@
   const chipsCfg = cfg.quickChips || {};
   const sceneCfg = cfg.scenarios || {};
 
-  // 1.2 主题管理键名 (与税金计算器实现双向无缝同步)
+  // 1.2 本地存储键名
   const THEME_STORAGE_KEY = 'japan_mortgage_theme';
   const THEME_ALT_KEY = 'japan_tax_theme';
+  const STORAGE_KEY_CUSTOM_PLANS = 'mortgage_custom_plans_v2';
+  const STORAGE_KEY_ACTIVE_PLAN_ID = 'mortgage_active_plan_id_v2';
+  const STORAGE_KEY_ACTIVE_SCENARIO = 'mortgage_active_scenario_v2';
 
-  // 1.3 核心状态中心 (响应式单一事实源)
+  // 1.3 获取 config.js 默认加息节点
+  function getDefaultConfigMilestones() {
+    return sceneCfg.customMilestones
+      ? JSON.parse(JSON.stringify(sceneCfg.customMilestones))
+      : [
+          { year: 1, month: 8, rate: 1.445 },
+          { year: 2, month: 2, rate: 1.695 },
+          { year: 2, month: 8, rate: 1.945 },
+          { year: 3, month: 2, rate: 2.195 },
+          { year: 6, month: 1, rate: 2.445 }
+        ];
+  }
+
+  // 1.4 自定义方案本地存储与多方案管理
+  function getCustomPlansData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_CUSTOM_PLANS);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data && Array.isArray(data.plans) && data.plans.length > 0) {
+          return data;
+        }
+      }
+    } catch (e) {}
+    const defaultList = getDefaultConfigMilestones();
+    const initialData = {
+      activePlanId: 'custom_primary',
+      plans: [
+        {
+          id: 'custom_primary',
+          name: '我的自定义加息方案',
+          nameJa: 'マイカスタム金利プラン',
+          isPrimary: true,
+          mufgMode: loanCfg.mufgMode ?? 'semiannual',
+          milestones: defaultList,
+          updatedAt: Date.now()
+        }
+      ]
+    };
+    saveCustomPlansData(initialData);
+    return initialData;
+  }
+
+  function saveCustomPlansData(data) {
+    try {
+      localStorage.setItem(STORAGE_KEY_CUSTOM_PLANS, JSON.stringify(data));
+      if (data.activePlanId) {
+        localStorage.setItem(STORAGE_KEY_ACTIVE_PLAN_ID, data.activePlanId);
+      }
+    } catch (e) {}
+  }
+
+  function getActivePlan() {
+    const data = getCustomPlansData();
+    let plan = data.plans.find((p) => p.id === data.activePlanId);
+    if (!plan) {
+      plan = data.plans[0];
+      data.activePlanId = plan.id;
+      saveCustomPlansData(data);
+    }
+    return plan;
+  }
+
+  // 获取初始活跃加息方案与记忆的情景
+  const initialPlan = getActivePlan();
+  const savedScenario = (() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY_ACTIVE_SCENARIO);
+    } catch (e) {
+      return null;
+    }
+  })();
+
+  // 1.5 核心状态中心 (响应式单一事实源)
   const state = {
     // 贷款本金（单位：万円）
     principalMan: loanCfg.principalMan ?? 3190,
@@ -50,19 +126,13 @@
     enable5YearRule: loanCfg.enable5YearRule ?? true,
     enable125Rule: loanCfg.enable125Rule ?? true,
     // 三菱UFJ银行调息模式：'semiannual'(年2回型) | 'monthly'(毎月型)
-    mufgMode: loanCfg.mufgMode ?? 'semiannual',
+    mufgMode: initialPlan.mufgMode ?? (loanCfg.mufgMode ?? 'semiannual'),
     // 加息情景：'mufg' | 'mild' | 'flat' | 'steep' | 'extreme' | 'custom'
-    currentScenario: sceneCfg.defaultScenario ?? 'mufg',
-    // 自定义加息时间轴节点（支持按第几年第几月精确设置）
-    customMilestones: sceneCfg.customMilestones
-      ? JSON.parse(JSON.stringify(sceneCfg.customMilestones))
-      : [
-          { year: 1, month: 2, rate: 1.345 },
-          { year: 1, month: 3, rate: 1.445 },
-          { year: 1, month: 9, rate: 1.595 },
-          { year: 2, month: 3, rate: 1.745 },
-          { year: 6, month: 1, rate: 2.050 }
-        ],
+    currentScenario: savedScenario || sceneCfg.defaultScenario || 'mufg',
+    // 自定义加息时间轴节点（支持从本地存储中记忆加载）
+    customMilestones: initialPlan.milestones
+      ? JSON.parse(JSON.stringify(initialPlan.milestones))
+      : getDefaultConfigMilestones(),
     // 界面激活选项卡与表格展开状态
     activeChartTab: 'payment',
     isTableExpanded: false
@@ -178,31 +248,31 @@
         const calMonth = cal.month;
 
         if (state.mufgMode === 'monthly') {
-          // 毎月型: 2026年12月起即反映调息
+          // 毎月型: 2026年12月起即反映调息 (+0.25% ➔ 1.445%)
           if (calYear < 2026 || (calYear === 2026 && calMonth < 12)) return base;
-          if (calYear === 2026 && calMonth === 12) return +(base + 0.15).toFixed(3);
-          if (calYear === 2027 && calMonth <= 5) return +(base + 0.15).toFixed(3);
-          if (calYear === 2027 && calMonth <= 11) return +(base + 0.30).toFixed(3);
-          if (calYear === 2028 && calMonth <= 5) return +(base + 0.45).toFixed(3);
-          if (calYear === 2028 && calMonth <= 11) return +(base + 0.60).toFixed(3);
+          if (calYear === 2026 && calMonth === 12) return +(base + 0.25).toFixed(3);
+          if (calYear === 2027 && calMonth <= 5) return +(base + 0.25).toFixed(3);
+          if (calYear === 2027 && calMonth <= 11) return +(base + 0.50).toFixed(3);
+          if (calYear === 2028 && calMonth <= 5) return +(base + 0.75).toFixed(3);
+          if (calYear === 2028 && calMonth <= 11) return +(base + 1.00).toFixed(3);
           const year = Math.ceil(month / 12);
-          if (year <= 5) return +(base + 0.60).toFixed(3);
+          if (year <= 5) return +(base + 1.00).toFixed(3);
           const p = Math.floor((month - 61) / 60) + 1;
-          return +(base + 0.60 + p * 0.20).toFixed(3);
+          return +(base + 1.00 + p * 0.25).toFixed(3);
         } else {
-          // 年2回型 (4月/10月检视，7月/1月扣款)
+          // 年2回型 (4月/10月检视，7月/1月扣款，每次加息 +0.25%)
           // 令和8年(2026年)11月20日借入，10月调息已包含在1.195%初始利率中
-          // 下一次检视期为2027年4月1日，在2027年7月还款时首次反映新利息
+          // 下一次检视期为2027年4月1日，在2027年7月还款时首次反映新利息 (+0.25% ➔ 1.445%)
           if (calYear < 2027) return base;
           if (calYear === 2027 && calMonth < 7) return base; // 2027年1月~6月维持初始利率
-          if (calYear === 2027) return +(base + 0.15).toFixed(3); // 2027年7月~12月
-          if (calYear === 2028 && calMonth < 7) return +(base + 0.30).toFixed(3); // 2028年1月~6月
-          if (calYear === 2028) return +(base + 0.45).toFixed(3); // 2028年7月~12月
-          if (calYear === 2029 && calMonth < 7) return +(base + 0.60).toFixed(3); // 2029年1月~6月
+          if (calYear === 2027) return +(base + 0.25).toFixed(3); // 2027年7月~12月 (1.445%)
+          if (calYear === 2028 && calMonth < 7) return +(base + 0.50).toFixed(3); // 2028年1月~6月 (1.695%)
+          if (calYear === 2028) return +(base + 0.75).toFixed(3); // 2028年7月~12月 (1.945%)
+          if (calYear === 2029 && calMonth < 7) return +(base + 1.00).toFixed(3); // 2029年1月~6月 (2.195%)
           const year = Math.ceil(month / 12);
-          if (year <= 5) return +(base + 0.60).toFixed(3);
+          if (year <= 5) return +(base + 1.00).toFixed(3);
           const p = Math.floor((month - 61) / 60) + 1;
-          return +(base + 0.60 + p * 0.20).toFixed(3);
+          return +(base + 1.00 + p * 0.25).toFixed(3);
         }
       }
 
@@ -1135,6 +1205,7 @@
       sel.addEventListener('change', (e) => {
         const idx = parseInt(e.target.getAttribute('data-idx'));
         state.customMilestones[idx].year = parseInt(e.target.value);
+        autoSaveCurrentMilestones();
         renderCustomMilestones();
         updateUI();
       });
@@ -1144,6 +1215,7 @@
       sel.addEventListener('change', (e) => {
         const idx = parseInt(e.target.getAttribute('data-idx'));
         state.customMilestones[idx].month = parseInt(e.target.value);
+        autoSaveCurrentMilestones();
         renderCustomMilestones();
         updateUI();
       });
@@ -1155,6 +1227,7 @@
         const val = parseFloat(e.target.value);
         if (!isNaN(val) && val >= 0) {
           state.customMilestones[idx].rate = val;
+          autoSaveCurrentMilestones();
           updateUI();
         }
       });
@@ -1164,10 +1237,253 @@
       btn.addEventListener('click', (e) => {
         const idx = parseInt(e.target.getAttribute('data-idx'));
         state.customMilestones.splice(idx, 1);
+        autoSaveCurrentMilestones();
+        renderCustomPlanToolbar();
         renderCustomMilestones();
         updateUI();
       });
     });
+  }
+
+  /**
+   * 显示浮动 Toast 操作反馈提示
+   * @param {string} msg 提示内容
+   * @param {number} duration 持续毫秒
+   */
+  function showToast(msg, duration = 2500) {
+    let toast = document.getElementById('app-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'app-toast';
+      toast.className = 'app-toast';
+      document.body.appendChild(toast);
+    }
+    toast.innerHTML = msg;
+    toast.classList.add('show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => {
+      toast.classList.remove('show');
+    }, duration);
+  }
+
+  /**
+   * 更新自定义方案工具栏右侧保存状态徽章
+   * @param {'auto'|'manual'|'template'|'reset'} status
+   */
+  function updatePlanBadge(status) {
+    const badge = document.getElementById('custom-plan-badge');
+    if (!badge) return;
+    const lang = getLang();
+    if (status === 'manual') {
+      badge.textContent = lang === 'ja' ? '💾 保存済み' : '💾 已手动保存';
+      badge.className = 'custom-plan-badge';
+    } else if (status === 'template') {
+      badge.textContent = lang === 'ja' ? '📌 プリセット' : '📌 默认模板';
+      badge.className = 'custom-plan-badge default';
+    } else if (status === 'reset') {
+      badge.textContent = lang === 'ja' ? '🔄 初期値' : '🔄 已重置默认';
+      badge.className = 'custom-plan-badge default';
+    } else {
+      badge.textContent = lang === 'ja' ? '🟢 自動保存済み' : '🟢 已自动保存';
+      badge.className = 'custom-plan-badge';
+    }
+  }
+
+  /**
+   * 自动保存当前自定义节点到本地存储活跃方案中
+   * @param {boolean} notify 是否显示 Toast 弹窗
+   */
+  function autoSaveCurrentMilestones(notify = false) {
+    const data = getCustomPlansData();
+    let active = data.plans.find((p) => p.id === data.activePlanId);
+    if (!active) {
+      active = data.plans[0];
+      data.activePlanId = active.id;
+    }
+    active.milestones = JSON.parse(JSON.stringify(state.customMilestones));
+    active.mufgMode = state.mufgMode;
+    active.updatedAt = Date.now();
+    saveCustomPlansData(data);
+    updatePlanBadge(notify ? 'manual' : 'auto');
+    if (notify) {
+      showToast(t('toast_saved'));
+    }
+  }
+
+  /**
+   * 渲染自定义方案选择下拉菜单
+   */
+  function renderCustomPlanToolbar() {
+    const select = document.getElementById('custom-plan-select');
+    if (!select) return;
+    const lang = getLang();
+    const data = getCustomPlansData();
+
+    select.innerHTML = '';
+    data.plans.forEach((p) => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      const displayName = lang === 'ja' && p.nameJa ? p.nameJa : p.name;
+      const count = p.milestones ? p.milestones.length : 0;
+      opt.textContent = `📁 ${displayName} (${count}${lang === 'ja' ? '件' : '个节点'})`;
+      if (p.id === data.activePlanId) opt.selected = true;
+      select.appendChild(opt);
+    });
+
+    const optTpl = document.createElement('option');
+    optTpl.value = '__template_config__';
+    optTpl.textContent = t('custom_plan_template');
+    select.appendChild(optTpl);
+
+    const btnDel = document.getElementById('btn-delete-plan');
+    const current = data.plans.find((p) => p.id === data.activePlanId);
+    if (btnDel) {
+      btnDel.style.display = (current && !current.isPrimary) ? 'inline-flex' : 'none';
+    }
+  }
+
+  /**
+   * 绑定自定义方案操作工具栏事件
+   */
+  function bindCustomPlanEvents() {
+    // 方案下拉选择
+    const planSelect = document.getElementById('custom-plan-select');
+    if (planSelect) {
+      planSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val === '__template_config__') {
+          state.customMilestones = getDefaultConfigMilestones();
+          renderCustomMilestones();
+          updateUI();
+          updatePlanBadge('template');
+          showToast(t('toast_template_loaded'));
+          return;
+        }
+        const data = getCustomPlansData();
+        const target = data.plans.find((p) => p.id === val);
+        if (target) {
+          data.activePlanId = target.id;
+          saveCustomPlansData(data);
+          state.customMilestones = JSON.parse(JSON.stringify(target.milestones));
+          if (target.mufgMode) {
+            state.mufgMode = target.mufgMode;
+            document.querySelectorAll('.segment-mufg-mode .segment-btn').forEach((b) => {
+              b.classList.toggle('active', b.getAttribute('data-val') === state.mufgMode);
+            });
+            const hintSemi = document.getElementById('mufg-hint-semiannual');
+            const hintMonth = document.getElementById('mufg-hint-monthly');
+            if (hintSemi && hintMonth) {
+              hintSemi.style.display = state.mufgMode === 'semiannual' ? 'block' : 'none';
+              hintMonth.style.display = state.mufgMode === 'monthly' ? 'block' : 'none';
+            }
+          }
+          renderCustomPlanToolbar();
+          renderCustomMilestones();
+          updateUI();
+          updatePlanBadge('auto');
+          showToast(getLang() === 'ja' ? `📂 プラン「${target.nameJa || target.name}」を読み込みました` : `📂 已载入方案：“${target.name}”`);
+        }
+      });
+    }
+
+    // 手动保存按钮
+    const btnSave = document.getElementById('btn-save-plan');
+    if (btnSave) {
+      btnSave.addEventListener('click', () => {
+        autoSaveCurrentMilestones(true);
+      });
+    }
+
+    // 另存为按钮
+    const btnSaveAs = document.getElementById('btn-save-as-plan');
+    if (btnSaveAs) {
+      btnSaveAs.addEventListener('click', () => {
+        const lang = getLang();
+        const data = getCustomPlansData();
+        const defaultName = (lang === 'ja' ? '新プラン ' : '方案 ') + (data.plans.length + 1);
+        const planName = window.prompt(t('prompt_save_as'), defaultName);
+        if (!planName || !planName.trim()) return;
+
+        const newId = 'custom_' + Date.now();
+        const newPlan = {
+          id: newId,
+          name: planName.trim(),
+          nameJa: planName.trim(),
+          isPrimary: false,
+          mufgMode: state.mufgMode,
+          milestones: JSON.parse(JSON.stringify(state.customMilestones)),
+          updatedAt: Date.now()
+        };
+        data.plans.push(newPlan);
+        data.activePlanId = newId;
+        saveCustomPlansData(data);
+        renderCustomPlanToolbar();
+        updatePlanBadge('manual');
+        showToast(t('toast_save_as_success').replace('{name}', planName.trim()));
+      });
+    }
+
+    // 恢复默认按钮
+    const btnReset = document.getElementById('btn-reset-plan');
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        if (!window.confirm(t('confirm_reset'))) return;
+        const defaultList = getDefaultConfigMilestones();
+        state.customMilestones = JSON.parse(JSON.stringify(defaultList));
+        const data = getCustomPlansData();
+        const current = data.plans.find((p) => p.id === data.activePlanId);
+        if (current) {
+          current.milestones = JSON.parse(JSON.stringify(defaultList));
+          current.updatedAt = Date.now();
+          saveCustomPlansData(data);
+        }
+        renderCustomPlanToolbar();
+        renderCustomMilestones();
+        updateUI();
+        updatePlanBadge('reset');
+        showToast(t('toast_reset_success'));
+      });
+    }
+
+    // 复制配置按钮
+    const btnCopy = document.getElementById('btn-copy-plan');
+    if (btnCopy) {
+      btnCopy.addEventListener('click', () => {
+        const codeSnippet = `customMilestones: ${JSON.stringify(state.customMilestones, null, 2)}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(codeSnippet).then(() => {
+            showToast(t('toast_copied'));
+          }).catch(() => {
+            window.prompt(t('toast_copied'), codeSnippet);
+          });
+        } else {
+          window.prompt(t('toast_copied'), codeSnippet);
+        }
+      });
+    }
+
+    // 删除方案按钮
+    const btnDel = document.getElementById('btn-delete-plan');
+    if (btnDel) {
+      btnDel.addEventListener('click', () => {
+        const data = getCustomPlansData();
+        const current = data.plans.find((p) => p.id === data.activePlanId);
+        if (!current || current.isPrimary) return;
+        if (!window.confirm(t('confirm_delete').replace('{name}', current.name))) return;
+
+        data.plans = data.plans.filter((p) => p.id !== data.activePlanId);
+        data.activePlanId = data.plans[0].id;
+        saveCustomPlansData(data);
+
+        const active = data.plans[0];
+        state.customMilestones = JSON.parse(JSON.stringify(active.milestones));
+        if (active.mufgMode) state.mufgMode = active.mufgMode;
+        renderCustomPlanToolbar();
+        renderCustomMilestones();
+        updateUI();
+        showToast(t('toast_deleted'));
+      });
+    }
   }
 
   /**
@@ -1481,6 +1797,9 @@
         document.querySelectorAll('.scenario-item').forEach((c) => c.classList.remove('active'));
         card.classList.add('active');
         state.currentScenario = scenario;
+        try {
+          localStorage.setItem(STORAGE_KEY_ACTIVE_SCENARIO, scenario);
+        } catch (e) {}
 
         const customBox = document.getElementById('custom-schedule-box');
         if (customBox) customBox.style.display = scenario === 'custom' ? 'block' : 'none';
@@ -1508,13 +1827,14 @@
             hintSemi.style.display = state.mufgMode === 'semiannual' ? 'block' : 'none';
             hintMonth.style.display = state.mufgMode === 'monthly' ? 'block' : 'none';
           }
+          autoSaveCurrentMilestones();
           renderCustomMilestones();
           updateUI();
         });
       });
     }
 
-    // 快捷按钮：添加三菱12月调息节点
+    // 快捷按钮：添加三菱12月调息节点 (+0.25% ➔ 1.445%)
     const btnAddDecStep = document.getElementById('btn-add-dec-step');
     if (btnAddDecStep) {
       btnAddDecStep.addEventListener('click', () => {
@@ -1531,21 +1851,23 @@
 
         const existing = state.customMilestones.find((x) => x.year === targetYear && x.month === targetMonth);
         if (existing) {
-          existing.rate = +(existing.rate + 0.15).toFixed(3);
+          existing.rate = +(existing.rate + 0.25).toFixed(3);
         } else {
           const lastRate = state.customMilestones.length > 0 ? state.customMilestones[state.customMilestones.length - 1].rate : state.initialRate;
           state.customMilestones.push({
             year: targetYear,
             month: targetMonth,
-            rate: +(lastRate + 0.15).toFixed(3)
+            rate: +(lastRate + 0.25).toFixed(3)
           });
         }
+        autoSaveCurrentMilestones();
+        renderCustomPlanToolbar();
         renderCustomMilestones();
         updateUI();
       });
     }
 
-    // 快捷按钮：按三菱年2回规律 (7月/1月) 添加下一个调息节点
+    // 快捷按钮：按三菱年2回规律 (7月/1月) 添加下一个调息节点 (+0.25%)
     const btnAddSemiStep = document.getElementById('btn-add-mufg-semi-step');
     if (btnAddSemiStep) {
       btnAddSemiStep.addEventListener('click', () => {
@@ -1574,15 +1896,17 @@
           state.customMilestones.push({
             year: y,
             month: mo,
-            rate: +(lastRate + 0.15).toFixed(3)
+            rate: +(lastRate + 0.25).toFixed(3)
           });
+          autoSaveCurrentMilestones();
+          renderCustomPlanToolbar();
           renderCustomMilestones();
           updateUI();
         }
       });
     }
 
-    // 添加自定义节点按钮
+    // 添加自定义节点按钮 (+0.25%)
     const btnAddStep = document.getElementById('btn-add-step');
     if (btnAddStep) {
       btnAddStep.addEventListener('click', () => {
@@ -1597,11 +1921,16 @@
           nextYr = Math.ceil(nextAbs / 12);
           nextMo = ((nextAbs - 1) % 12) + 1;
         }
-        state.customMilestones.push({ year: nextYr, month: nextMo, rate: +(lastRate + 0.15).toFixed(3) });
+        state.customMilestones.push({ year: nextYr, month: nextMo, rate: +(lastRate + 0.25).toFixed(3) });
+        autoSaveCurrentMilestones();
+        renderCustomPlanToolbar();
         renderCustomMilestones();
         updateUI();
       });
     }
+
+    // 绑定自定义加息方案管理工具条事件
+    bindCustomPlanEvents();
 
     // 图表选项卡切换
     document.querySelectorAll('.chart-tab-btn').forEach((btn) => {
@@ -1676,6 +2005,7 @@
     // 6.2 绑定语言变更事件
     window.addEventListener('mortgage-lang-changed', () => {
       renderDynamicChips();
+      renderCustomPlanToolbar();
       renderCustomMilestones();
       updateUI();
     });
@@ -1683,7 +2013,14 @@
     // 6.3 渲染控件与筹码
     renderDynamicChips();
     bindLoanInputControls();
+    renderCustomPlanToolbar();
     renderCustomMilestones();
+
+    // 若当前为自定义时间轴场景，自动展开编辑框
+    const customBox = document.getElementById('custom-schedule-box');
+    if (customBox) {
+      customBox.style.display = state.currentScenario === 'custom' ? 'block' : 'none';
+    }
 
     // 6.4 首次核心计算与渲染
     updateUI();
