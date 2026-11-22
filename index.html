@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>日本房贷还款计算器 | 40年超长贷·利率变动模拟</title>
   <meta name="description" content="专业独立日本房贷计算器与推演工具。默认支持40年超长贷款(自由自定义1~50年)，深度推演浮动利率(変動金利)下的5年规则、125%规则、未付利息(未払利息)及期末一次性补缴(一括返済)风险。">
-  <link rel="stylesheet" href="css/style.css?v=20261122_05">
+  <link rel="stylesheet" href="css/style.css?v=20261122_06">
   <script>
     // 独立轻量主题防闪烁预处理 (与税金计算器双向同步)
     (function() {
@@ -36,7 +36,7 @@
       }
     };
   </script>
-  <script src="js/i18n.js?v=20261122_05"></script>
+  <script src="js/i18n.js?v=20261122_06"></script>
 </head>
 
 <body>
@@ -381,26 +381,26 @@
               </div>
             </div>
 
-            <!-- 三菱UFJ调息规则模式选择器 -->
+            <!-- 三菱UFJ调息规则模式选择器 (您的合同约定：変動回数【都度】) -->
             <div class="mufg-mode-wrapper">
               <span class="mufg-mode-lbl" data-i18n="mufg_mode_lbl">🏦 三菱UFJ 调息规则模式：</span>
               <div class="segmented-control segment-mufg-mode">
-                <div class="segment-btn active" data-val="semiannual" data-i18n="mufg_mode_semi">
-                  🏛️ 年2回型 (4月/10月检视 · 6月/12月新利 · 7月/1月扣款)
+                <div class="segment-btn active" data-val="monthly" data-i18n="mufg_mode_month">
+                  ⚡ 都度型 / 短プラ随动型 (您的合同形式: 変動回数【都度】)
                 </div>
-                <div class="segment-btn" data-val="monthly" data-i18n="mufg_mode_month">
-                  ⚡ 毎月型 (每月1日短プラ检视 · 隔月反映 · 含12月调息)
+                <div class="segment-btn" data-val="semiannual" data-i18n="mufg_mode_semi">
+                  🏛️ 年2回型 (4月/10月固定窗口型)
                 </div>
               </div>
             </div>
 
             <!-- 规则说明卡片 -->
             <div class="mufg-rule-hint-box" id="mufg-rule-hint-box">
-              <p id="mufg-hint-semiannual" style="margin: 0; font-size: 11px; color: var(--text-secondary); line-height: 1.55;" data-i18n-html="mufg_hint_semi">
-                🏛️ <strong>三菱UFJ「年2回型」规则</strong>：每年4月1日和10月1日检讨短期优惠利率；10月1日检讨后，于<strong>12月还款日的翌日</strong>开始适用新利率（银行于11~12月寄发《返済予定表》通知，常被称为<strong>“12月调息通知”</strong>），并在<strong>翌年1月还款扣款</strong>中正式反映新利息。4月检讨则于6月还款后适用、7月还款反映。
+              <p id="mufg-hint-monthly" style="margin: 0; font-size: 11px; color: var(--text-secondary); line-height: 1.55;" data-i18n-html="mufg_hint_month">
+                ⚡ <strong>三菱UFJ「都度型（長期基準金利・双方向・都度型）」规则</strong>：您的合同约定<strong>「変動回数：都度」</strong>。每月1日根据银行短期优惠利率 (短プラ) 随时随动检视基准利率，变更日翌月还款日后换轨，隔月扣款反映新利率。在5年规则保护下，5年内实扣月供固定为83,634円不变，仅内部利息/本金比例随动重分。
               </p>
-              <p id="mufg-hint-monthly" style="display: none; margin: 0; font-size: 11px; color: var(--text-secondary); line-height: 1.55;" data-i18n-html="mufg_hint_month">
-                ⚡ <strong>三菱UFJ「毎月型」规则</strong>：每月1日根据短期优惠利率 (短プラ) 检视基准利率，变更日翌月还款日后换轨，隔月（翌々月）扣款反映。若10月1日调息，在<strong>12月还款</strong>中扣款生效；若12月1日上调基准金利，在次年2月扣款中生效。
+              <p id="mufg-hint-semiannual" style="display: none; margin: 0; font-size: 11px; color: var(--text-secondary); line-height: 1.55;" data-i18n-html="mufg_hint_semi">
+                🏛️ <strong>三菱UFJ「年2回型」规则</strong>：每年固定在4月1日和10月1日检讨基准利率，于6月/12月换轨、7月/1月扣款反映。
               </p>
             </div>
 
@@ -661,11 +661,11 @@
   </div>
 
   <!-- 引入用户专属配置文件 (可在此直接修改你的贷款参数) -->
-  <script src="config.js?v=20261122_05"></script>
+  <script src="config.js?v=20261122_06"></script>
   <!-- 引入 Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- 引入独立应用脚本 -->
-  <script src="js/app.js?v=20261122_05"></script>
+  <script src="js/app.js?v=20261122_06"></script>
 </body>
 
 </html>

@@ -39,7 +39,7 @@
     return sceneCfg.customMilestones
       ? JSON.parse(JSON.stringify(sceneCfg.customMilestones))
       : [
-          { year: 1, month: 8, rate: 1.445 },
+          { year: 1, month: 2, rate: 1.445 },
           { year: 3, month: 2, rate: 1.695 },
           { year: 6, month: 1, rate: 1.895 },
           { year: 11, month: 1, rate: 2.095 }
@@ -247,9 +247,10 @@
         const calMonth = cal.month;
 
         if (state.mufgMode === 'monthly') {
-          // 毎月型: 2026年12月起即反映调息 (+0.25% ➔ 1.445%)，之后平稳过渡
-          if (calYear < 2026 || (calYear === 2026 && calMonth < 12)) return base;
-          if (calYear <= 2028) return +(base + 0.25).toFixed(3); // 2026年12月~2028年末维持 1.445%
+          // 都度型 / 随动型: 令和8年11月借入、初回1月4日扣款(第1期)适用合同原样 1.195%
+          if (month === 1) return base;
+          // 若基准利率变动(+0.25%)，次月起换轨反映新利率 1.445%，之后平稳过渡
+          if (calYear <= 2028) return +(base + 0.25).toFixed(3); // 2027~2028年末维持 1.445%
           if (calYear <= 2031) return +(base + 0.50).toFixed(3); // 2029年~2031年末维持 1.695%
           const year = Math.ceil(month / 12);
           if (year <= 5) return +(base + 0.50).toFixed(3);
