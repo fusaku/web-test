@@ -121,7 +121,8 @@
    * @returns {{ year: number, month: number, label: string, shortLabel: string }}
    */
   function getCalendarDate(monthIndex) {
-    const totalMonths = (state.startYear * 12 + (state.startMonth - 1)) + (monthIndex - 1);
+    // 借入放款日之后第1期还款归属自然月：例如令和8年11月20日借入，第1期还款为2026年12月(次回1月4日扣款)，第480期最终还款为令和48年11月(30日)
+    const totalMonths = (state.startYear * 12 + state.startMonth) + (monthIndex - 1);
     const calYear = Math.floor(totalMonths / 12);
     const calMonth = (totalMonths % 12) + 1;
     const moStr = calMonth < 10 ? '0' + calMonth : calMonth.toString();
@@ -399,16 +400,6 @@
         isPeriodStart: (m - 1) % 60 === 0
       });
     }
-        payment: currentPayment,
-        principalPaid: principalPaid,
-        interestPaid: interestPaid,
-        balance: balance,
-        unpaidInterest: accumulatedUnpaidInterest,
-        unpaidAdded: unpaidInterestAdded,
-        rule125Triggered: rule125TriggeredThisMonth,
-        isPeriodStart: (m - 1) % 60 === 0
-      });
-    }
 
     // 步骤 3: 按年度构建聚合统计数据 (Yearly Aggregation)
     const yearlyRecords = [];
@@ -437,11 +428,24 @@
       const payMin = Math.min(...payments);
       const payMax = Math.max(...payments);
 
+      let paymentDisplay = '';
+      if (payMin === payMax) {
+        paymentDisplay = formatYen(payMin);
+      } else if (y === 1 && yearMonths[0].oddInterest > 0) {
+        const regularPay = yearMonths[1] ? yearMonths[1].payment : payMin;
+        const firstPay = yearMonths[0].payment;
+        const lang = getLang();
+        const firstLabel = lang === 'ja' ? '初回' : '首期';
+        paymentDisplay = `${formatYen(regularPay)} <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">(${firstLabel} ${formatYen(firstPay)})</span>`;
+      } else {
+        paymentDisplay = `${formatYen(payMin)} ~ ${formatYen(payMax)}`;
+      }
+
       yearlyRecords.push({
         year: y,
         rateDisplay: rateMin === rateMax ? formatRate(rateMin) : `${formatRate(rateMin)}~${formatRate(rateMax)}`,
         monthlyPayment: yearMonths[0].payment,
-        paymentDisplay: payMin === payMax ? formatYen(payMin) : `${formatYen(payMin)} ~ ${formatYen(payMax)}`,
+        paymentDisplay: paymentDisplay,
         monthlyPaymentMin: payMin,
         monthlyPaymentMax: payMax,
         yearPayment: yearPayment,
@@ -702,6 +706,41 @@
       `;
     } else {
       bannerEl.style.display = 'none';
+    }
+
+    // 渲染三菱UFJ合同实务卡片 / 首期日割利息对照卡 (支持双语与动态数据同步)
+    const mufgContractCard = document.getElementById('mufg-contract-card');
+    if (mufgContractCard) {
+      if (res.hasOddInterest) {
+        mufgContractCard.style.display = 'block';
+        const headEl = mufgContractCard.querySelector('.mufg-contract-head');
+        const bodyEl = mufgContractCard.querySelector('.mufg-contract-body');
+        if (state.principalMan === 3190 && state.startYear === 2026 && state.startMonth === 11 && state.startDay === 20 && state.termYears === 40) {
+          if (headEl) headEl.innerHTML = `<span>🏦</span> <strong>${t('mufg_contract_head')}</strong>`;
+          if (bodyEl) bodyEl.innerHTML = t('mufg_contract_body');
+        } else {
+          const oddDays = state.startDay < 30 ? (30 - state.startDay) : 0;
+          const eraLabel = state.startYear >= 2019 ? `令和${state.startYear - 2018}年` : `${state.startYear}年`;
+          const dateStr = `${eraLabel}(${state.startYear}年)${state.startMonth}月${state.startDay}日`;
+          if (lang === 'ja') {
+            if (headEl) headEl.innerHTML = `<span>🏦</span> <strong>端数日割利息計算適用中（借入日: ${dateStr}）：</strong>`;
+            if (bodyEl) bodyEl.innerHTML = `
+              <div>• お借入日：<strong>${dateStr}</strong>（月末約定返済）</div>
+              <div>• <strong>次回初回ご返済額</strong>：<strong>${formatYen(res.firstActualPayment)}</strong>（${oddDays}日間の端数日割利息 ${formatYen(res.firstOddInterest)} 含）</div>
+              <div>• <strong>第2回目以降の通常返済額</strong>：<strong>${formatYen(res.initialPayment)}/月</strong>（5年ルール適用、当初5年固定）</div>
+            `;
+          } else {
+            if (headEl) headEl.innerHTML = `<span>🏦</span> <strong>首期日割利息已实务核算（借入日: ${dateStr}）：</strong>`;
+            if (bodyEl) bodyEl.innerHTML = `
+              <div>• 借入放款日：<strong>${dateStr}</strong>（约定每月月末还款）</div>
+              <div>• <strong>次回首期还款金额</strong>：<strong>${formatYen(res.firstActualPayment)}</strong>（含${oddDays}天放款日至月末日割利息 ${formatYen(res.firstOddInterest)}）</div>
+              <div>• <strong>第2期起常规月供</strong>：<strong>${formatYen(res.initialPayment)}/月</strong>（5年规则保护，前5年每月固定）</div>
+            `;
+          }
+        }
+      } else {
+        mufgContractCard.style.display = 'none';
+      }
     }
   }
 
@@ -1426,14 +1465,18 @@
       });
     }
 
-    // 加息情景卡片选择
+    // 加息情景卡片初始化与事件绑定
+    document.querySelectorAll('.scenario-item').forEach((c) => {
+      const s = c.getAttribute('data-scenario');
+      if (s === state.currentScenario) {
+        c.classList.add('active');
+      } else {
+        c.classList.remove('active');
+      }
+    });
+
     document.querySelectorAll('.scenario-item').forEach((card) => {
       const scenario = card.getAttribute('data-scenario');
-      if (scenario === state.currentScenario) {
-        document.querySelectorAll('.scenario-item').forEach((c) => c.classList.remove('active'));
-        card.classList.add('active');
-      }
-
       card.addEventListener('click', () => {
         document.querySelectorAll('.scenario-item').forEach((c) => c.classList.remove('active'));
         card.classList.add('active');

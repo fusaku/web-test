@@ -309,6 +309,40 @@ body {
   transition: all var(--transition-fast);
 }
 
+/* 隐藏 number 类型原生微调上下箭头，避免挤占输入空间 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* 放款借入日期 3列网格输入 (紧凑布局，防止手机端溢出) */
+.date-input-grid {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.5fr;
+  gap: 6px;
+}
+
+.date-input-grid .form-input {
+  padding: 9px 24px 9px 8px;
+  font-size: 13.5px;
+  text-align: center;
+}
+
+.date-input-grid .input-addon {
+  right: 6px;
+  font-size: 11px;
+}
+
+.date-input-grid select.form-input {
+  padding: 9px 4px;
+  text-align: center;
+  cursor: pointer;
+}
+
 .form-input:focus {
   border-color: var(--primary);
   background: var(--bg-surface);
