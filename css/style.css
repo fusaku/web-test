@@ -512,6 +512,7 @@ input:checked + .slider:before {
 .badge-blue { background: rgba(37, 99, 235, 0.15); color: #3b82f6; }
 .badge-orange { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
 .badge-red { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.badge-purple { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
 
 /* 自定义时间轴编辑 */
 .custom-box {
@@ -520,6 +521,38 @@ input:checked + .slider:before {
   padding: 14px;
   margin-top: 10px;
   border: 1px solid var(--border-color);
+}
+
+.mufg-mode-wrapper {
+  margin-bottom: 10px;
+}
+
+.mufg-mode-lbl {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.segmented-control.segment-mufg-mode {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.segmented-control.segment-mufg-mode .segment-btn {
+  font-size: 11px;
+  padding: 6px 8px;
+  line-height: 1.35;
+}
+
+.mufg-rule-hint-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  margin-bottom: 12px;
 }
 
 .custom-step-row {
@@ -592,6 +625,46 @@ input:checked + .slider:before {
   background: var(--danger-light);
 }
 
+.custom-actions-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.btn-outline-quick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.btn-outline-quick:hover {
+  background: var(--bg-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-outline-quick.highlight {
+  border-color: #f59e0b;
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.btn-outline-quick.highlight:hover {
+  background: rgba(245, 158, 11, 0.16);
+}
+
 .btn-outline-add {
   display: inline-flex;
   align-items: center;
@@ -612,6 +685,29 @@ input:checked + .slider:before {
 .btn-outline-add:hover {
   background: var(--primary-light);
   border-color: var(--primary);
+}
+
+.step-mufg-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.step-tag-dec {
+  background: rgba(245, 158, 11, 0.16);
+  color: #d97706;
+}
+
+.step-tag-semi {
+  background: rgba(139, 92, 246, 0.16);
+  color: #7c3aed;
+}
+
+.step-tag-normal {
+  background: var(--primary-light);
+  color: var(--primary);
 }
 
 /* 右侧：KPI 指标卡片 */

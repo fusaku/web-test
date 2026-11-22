@@ -52,6 +52,9 @@
       'scene_flat_title': '🟢 全期平稳 (利率不变)',
       'scene_flat_desc': '全程维持当前初始利率不变',
       'scene_flat_tag': '基准场景',
+      'scene_mufg_title': '🏦 三菱UFJ加息预测 (含12月/1月调息)',
+      'scene_mufg_desc': '贴合三菱真实规律：2026年12月/2027年1月调息(+0.25%)，随后按年2回渐进走高',
+      'scene_mufg_tag': '三菱真实推演',
       'scene_mild_title': '🟡 温和加息 (+0.25%/5年)',
       'scene_mild_desc': '每5年递增0.25%，40年内平稳走高',
       'scene_mild_tag': '主流预测',
@@ -62,11 +65,19 @@
       'scene_extreme_desc': '第6年飙升至3.0%，第11年飙至4.5% (观察125%封顶与未付利息)',
       'scene_extreme_tag': '极端测试',
       'scene_custom_title': '⚙️ 自定义时间轴节点',
-      'scene_custom_desc': '自由设定各个年份节点的利率变化',
+      'scene_custom_desc': '自由设定各个年份节点的利率变化 (支持三菱年2回/毎月型)',
       'scene_custom_tag': '自由定制',
+
+      // 自定义时间轴与三菱UFJ模式
       'custom_box_title': '各阶段加息节点设定 (精确到月)：',
-      'custom_box_hint': '🏦 <strong>三菱UFJ调息规律</strong>：每年4月1日/10月1日检讨基准利率，分别反映在7月/1月的还款扣款中。你可在此自由设置具体第几年第几月生效。',
-      'btn_add_step': '＋ 添加精确月份加息节点',
+      'mufg_mode_lbl': '🏦 三菱UFJ 调息规则模式：',
+      'mufg_mode_semi': '年2回型 (4月/10月检视 · 6月/12月新利 · 7月/1月扣款)',
+      'mufg_mode_month': '毎月型 (每月1日短プラ检视 · 隔月反映 · 含12月调息)',
+      'mufg_hint_semi': '🏛️ <strong>三菱UFJ「年2回型」规则</strong>：每年4月1日和10月1日检讨短期优惠利率；10月1日检讨后，于<strong>12月还款日的翌日</strong>开始适用新利率（银行于11~12月寄发《返済予定表》通知，常被称为<strong>“12月调息通知”</strong>），并在<strong>翌年1月还款扣款</strong>中正式反映新利息。4月检讨则于6月还款后适用、7月还款反映。',
+      'mufg_hint_month': '⚡ <strong>三菱UFJ「毎月型」规则</strong>：每月1日根据短期优惠利率 (短プラ) 检视基准利率，变更日翌月还款日后换轨，隔月（翌々月）扣款反映。若10月1日调息，在<strong>12月还款</strong>中扣款生效；若12月1日上调基准金利，在次年2月扣款中生效。',
+      'btn_add_dec_step': '🔥 快速添加12月调息节点',
+      'btn_add_semi_step': '🏛️ 添加年2回调息节点 (7月/1月)',
+      'btn_add_step': '＋ 添加自定义月份加息节点',
 
       // KPI 卡片
       'kpi_initial_title': '初期月供 (第1~5年)',
@@ -210,6 +221,9 @@
       'scene_flat_title': '🟢 全期間一定 (金利変動なし)',
       'scene_flat_desc': '完済まで当初金利を維持するベースシナリオ',
       'scene_flat_tag': '基準シナリオ',
+      'scene_mufg_title': '🏦 三菱UFJ金利予測 (12月・1月見直し対応)',
+      'scene_mufg_desc': '三菱UFJの実務に即した試算：2026年12月/2027年1月より初回引き上げ(+0.25%)、年2回ベースで推移',
+      'scene_mufg_tag': '三菱UFJ実務想定',
       'scene_mild_title': '🟡 緩やかな利上げ (+0.25%/5年)',
       'scene_mild_desc': '5年ごとに0.25%上昇、緩やかな利上げを想定',
       'scene_mild_tag': '主流予測',
@@ -220,10 +234,18 @@
       'scene_extreme_desc': '6年目3.0%、11年目4.5%へ急騰 (125%上限と未払利息の検証)',
       'scene_extreme_tag': 'ストレステスト',
       'scene_custom_title': '⚙️ カスタム金利推移 (月単位指定)',
-      'scene_custom_desc': '各年・月の金利変動ノードを自由に設定',
+      'scene_custom_desc': '各年・月の金利変動ノードを自由に設定 (三菱UFJ 年2回型/毎月型対応)',
       'scene_custom_tag': '自由設定',
+
+      // カスタム設定と三菱UFJモード
       'custom_box_title': '各段階の金利見直しノード設定 (月単位)：',
-      'custom_box_hint': '🏦 <strong>三菱UFJ等の見直し基準</strong>：4月1日/10月1日の店頭金利見直しが7月/1月の返済に反映されます。第何年・第何月に改定されるか高精度に指定できます。',
+      'mufg_mode_lbl': '🏦 三菱UFJ 金利見直し方式：',
+      'mufg_mode_semi': '年2回型 (4月・10月見直し／7月・1月返済反映)',
+      'mufg_mode_month': '毎月型 (毎月1日短プラ見直し／翌々月反映／12月改定対応)',
+      'mufg_hint_semi': '🏛️ <strong>三菱UFJ「年2回型」の仕組み</strong>：毎年4月1日と10月1日の年2回短期プライムレートを見直します。10月1日見直し分は<strong>12月返済日の翌日より新金利が適用</strong>され（11月〜12月に「ご返済のお知らせ」が届くため<strong>「12月見直し」</strong>と呼ばれます）、<strong>翌年1月の約定返済分</strong>より引き落とし額内の利息割合に反映されます。4月見直し分は6月返済翌日適用・7月返済に反映されます。',
+      'mufg_hint_month': '⚡ <strong>三菱UFJ「毎月型」の仕組み</strong>：毎月1日時点の短期プライムレートに基づき毎月金利を判定します。変更日翌月の返済日翌日に適用され、翌々月の約定返済に反映されます。10月改定時は<strong>12月返済</strong>より反映され、12月1日基準金利改定時は翌年2月返済に反映されます。',
+      'btn_add_dec_step': '🔥 12月金利見直しノードを追加',
+      'btn_add_semi_step': '🏛️ 年2回見直しノードを追加 (7月/1月)',
       'btn_add_step': '＋ 金利見直しノードを追加',
 
       // KPI カード

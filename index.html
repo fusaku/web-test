@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>日本房贷还款计算器 | 40年超长贷·利率变动模拟</title>
   <meta name="description" content="专业独立日本房贷计算器与推演工具。默认支持40年超长贷款(自由自定义1~50年)，深度推演浮动利率(変動金利)下的5年规则、125%规则、未付利息(未払利息)及期末一次性补缴(一括返済)风险。">
-  <link rel="stylesheet" href="css/style.css?v=20261010_03">
+  <link rel="stylesheet" href="css/style.css?v=20261122_01">
   <script>
     // 独立轻量主题防闪烁预处理 (与税金计算器双向同步)
     (function() {
@@ -36,7 +36,7 @@
       }
     };
   </script>
-  <script src="js/i18n.js?v=20261010_03"></script>
+  <script src="js/i18n.js?v=20261122_01"></script>
 </head>
 
 <body>
@@ -287,7 +287,16 @@
               <span class="badge badge-green" data-i18n="scene_flat_tag">基准场景</span>
             </div>
 
-            <!-- 场景 2: 温和加息 (默认) -->
+            <!-- 场景 2: 三菱UFJ实务加息预测 (含2026年12月/2027年1月调息) -->
+            <div class="scenario-item" data-scenario="mufg">
+              <div>
+                <h4 class="scenario-item-title" data-i18n="scene_mufg_title">🏦 三菱UFJ加息预测 (含12月/1月调息)</h4>
+                <p class="scenario-item-desc" data-i18n="scene_mufg_desc">贴合三菱真实规律：2026年12月/2027年1月调息(+0.25%)，随后按年2回渐进走高</p>
+              </div>
+              <span class="badge badge-purple" data-i18n="scene_mufg_tag">三菱真实推演</span>
+            </div>
+
+            <!-- 场景 3: 温和加息 (默认) -->
             <div class="scenario-item active" data-scenario="mild">
               <div>
                 <h4 class="scenario-item-title" data-i18n="scene_mild_title">🟡 温和加息 (+0.25%/5年)</h4>
@@ -296,7 +305,7 @@
               <span class="badge badge-blue" data-i18n="scene_mild_tag">主流预测</span>
             </div>
 
-            <!-- 场景 3: 阶梯加息 -->
+            <!-- 场景 4: 阶梯加息 -->
             <div class="scenario-item" data-scenario="steep">
               <div>
                 <h4 class="scenario-item-title" data-i18n="scene_steep_title">🟠 阶梯快速加息</h4>
@@ -305,7 +314,7 @@
               <span class="badge badge-orange" data-i18n="scene_steep_tag">加速加息</span>
             </div>
 
-            <!-- 场景 4: 剧烈暴涨 -->
+            <!-- 场景 5: 剧烈暴涨 -->
             <div class="scenario-item" data-scenario="extreme">
               <div>
                 <h4 class="scenario-item-title" data-i18n="scene_extreme_title">🔴 剧烈暴涨 (压力测试)</h4>
@@ -314,28 +323,59 @@
               <span class="badge badge-red" data-i18n="scene_extreme_tag">极端测试</span>
             </div>
 
-            <!-- 场景 5: 自定义 -->
+            <!-- 场景 6: 自定义时间轴节点 -->
             <div class="scenario-item" data-scenario="custom">
               <div>
                 <h4 class="scenario-item-title" data-i18n="scene_custom_title">⚙️ 自定义时间轴节点</h4>
-                <p class="scenario-item-desc" data-i18n="scene_custom_desc">自由设定各个年份节点的利率变化</p>
+                <p class="scenario-item-desc" data-i18n="scene_custom_desc">自由设定各个年份节点的利率变化 (支持三菱年2回/毎月型)</p>
               </div>
               <span class="badge badge-blue" data-i18n="scene_custom_tag">自由定制</span>
             </div>
           </div>
 
-          <!-- 自定义时间轴编辑框 -->
+          <!-- 自定义时间轴编辑框 (深度适配三菱银行调整规则) -->
           <div id="custom-schedule-box" class="custom-box" style="display: none;">
-            <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;" data-i18n="custom_box_title">各阶段加息节点设定 (精确到月)：</div>
-            <p style="margin: 0 0 10px; font-size: 11px; color: var(--text-secondary); line-height: 1.5;" data-i18n-html="custom_box_hint">
-              🏦 <strong>三菱UFJ调息规律</strong>：每年4月1日/10月1日检讨基准利率，分别反映在7月/1月的还款扣款中。你可在此自由设置具体第几年第几月生效。
-            </p>
-            <div id="custom-milestone-list">
-              <!-- 动态注入节点 (年+月+实际日历年月) -->
+            <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px;" data-i18n="custom_box_title">各阶段加息节点设定 (精确到月)：</div>
+
+            <!-- 三菱UFJ调息规则模式选择器 -->
+            <div class="mufg-mode-wrapper">
+              <span class="mufg-mode-lbl" data-i18n="mufg_mode_lbl">🏦 三菱UFJ 调息规则模式：</span>
+              <div class="segmented-control segment-mufg-mode">
+                <div class="segment-btn active" data-val="semiannual" data-i18n="mufg_mode_semi">
+                  🏛️ 年2回型 (4月/10月检视 · 6月/12月新利 · 7月/1月扣款)
+                </div>
+                <div class="segment-btn" data-val="monthly" data-i18n="mufg_mode_month">
+                  ⚡ 毎月型 (每月1日短プラ检视 · 隔月反映 · 含12月调息)
+                </div>
+              </div>
             </div>
-            <button type="button" id="btn-add-step" class="btn-outline-add" data-i18n="btn_add_step">
-              ＋ 添加精确月份加息节点
-            </button>
+
+            <!-- 规则说明卡片 -->
+            <div class="mufg-rule-hint-box" id="mufg-rule-hint-box">
+              <p id="mufg-hint-semiannual" style="margin: 0; font-size: 11px; color: var(--text-secondary); line-height: 1.55;" data-i18n-html="mufg_hint_semi">
+                🏛️ <strong>三菱UFJ「年2回型」规则</strong>：每年4月1日和10月1日检讨短期优惠利率；10月1日检讨后，于<strong>12月还款日的翌日</strong>开始适用新利率（银行于11~12月寄发《返済予定表》通知，常被称为<strong>“12月调息通知”</strong>），并在<strong>翌年1月还款扣款</strong>中正式反映新利息。4月检讨则于6月还款后适用、7月还款反映。
+              </p>
+              <p id="mufg-hint-monthly" style="display: none; margin: 0; font-size: 11px; color: var(--text-secondary); line-height: 1.55;" data-i18n-html="mufg_hint_month">
+                ⚡ <strong>三菱UFJ「毎月型」规则</strong>：每月1日根据短期优惠利率 (短プラ) 检视基准利率，变更日翌月还款日后换轨，隔月（翌々月）扣款反映。若10月1日调息，在<strong>12月还款</strong>中扣款生效；若12月1日上调基准金利，在次年2月扣款中生效。
+              </p>
+            </div>
+
+            <div id="custom-milestone-list">
+              <!-- 动态注入节点 (年+月+实际日历年月+三菱规则标签) -->
+            </div>
+
+            <!-- 快捷添加操作区 -->
+            <div class="custom-actions-bar">
+              <button type="button" id="btn-add-dec-step" class="btn-outline-quick highlight" title="快速添加 2026年12月 调息节点" data-i18n="btn_add_dec_step">
+                🔥 快速添加12月调息节点
+              </button>
+              <button type="button" id="btn-add-mufg-semi-step" class="btn-outline-quick" title="按三菱年2回规律 (7月/1月) 添加下一个节点" data-i18n="btn_add_semi_step">
+                🏛️ 添加年2回调息节点 (7月/1月)
+              </button>
+              <button type="button" id="btn-add-step" class="btn-outline-add" data-i18n="btn_add_step">
+                ＋ 添加自定义月份加息节点
+              </button>
+            </div>
           </div>
         </section>
 
@@ -577,11 +617,11 @@
   </div>
 
   <!-- 引入用户专属配置文件 (可在此直接修改你的贷款参数) -->
-  <script src="config.js?v=20261010_03"></script>
+  <script src="config.js?v=20261122_01"></script>
   <!-- 引入 Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- 引入独立应用脚本 -->
-  <script src="js/app.js?v=20261010_03"></script>
+  <script src="js/app.js?v=20261122_01"></script>
 </body>
 
 </html>

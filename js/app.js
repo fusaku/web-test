@@ -47,16 +47,19 @@
     // 核心保护机制开关
     enable5YearRule: loanCfg.enable5YearRule ?? true,
     enable125Rule: loanCfg.enable125Rule ?? true,
-    // 加息情景：'mild' | 'flat' | 'steep' | 'extreme' | 'custom'
+    // 三菱UFJ银行调息模式：'semiannual'(年2回型) | 'monthly'(毎月型)
+    mufgMode: loanCfg.mufgMode ?? 'semiannual',
+    // 加息情景：'mufg' | 'mild' | 'flat' | 'steep' | 'extreme' | 'custom'
     currentScenario: sceneCfg.defaultScenario ?? 'mild',
     // 自定义加息时间轴节点（支持按第几年第几月精确设置）
     customMilestones: sceneCfg.customMilestones
       ? JSON.parse(JSON.stringify(sceneCfg.customMilestones))
       : [
-          { year: 1, month: 3, rate: 1.345 },
-          { year: 1, month: 9, rate: 1.495 },
-          { year: 2, month: 3, rate: 1.645 },
-          { year: 6, month: 1, rate: 1.950 }
+          { year: 1, month: 2, rate: 1.345 },
+          { year: 1, month: 3, rate: 1.445 },
+          { year: 1, month: 9, rate: 1.595 },
+          { year: 2, month: 3, rate: 1.745 },
+          { year: 6, month: 1, rate: 2.050 }
         ],
     // 界面激活选项卡与表格展开状态
     activeChartTab: 'payment',
@@ -163,8 +166,42 @@
         // 场景 1: 全程平稳维持初始利率
         return base;
 
+      case 'mufg': {
+        // 场景 2: 三菱UFJ银行实务预测 (贴合短プラ调升与真实见直し周期)
+        const cal = getCalendarDate(month);
+        const calYear = cal.year;
+        const calMonth = cal.month;
+
+        if (state.mufgMode === 'monthly') {
+          // 毎月型: 2026年12月起即反映调息
+          if (calYear < 2026 || (calYear === 2026 && calMonth < 12)) return base;
+          if (calYear === 2026 && calMonth === 12) return +(base + 0.15).toFixed(3);
+          if (calYear === 2027 && calMonth <= 5) return +(base + 0.15).toFixed(3);
+          if (calYear === 2027 && calMonth <= 11) return +(base + 0.30).toFixed(3);
+          if (calYear === 2028 && calMonth <= 5) return +(base + 0.45).toFixed(3);
+          if (calYear === 2028 && calMonth <= 11) return +(base + 0.60).toFixed(3);
+          const year = Math.ceil(month / 12);
+          if (year <= 5) return +(base + 0.60).toFixed(3);
+          const p = Math.floor((month - 61) / 60) + 1;
+          return +(base + 0.60 + p * 0.20).toFixed(3);
+        } else {
+          // 年2回型 (4月/10月检视，7月/1月扣款)
+          // 2026年11月、12月还款维持初始利率
+          // 2027年1月扣款生效 (10月检视·12月还款日后利率生效)
+          if (calYear < 2027 || (calYear === 2027 && calMonth === 0)) return base;
+          if (calYear === 2027 && calMonth < 7) return +(base + 0.15).toFixed(3); // 2027年1月~6月
+          if (calYear === 2027) return +(base + 0.30).toFixed(3); // 2027年7月~12月
+          if (calYear === 2028 && calMonth < 7) return +(base + 0.45).toFixed(3); // 2028年1月~6月
+          if (calYear === 2028) return +(base + 0.60).toFixed(3); // 2028年7月~12月
+          const year = Math.ceil(month / 12);
+          if (year <= 5) return +(base + 0.60).toFixed(3);
+          const p = Math.floor((month - 61) / 60) + 1;
+          return +(base + 0.60 + p * 0.20).toFixed(3);
+        }
+      }
+
       case 'mild': {
-        // 场景 2: 主流温和预测，每5年递增 0.25%
+        // 场景 3: 主流温和预测，每5年递增 0.25%
         const step = sceneCfg.mildIncreaseStepPer5Years ?? 0.25;
         const periodIdx = Math.floor((month - 1) / 60);
         return +(base + periodIdx * step).toFixed(3);
@@ -544,6 +581,7 @@
     const mSceneTag = document.getElementById('m-summary-scenario-tag');
     if (mSceneTag) {
       const sceneNames = {
+        'mufg': lang === 'ja' ? '三菱UFJ金利予測' : '三菱UFJ加息预测',
         'mild': lang === 'ja' ? '緩やかな利上げ' : '主流温和预测',
         'flat': lang === 'ja' ? '金利据え置き' : '基准平稳',
         'steep': lang === 'ja' ? '段階的利上げ' : '加速快速加息',
@@ -966,6 +1004,17 @@
         const moLabel = (mo) => (lang === 'ja' ? `第 ${mo} か月目` : `第 ${mo} 月`);
         const termLabel = lang === 'ja' ? `第${absMonth}回 · ${cal.label}` : `第${absMonth}期 · ${cal.label}`;
 
+        let ruleBadge = '';
+        if (cal.month === 12) {
+          ruleBadge = `<span class="step-mufg-tag step-tag-dec" title="${lang === 'ja' ? '三菱UFJ 12月改定ノード' : '三菱UFJ 12月调息节点'}">${lang === 'ja' ? '🔥 12月改定' : '🔥 12月调息'}</span>`;
+        } else if (cal.month === 1) {
+          ruleBadge = `<span class="step-mufg-tag step-tag-semi" title="${lang === 'ja' ? '10月基準／12月適用／1月返済反映' : '10月基准·12月新利·1月扣款反映'}">${lang === 'ja' ? '🏛️ 1月反映' : '🏛️ 1月扣款'}</span>`;
+        } else if (cal.month === 7) {
+          ruleBadge = `<span class="step-mufg-tag step-tag-semi" title="${lang === 'ja' ? '4月基準／6月適用／7月返済反映' : '4月基准·6月新利·7月扣款反映'}">${lang === 'ja' ? '🏛️ 7月反映' : '🏛️ 7月扣款'}</span>`;
+        } else {
+          ruleBadge = `<span class="step-mufg-tag step-tag-normal">${lang === 'ja' ? '⚡ 任意見直し' : '⚡ 调息期'}</span>`;
+        }
+
         const row = document.createElement('div');
         row.className = 'custom-step-row';
         row.innerHTML = `
@@ -980,6 +1029,7 @@
               .join('')}
           </select>
           <span class="step-date-tag" title="${lang === 'ja' ? '返済回と年月' : '对应还款期数与日历年月'}">${termLabel}</span>
+          ${ruleBadge}
           <div class="rate-wrap">
             <input type="number" step="0.001" min="0" max="15" value="${m.rate}" class="form-input step-rate-input" data-idx="${idx}" />
             <span class="input-addon">%</span>
@@ -1329,6 +1379,100 @@
         updateUI();
       });
     });
+
+    // 三菱UFJ调息规则模式切换 (年2回型 vs 毎月型)
+    const mufgModeBtns = document.querySelectorAll('.segment-mufg-mode .segment-btn');
+    if (mufgModeBtns.length > 0) {
+      mufgModeBtns.forEach((btn) => {
+        const val = btn.getAttribute('data-val');
+        if (val === state.mufgMode) {
+          mufgModeBtns.forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+        }
+        btn.addEventListener('click', () => {
+          mufgModeBtns.forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          state.mufgMode = btn.getAttribute('data-val');
+
+          const hintSemi = document.getElementById('mufg-hint-semiannual');
+          const hintMonth = document.getElementById('mufg-hint-monthly');
+          if (hintSemi && hintMonth) {
+            hintSemi.style.display = state.mufgMode === 'semiannual' ? 'block' : 'none';
+            hintMonth.style.display = state.mufgMode === 'monthly' ? 'block' : 'none';
+          }
+          renderCustomMilestones();
+          updateUI();
+        });
+      });
+    }
+
+    // 快捷按钮：添加三菱12月调息节点
+    const btnAddDecStep = document.getElementById('btn-add-dec-step');
+    if (btnAddDecStep) {
+      btnAddDecStep.addEventListener('click', () => {
+        let decAbsMonth = 1;
+        for (let m = 1; m <= state.termYears * 12; m++) {
+          const cal = getCalendarDate(m);
+          if (cal.month === 12) {
+            decAbsMonth = m;
+            break;
+          }
+        }
+        const targetYear = Math.ceil(decAbsMonth / 12);
+        const targetMonth = ((decAbsMonth - 1) % 12) + 1;
+
+        const existing = state.customMilestones.find((x) => x.year === targetYear && x.month === targetMonth);
+        if (existing) {
+          existing.rate = +(existing.rate + 0.15).toFixed(3);
+        } else {
+          const lastRate = state.customMilestones.length > 0 ? state.customMilestones[state.customMilestones.length - 1].rate : state.initialRate;
+          state.customMilestones.push({
+            year: targetYear,
+            month: targetMonth,
+            rate: +(lastRate + 0.15).toFixed(3)
+          });
+        }
+        renderCustomMilestones();
+        updateUI();
+      });
+    }
+
+    // 快捷按钮：按三菱年2回规律 (7月/1月) 添加下一个调息节点
+    const btnAddSemiStep = document.getElementById('btn-add-mufg-semi-step');
+    if (btnAddSemiStep) {
+      btnAddSemiStep.addEventListener('click', () => {
+        let maxAbs = 1;
+        let lastRate = state.initialRate;
+        if (state.customMilestones.length > 0) {
+          state.customMilestones.forEach((m) => {
+            const a = (m.year - 1) * 12 + (m.month || 1);
+            if (a > maxAbs) {
+              maxAbs = a;
+              lastRate = m.rate;
+            }
+          });
+        }
+        let nextSemiAbs = maxAbs + 1;
+        while (nextSemiAbs <= state.termYears * 12) {
+          const cal = getCalendarDate(nextSemiAbs);
+          if (cal.month === 1 || cal.month === 7) {
+            break;
+          }
+          nextSemiAbs++;
+        }
+        if (nextSemiAbs <= state.termYears * 12) {
+          const y = Math.ceil(nextSemiAbs / 12);
+          const mo = ((nextSemiAbs - 1) % 12) + 1;
+          state.customMilestones.push({
+            year: y,
+            month: mo,
+            rate: +(lastRate + 0.15).toFixed(3)
+          });
+          renderCustomMilestones();
+          updateUI();
+        }
+      });
+    }
 
     // 添加自定义节点按钮
     const btnAddStep = document.getElementById('btn-add-step');
