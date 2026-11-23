@@ -75,6 +75,11 @@
   padding: 0;
 }
 
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   background-color: var(--bg-page);
@@ -89,8 +94,10 @@ body {
 /* 容器布局：优雅黄金居中，消除宽屏横向拉扯与视线疲劳 */
 .app-container {
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   padding: 24px 20px 80px;
+  box-sizing: border-box;
 }
 
 /* 顶部导航 Header */
@@ -231,18 +238,34 @@ body {
   cursor: default;
 }
 
-/* 主工作区栅格：420px 黄金侧栏比例 + 居中响应式适配 */
+/* 主工作区栅格：400px 黄金侧栏比例 + 居中响应式适配，严格约束列宽防止溢出 */
 .main-grid {
   display: grid;
-  grid-template-columns: 420px 1fr;
+  grid-template-columns: 400px minmax(0, 1fr);
   gap: 24px;
   align-items: start;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1024px) {
   .main-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.sidebar-panel {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.results-panel {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* 基础卡片 */
@@ -908,21 +931,23 @@ input:checked + .slider:before {
   color: var(--primary);
 }
 
-/* 右侧：KPI 指标卡片 (紧凑黄金比例，防换行截断) */
+/* 右侧：KPI 指标卡片 (紧凑黄金比例，防换行截断与溢出) */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1100px) {
   .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 340px) {
+@media (max-width: 360px) {
   .kpi-grid {
     grid-template-columns: 1fr;
   }
@@ -932,10 +957,12 @@ input:checked + .slider:before {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 14px 14px;
+  padding: 14px 12px;
   box-shadow: var(--shadow-sm);
   position: relative;
   overflow: hidden;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .kpi-item.highlight-primary {
@@ -1021,6 +1048,9 @@ input:checked + .slider:before {
   padding: 16px;
   margin-bottom: 24px;
   border: 1px solid var(--border-color);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .compare-head {
@@ -1038,11 +1068,13 @@ input:checked + .slider:before {
 
 .compare-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 720px) {
   .compare-grid {
     grid-template-columns: 1fr;
   }
@@ -1053,6 +1085,8 @@ input:checked + .slider:before {
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .compare-card.highlight {
@@ -1067,11 +1101,16 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .compare-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
   font-size: 12px;
   padding: 4px 0;
   border-bottom: 1px dashed var(--border-light);
@@ -1083,11 +1122,13 @@ input:checked + .slider:before {
 
 .compare-row .lbl {
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .compare-row .val {
   font-weight: 700;
   color: var(--text-primary);
+  text-align: right;
 }
 
 /* 图表容器 */
@@ -1098,6 +1139,10 @@ input:checked + .slider:before {
   padding: 20px;
   margin-bottom: 24px;
   box-shadow: var(--shadow-sm);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .chart-tabs {
@@ -1106,6 +1151,7 @@ input:checked + .slider:before {
   border-bottom: 1px solid var(--border-color);
   margin-bottom: 16px;
   padding-bottom: 8px;
+  flex-wrap: wrap;
 }
 
 .tab-btn {
@@ -1134,6 +1180,8 @@ input:checked + .slider:before {
   position: relative;
   height: 350px;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* 还款明细表格 */
@@ -1144,6 +1192,9 @@ input:checked + .slider:before {
   padding: 20px;
   margin-bottom: 24px;
   box-shadow: var(--shadow-sm);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .table-header {
@@ -1157,9 +1208,13 @@ input:checked + .slider:before {
 
 .table-scroll {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   max-height: 520px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .data-table {
