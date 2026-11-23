@@ -86,9 +86,9 @@ body {
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
-/* 容器布局 */
+/* 容器布局：优雅黄金居中，消除宽屏横向拉扯与视线疲劳 */
 .app-container {
-  max-width: 1380px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px 20px 80px;
 }
@@ -231,15 +231,15 @@ body {
   cursor: default;
 }
 
-/* 主工作区栅格 */
+/* 主工作区栅格：420px 黄金侧栏比例 + 居中响应式适配 */
 .main-grid {
   display: grid;
-  grid-template-columns: 460px 1fr;
+  grid-template-columns: 420px 1fr;
   gap: 24px;
   align-items: start;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1024px) {
   .main-grid {
     grid-template-columns: 1fr;
   }
@@ -571,13 +571,21 @@ input:checked + .slider:before {
 
 .segmented-control.segment-mufg-mode {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
   margin-bottom: 8px;
+  padding: 4px;
 }
 
 .segmented-control.segment-mufg-mode .segment-btn {
-  font-size: 11px;
-  padding: 6px 8px;
-  line-height: 1.35;
+  font-size: 11.5px;
+  padding: 8px 12px;
+  line-height: 1.4;
+  text-align: left;
+  border-radius: calc(var(--radius-sm) - 2px);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .mufg-rule-hint-box {
@@ -900,15 +908,15 @@ input:checked + .slider:before {
   color: var(--primary);
 }
 
-/* 右侧：KPI 指标卡片 */
+/* 右侧：KPI 指标卡片 (紧凑黄金比例，防换行截断) */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -924,7 +932,7 @@ input:checked + .slider:before {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 16px 18px;
+  padding: 14px 14px;
   box-shadow: var(--shadow-sm);
   position: relative;
   overflow: hidden;
@@ -951,10 +959,11 @@ input:checked + .slider:before {
 }
 
 .kpi-num {
-  font-size: 22px;
+  font-size: clamp(17px, 1.35vw, 21px);
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .kpi-hint {
@@ -1257,7 +1266,7 @@ input:checked + .slider:before {
 .faq-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 16px;
 }
 
 @media (max-width: 860px) {

@@ -92,9 +92,9 @@ body {
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
-/* 容器布局 */
+/* 容器布局：优雅黄金居中，消除宽屏拉扯 */
 .app-container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px 20px 80px;
 }
